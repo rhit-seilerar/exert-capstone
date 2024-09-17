@@ -1,0 +1,1 @@
+start cmd /K docker exec -it pandare bash
