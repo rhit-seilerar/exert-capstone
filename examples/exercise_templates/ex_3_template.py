@@ -22,7 +22,7 @@ def guest_driver():
             "./benew"]
     for cmd in cmds:
         print("cmd=[%s]" % cmd)
-        print(panda.run_serial_cmd(cmd, no_timeout=True))
+        panda.run_serial_cmd(cmd, no_timeout=True)
 
     panda.end_analysis()
 
@@ -35,8 +35,8 @@ def guest_driver():
 # https://github.com/panda-re/panda/tree/dev/panda/plugins/proc_start_linux
 # to determine what arguments your `on_recv` callback should be called with
 # and then fix the method def line.
-@panda.ppp('PLUGIN_NAME', 'PLUGIN_CALLBACK_NAME')
-def on_recv(cpu, ...):
+@panda.ppp('proc_start_linux', 'on_rec_auxv')
+def on_recv(cpu, tb, auxv):
     
     # Part 3. It's correct to assume that argc is the number of
     # arguments and argv is an array of argument values to the process
@@ -46,7 +46,7 @@ def on_recv(cpu, ...):
     # `panda.ffi.string(c_string)`
     for idx in range(auxv.argc):
         this_arg_cstring = auxv.argv[idx]
-        this_arg = some_fn(this_arg_cstring)
+        this_arg = panda.ffi.string(this_arg_cstring).decode()
         print(this_arg + " ", end="")
     print()
 

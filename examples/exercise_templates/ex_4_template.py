@@ -18,7 +18,7 @@ panda = Panda(generic="x86_64")
 # Part 1. Add a single line of code here to load `syscalls_logger`
 # plugin and to pass it one argument:
 #   target = maxdem      -- restrict to just this process
-panda.load_plugin(...)
+panda.load_plugin("syscalls_logger", { "target": "maxdem" })
 
 # Look how many things we can get the guest driver to do!
 @panda.queue_blocking
@@ -48,18 +48,21 @@ def on_recv(cpu, tb, auxv):
 
     # Part 2. Use a field of auxv to get command name and then 
     # arrange for the following to only run for process `maxdem`
-    cmdname = SOME_PANDA_FN_TO_GET_GUEST_STRING(auxv.FIELD_THAT_IS_CMD_NAME).decode()
+    cmdname = panda.ffi.string(auxv.argv[0]).decode()
     if "maxdem" in cmdname:
     
         # Part 3. Use a field of auxv, here, to hook entry point 
         # of `maxdem`
-        entry = auxv.FIELD_THAT_IS_ENTRY
+        entry = auxv.entry
         print("entry point for maxdem is %x" % auxv.entry)
         @panda.hook(entry)
         def hook_entry(cpu, tb, h):
             # Part 4. use `panda.get_mappings() to iterate over
             # libraries loaded by maxdem and print out their names
-            ...
+            mappings = panda.get_mappings(cpu)
+            for mapping in mappings:
+                cstring_name = mapping.name
+                print(panda.ffi.string(cstring_name).decode())
 
         
 panda.run()
