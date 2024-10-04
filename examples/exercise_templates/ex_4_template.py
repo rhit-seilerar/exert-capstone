@@ -2,7 +2,7 @@
 #
 # Template for exercise 4, parts 1-4
 #
-# Exercise 4: Syscalls, hooks, and osi for deeper analysis  
+# Exercise 4: Syscalls, hooks, and osi for deeper analysis
 #
 # In exercise 3, we learned that a mysterious process named "maxdem"
 # is running after `benew` runs.  Here, we will investigate that
@@ -46,12 +46,12 @@ def on_recv(cpu, tb, auxv):
         print(arg + " ", end="")
     print()
 
-    # Part 2. Use a field of auxv to get command name and then 
+    # Part 2. Use a field of auxv to get command name and then
     # arrange for the following to only run for process `maxdem`
     cmdname = panda.ffi.string(auxv.argv[0]).decode()
     if "maxdem" in cmdname:
-    
-        # Part 3. Use a field of auxv, here, to hook entry point 
+
+        # Part 3. Use a field of auxv, here, to hook entry point
         # of `maxdem`
         entry = auxv.entry
         print("entry point for maxdem is %x" % auxv.entry)
@@ -64,5 +64,5 @@ def on_recv(cpu, tb, auxv):
                 cstring_name = mapping.name
                 print(panda.ffi.string(cstring_name).decode())
 
-        
+
 panda.run()

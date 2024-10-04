@@ -37,7 +37,7 @@ def guest_driver():
 # and then fix the method def line.
 @panda.ppp('proc_start_linux', 'on_rec_auxv')
 def on_recv(cpu, tb, auxv):
-    
+
     # Part 3. It's correct to assume that argc is the number of
     # arguments and argv is an array of argument values to the process
     # that just started. Modify the below code to print the value of
@@ -52,4 +52,3 @@ def on_recv(cpu, tb, auxv):
 
 
 panda.run()
-
