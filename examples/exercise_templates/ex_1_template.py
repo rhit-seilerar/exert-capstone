@@ -5,7 +5,7 @@
 # Exercise 1: Control the PANDA guest with a Python script.
 #
 # This script should run as-is and print out the result of the
-# command `whoami` running in the guest.  
+# command `whoami` running in the guest.
 #
 # Part 1. Modify it to run the command `cat /proc/cpuinfo`
 # inside the guest instead of `whoami` and print the result.
@@ -41,4 +41,3 @@ def guest_driver():
 
 # Now, after we've registered a blocking function, we start the emulation
 panda.run()
-
