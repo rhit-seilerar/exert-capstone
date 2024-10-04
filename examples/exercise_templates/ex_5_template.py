@@ -23,9 +23,9 @@ def guest_driver():
             "chmod +x benew",
             "./benew"]
     for cmd in cmds:
-        print("cmd=[%s]" % cmd)
+        print(f"cmd=[{cmd}]")
         print(panda.run_serial_cmd(cmd, no_timeout=True))
-        
+
     panda.end_analysis()
 
 
@@ -41,20 +41,20 @@ def on_recv(cpu, tb, auxv):
     print()
 
     cmdname = panda.ffi.string(auxv.argv[0]).decode()
-    if ("maxdem" in cmdname):
+    if "maxdem" in cmdname:
 
         # Note: we'll use the machinery of ex 4 to limit
         # the application of these expensive introspections to
         # just `maxdem`
-        
+
         # Part 1. Use `@panda.hook_symbol` to intercept *all* functions
         # actually called by `libgcrypt`.
         @panda.hook_symbol("libgcrypt", None)
         def hook_libgcrypt(cpu, tb, hook):
-            # Part 2. 
+            # Part 2.
             # print out the name of the fn here
             print(panda.ffi.string(hook.sym.name).decode())
-    
+
         # Part 3. Iterate, now that you know the name of the
         # encryption fn being called.  Uncomment this decorator
         # (enabling the hook).  Then fill in the args to that
@@ -68,6 +68,6 @@ def on_recv(cpu, tb, auxv):
             # Part 5. Read that buffer out of guest using `panda.virtual_memory_read`
             buf = panda.virtual_memory_read(cpu, ptr, ptr_size)
             print(f"Saw plaintext buf=[{buf}] passed to encrytion fn")
-            
+
 
 panda.run()

@@ -1,5 +1,5 @@
 # Day 1 (Introduction to PANDA)
-# 
+#
 # Template for exercise 2, parts 1-4.
 #
 # Exercise 2: Add some analysis to the script from Exercise 1 with a
@@ -12,7 +12,7 @@ from pandare import Panda
 
 panda = Panda(generic="x86_64")
 
-# Control the guest 
+# Control the guest
 @panda.queue_blocking
 def guest_driver():
     panda.revert_sync("root")
@@ -24,20 +24,17 @@ def guest_driver():
 # guest ASID changes. Look through the callback list in PANDA's
 # documentation at https://docs.panda.re/#pandare.Callbacks and find
 # the one that will work here.
-# 
+#
 # Part 2: Rename the function and fix up its arguments
-@panda.cb_CALLBACK_NAME
-def your_fn(CALLBACK_ARGS):
-    
+@panda.cb_asid_changed # pylint: disable=E1101
+def your_fn(env, old_val, new_val):
+
     # Part 3: print the old asid and new asid in hexadecimal
-    print(f"ASID has changed from {XXX:x} to {YYY:x}")
-    
+    print(f"ASID has changed from {old_val:x} to {new_val:x}")
+
     # Part 4: Does the return value of this callback get used for something?
     # If so, what value should we return?
-    return SOMETHING
+    return False
 
 
 panda.run() # Start emulation
-
-
-
