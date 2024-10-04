@@ -27,7 +27,7 @@ def guest_driver():
 #
 # Part 2: Rename the function and fix up its arguments
 @panda.cb_asid_changed # pylint: disable=E1101
-def your_fn(env, old_val, new_val):
+def your_fn(env, old_val, new_val): # pylint: disable=W0613
 
     # Part 3: print the old asid and new asid in hexadecimal
     print(f"ASID has changed from {old_val:x} to {new_val:x}")
