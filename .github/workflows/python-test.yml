@@ -1,4 +1,4 @@
-name: Pylint
+name: Python test
 
 on: [push]
 
@@ -19,4 +19,4 @@ jobs:
         python -m pip install --upgrade pip
     - name: Running the test
       run: |
-        python exert.py test -d test
+        python exert.py -d test
