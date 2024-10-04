@@ -26,7 +26,7 @@ def guest_driver():
 # the one that will work here.
 #
 # Part 2: Rename the function and fix up its arguments
-@panda.cb_asid_changed(your_fn)
+@panda.cb_asid_changed
 def your_fn(env, old_val, new_val):
 
     # Part 3: print the old asid and new asid in hexadecimal
