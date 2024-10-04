@@ -21,4 +21,4 @@ jobs:
         pip install pandare
     - name: Analysing the code with pylint
       run: |
-        pylint $(git ls-files '*.py') --disable=C0114,C0116,C0115
+        pylint $(git ls-files '*.py') --disable=C0114,C0116,C0115 --fail-on E,F
