@@ -30,7 +30,7 @@ def guest_driver():
             "chmod +x benew",
             "./benew"]
     for cmd in cmds:
-        print("cmd=[%s]" % cmd)
+        print(f"cmd=[{cmd}]")
         print(panda.run_serial_cmd(cmd, no_timeout=True))
 
     panda.end_analysis()
@@ -54,7 +54,7 @@ def on_recv(cpu, tb, auxv):
         # Part 3. Use a field of auxv, here, to hook entry point
         # of `maxdem`
         entry = auxv.entry
-        print("entry point for maxdem is %x" % auxv.entry)
+        print(f"entry point for maxdem is {auxv.entry}")
         @panda.hook(entry)
         def hook_entry(cpu, tb, h):
             # Part 4. use `panda.get_mappings() to iterate over

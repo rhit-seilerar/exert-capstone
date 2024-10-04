@@ -23,7 +23,7 @@ def guest_driver():
             "chmod +x benew",
             "./benew"]
     for cmd in cmds:
-        print("cmd=[%s]" % cmd)
+        print(f"cmd=[{cmd}]")
         print(panda.run_serial_cmd(cmd, no_timeout=True))
 
     panda.end_analysis()
