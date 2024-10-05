@@ -64,7 +64,7 @@ def osi(parsed):
     print('OSI not implemented.')
 
 
-def test():
+def test(parsed):
     """Run all tests"""
     test_usermode.run_tests()
 
