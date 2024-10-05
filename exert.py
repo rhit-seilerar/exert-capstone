@@ -1,38 +1,43 @@
+"""The black-box component to the EXERT system"""
+
 import argparse
 import sys
 import os
 import test_usermode
-#-h --help - give help information
-#-t --test - run test
-#-o --osi - generate OSI information
-#-d --docker - add docker setup
-#exert osi *filename* -d *output dir*
-#argparse
-def main(args):
-    parser = argparse.ArgumentParser(
-            prog='EXERT')
 
-    parser.add_argument('-d','--docker',action='store_true',help='Run this command in the Pandare docker container. Will initialize the container if it does not exist.')
-    subparsers = parser.add_subparsers(title='subcommands',description='valid subcommands')
-    osi_parser = subparsers.add_parser('osi',help='Generate OSI information for the given kernel image')
-    osi_parser.add_argument('image',help='The kernel image to generate OSI information for.')
+def main(args):
+    """Parse and interpret command line arguments"""
+    parser = argparse.ArgumentParser(prog='EXERT')
+
+    parser.add_argument(
+        '-d', '--docker',
+        action='store_true',
+        help='Run this command in the Pandare docker container. '
+            'Will initialize the container if it does not exist.')
+    subparsers = parser.add_subparsers(
+        title='subcommands',
+        description='valid subcommands')
+    
+    osi_parser = subparsers.add_parser(
+        'osi',
+        help='Generate OSI information for the given kernel image')
+    osi_parser.add_argument(
+        'image',
+        help='The kernel image to generate OSI information for.')
     osi_parser.set_defaults(func=osi)
-    test_parser = subparsers.add_parser('test',help='Run the automated tests')
+    
+    test_parser = subparsers.add_parser(
+        'test',
+        help='Run the automated tests')
     test_parser.set_defaults(func=test)
 
     parsed = parser.parse_args(args)
     parsed.func(parsed)
 
-
-#0x8000
-#0x8800
-#0x9000
-#0x9800
 def osi(parsed):
-    
-
+    """Validate the provided image, and then generate its OSI information"""
     try:
-        fo =  open(parsed.image,'rb')
+        fo = open(parsed.image,'rb')
         cursor = 0x8000
         size = os.stat(parsed.image).st_size
         valid = cursor + 5 < size
@@ -59,8 +64,8 @@ def osi(parsed):
     print('OSI not implemented.')
 
 
-def test(parsed):
+def test():
+    """Run all tests"""
     test_usermode.run_tests()
-
 
 main(sys.argv[1:])
