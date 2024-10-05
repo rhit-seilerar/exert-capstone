@@ -1,6 +1,6 @@
 all: helloworld
 
-CFLAGS += -ggdb
+CFLAGS += -ggdb -static-libgcc -static
 
 .PHONY: clean all
 
