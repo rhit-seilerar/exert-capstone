@@ -1,6 +1,7 @@
 import argparse
 import sys
 import os
+import test_usermode
 #-h --help - give help information
 #-t --test - run test
 #-o --osi - generate OSI information
@@ -59,7 +60,7 @@ def osi(parsed):
 
 
 def test(parsed):
-    print('Test not implemented.')
+    test_usermode.run_tests()
 
 
 main(sys.argv[1:])
