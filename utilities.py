@@ -4,4 +4,9 @@ import subprocess
 
 def run_command(command):
     """Run a command in a forked child and return the stdout"""
-    return subprocess.check_output(command, shell=True).decode()
+    result = subprocess.run(command, shell=True, executable="/bin/bash", capture_output=True)
+    return result.stdout.decode()
+
+def run_commands(commands):
+    """Run a series of commands"""
+    return run_command(";".join(commands))
