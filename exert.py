@@ -3,6 +3,7 @@
 import argparse
 import sys
 import os
+import test_plugin
 import test_usermode
 
 def main(args):
@@ -66,6 +67,7 @@ def osi(parsed):
 
 def test(parsed):
     """Run all tests"""
+    test_plugin.run_tests()
     test_usermode.run_tests()
 
 main(sys.argv[1:])
