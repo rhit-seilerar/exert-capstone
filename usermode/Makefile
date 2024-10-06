@@ -1,6 +1,6 @@
 all: helloworld
 
-CC = ./build/cross/${ARCH}-linux-${LIBC}-cross/bin/${ARCH}-linux-${LIBC}-gcc
+CC = ./cross/${ARCH}-linux-${LIBC}-cross/bin/${ARCH}-linux-${LIBC}-gcc
 
 CFLAGS += -ggdb -static-libgcc -static
 
