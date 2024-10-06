@@ -1,5 +1,5 @@
 # Install some useful programs on the container
-apt-get update && apt-get install -y vim gdb
+apt-get update && apt-get install -y vim gdb cpio
 
 # Install some pip dependencies
 pip install ipython

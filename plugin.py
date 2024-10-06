@@ -1,6 +1,7 @@
 """The core file for the plugin component of the EXERT system"""
 
 from pandare import PyPlugin
+from filesystem_convert import filesystem_convert
 import IPython
 
 class Exert(PyPlugin):
@@ -21,7 +22,10 @@ class Exert(PyPlugin):
 
 def main(callback):
     from pandare import Panda
+
+    filesystem_convert('./filesystem')
     panda = Panda(generic='i386')
+    # panda = Panda(generic='i386', extra_args = '-initrd filesystem.cpio -kernel ./vmlinuz init=/helloworld root=/dev/ram1')
 
     panda.pyplugins.load(Exert, args={
         'callback': callback
