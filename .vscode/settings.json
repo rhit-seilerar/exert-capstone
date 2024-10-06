@@ -4,5 +4,6 @@
 	"editor.indentSize": "tabSize",
     "files.exclude": {
         "**/.git": false
-    }
+    },
+    "files.eol": "\n"
 }
