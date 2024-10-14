@@ -5,7 +5,7 @@ def compile_i386():
     run_commands([
         "pushd usermode",
         "make clean",
-        "make all",
+        "make all ARCH=arm LIBC=musleabi",
         "popd"])
     if not os.path.isfile("usermode/build/helloworld"):
         raise Exception(f"{compile_i386.__name__} failed: No output was produced")

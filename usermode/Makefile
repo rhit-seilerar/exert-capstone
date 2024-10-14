@@ -10,7 +10,7 @@ CFLAGS += -ggdb -static-libgcc -static
 	${CC} ${CFLAGS} -o build/$@ $^
 
 setup:
-	mkdir build
+	# if [[ ! -d build ]] mkdir build
 
 clean:
-	rm -rf helloworld
+	rm -rf build
