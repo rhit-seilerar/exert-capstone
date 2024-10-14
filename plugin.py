@@ -34,7 +34,7 @@ def main(callback):
     @panda.queue_blocking
     def drive():
         panda.revert_sync("root")
-        print(panda.run_serial_cmd('uname -a'))
+        print(panda.run_serial_cmd('uname -r'))
         panda.end_analysis()
 
     panda.run()

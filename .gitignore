@@ -1,5 +1,6 @@
 .panda/
 __pycache__
+*.cpio
 usermode/build
 usermode/cross/*musl
 usermode/cross/*musleabi
