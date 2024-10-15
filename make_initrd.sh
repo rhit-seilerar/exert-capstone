@@ -55,7 +55,7 @@ echo "Simple initrd is active"
 echo
 mount -t proc /proc /proc
 mount -t sysfs none /sys
-/bin/ash --login
+/bin/ash
 EOF
 
 cp $1 /$1
