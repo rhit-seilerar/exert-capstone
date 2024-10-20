@@ -20,11 +20,11 @@ class Exert(PyPlugin):
             else:
                 IPython.embed()
 
-def main(callback):
+def main(arch = 'i386', callback = None):
     from pandare import Panda
 
     filesystem_convert('./filesystem')
-    panda = Panda(generic='i386')
+    panda = Panda(generic=arch)
     # panda = Panda(generic='i386', extra_args = '-initrd filesystem.cpio -kernel ./vmlinuz init=/helloworld root=/dev/ram1')
 
     panda.pyplugins.load(Exert, args={
@@ -40,4 +40,4 @@ def main(callback):
     panda.run()
 
 if __name__ == '__main__':
-    main(None)
+    main()
