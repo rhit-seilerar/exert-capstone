@@ -1,12 +1,9 @@
 """The black-box component to the EXERT system"""
 
 import argparse
-import sys
 import os
-import test_plugin
-import test_usermode
 
-def main(args):
+def main(args = None):
     """Parse and interpret command line arguments"""
     parser = argparse.ArgumentParser(prog='EXERT')
 
@@ -27,12 +24,7 @@ def main(args):
         help='The kernel image to generate OSI information for.')
     osi_parser.set_defaults(func=osi)
     
-    test_parser = subparsers.add_parser(
-        'test',
-        help='Run the automated tests')
-    test_parser.set_defaults(func=test)
-
-    parsed = parser.parse_args(args)
+    parsed = parser.parse_args()
     parsed.func(parsed)
 
 def osi(parsed):
@@ -64,10 +56,4 @@ def osi(parsed):
         return
     print('OSI not implemented.')
 
-
-def test(parsed):
-    """Run all tests"""
-    test_plugin.run_tests()
-    test_usermode.run_tests()
-
-main(sys.argv[1:])
+main()

@@ -2,7 +2,7 @@
 apt-get update && apt-get install -y vim gdb cpio
 
 # Install some pip dependencies
-pip install ipython
+pip install ipython pytest pytest-mock
 
 # Symlink the qcows to the host so we only download them once
 if [[ ! -d /mount/.panda ]]; then mkdir /mount/.panda; fi
