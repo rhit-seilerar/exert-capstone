@@ -26,14 +26,14 @@ mkdir /mnt/initrd/proc
 # Grab busybox and create the symbolic links
 pushd /mnt/initrd/bin
 cp '/home/aidangfrantz/Documents/Coding Documents/Pandare/exert-capstone/busybox/busybox-armv4l' .
-ln -s busybox ash
-ln -s busybox mount
-ln -s busybox echo
-ln -s busybox ls
-ln -s busybox cat
-ln -s busybox ps
-ln -s busybox dmesg
-ln -s busybox sysctl
+ln -s busybox-armv4l ash
+ln -s busybox-armv4l mount
+ln -s busybox-armv4l echo
+ln -s busybox-armv4l ls
+ln -s busybox-armv4l cat
+ln -s busybox-armv4l ps
+ln -s busybox-armv4l dmesg
+ln -s busybox-armv4l sysctl
 popd
 
 # Grab the necessary dev files
