@@ -21,7 +21,7 @@ def main(args = None):
     init_parser.set_defaults(func = init)
     
     osi_parser = subparsers.add_parser('osi', help = 'Generate OSI information for the given kernel image')
-    osi_parser.add_argument('image', help = 'The kernel image to generate OSI information for.')
+    osi_parser.add_argument('image', nargs = '+', help = 'The kernel image to generate OSI information for.')
     osi_parser.set_defaults(func = osi)
     
     dev_parser = subparsers.add_parser('dev', help = 'Development tools')
@@ -55,8 +55,9 @@ def reset(parsed):
 def osi(parsed):
     """Validate the provided image, and then generate its OSI information"""
     validate_initialized()
-    validate_iso(parsed)
-    make_usermode()
+    for image in parsed.image:
+        validate_iso(image)
+        make_usermode(image)
     
     print('OSI not implemented.')
 
@@ -86,15 +87,15 @@ def validate_initialized():
     #TODO: Test if initialized
     pass
 
-def make_usermode():
+def make_usermode(image):
     #TODO: Compile usermode for specific version
     pass
 
-def validate_iso(parsed):
+def validate_iso(image):
     try:
-        fo = open(parsed.image,'rb')
+        fo = open(image,'rb')
         cursor = 0x8000
-        size = os.stat(parsed.image).st_size
+        size = os.stat(image).st_size
         valid = cursor + 5 < size
         while cursor + 7 < size and valid:
             fo.seek(cursor)
@@ -111,13 +112,13 @@ def validate_iso(parsed):
                 valid = False
             cursor += 0x800
         if not valid:
-            print(f'The file {parsed.image} is not a valid kernel image.')
+            print(f'The file {image} is not a valid kernel image.')
             exit(1)
     except FileNotFoundError:
-        print(f'Could not find {parsed.image}.')
+        print(f'Could not find {image}.')
         exit(1)
     except UnicodeDecodeError:
-        print(f'The file {parsed.image} is not a valid kernel image.')
+        print(f'The file {image} is not a valid kernel image.')
         exit(1)
 
 main()
