@@ -12,3 +12,4 @@ usermode/cross/*/share
 usermode/cross/*/usr
 usermode/cross/*/bin/*
 !usermode/cross/*/bin/*gcc
+*.img.gz
