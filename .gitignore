@@ -1,5 +1,6 @@
 .panda/
-__pycache__
+__pycache__/
+.pytest_cache/
 *.cpio
 usermode/build
 usermode/cross/*musl

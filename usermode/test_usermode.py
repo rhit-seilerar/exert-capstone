@@ -8,6 +8,6 @@ def _test_compile_i386():
         "make all ARCH=arm LIBC=musleabi",
         "popd"])
     assert os.path.isfile("usermode/build/helloworld")
-    assert get_stdout(run_command("usermode/build/helloworld")) == "hello world\n"
-    assert get_stderr(run_command("ldd usermode/build/helloworld")).strip() == "not a dynamic executable"
+    assert get_stdout(run_command("usermode/build/helloworld", True)) == "hello world\n"
+    assert get_stderr(run_command("ldd usermode/build/helloworld", True)).strip() == "not a dynamic executable"
     print("Task successful!")
