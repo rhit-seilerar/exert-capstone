@@ -23,7 +23,14 @@ class Exert(PyPlugin):
 def main(arch = 'i386', callback = None):
     from pandare import Panda
 
-    filesystem_convert('./filesystem')
+    # filesystem_convert('./filesystem')
+    # args="--nographic \
+    #     --machine virt-2.6 \
+    #     -kernel ./vmlinuz \
+    #     -initrd ramdisk.img.gz \
+    #     -append 'console=ttyS0 earlyprintk=serial nokaslr init=/linuxrc root=/dev/ram0'"
+    # panda = Panda(arch='arm', mem="1G", extra_args=args)
+    # panda.set_os_name("linux_32_ubuntu:4.4.0-98-generic")
     panda = Panda(generic=arch)
     # panda = Panda(generic='i386', extra_args = '-initrd filesystem.cpio -kernel ./vmlinuz init=/helloworld root=/dev/ram1')
 

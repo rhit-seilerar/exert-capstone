@@ -25,7 +25,7 @@ mkdir /mnt/initrd/proc
 
 # Grab busybox and create the symbolic links
 pushd /mnt/initrd/bin
-cp /usr/bin/busybox .
+cp '/home/aidangfrantz/Documents/Coding Documents/Pandare/exert-capstone/busybox/busybox-armv4l' .
 ln -s busybox ash
 ln -s busybox mount
 ln -s busybox echo
@@ -58,7 +58,7 @@ mount -t sysfs none /sys
 /bin/ash
 EOF
 
-cp $1 /$1
+# cp $1 /$1
 
 chmod +x /mnt/initrd/linuxrc
 
