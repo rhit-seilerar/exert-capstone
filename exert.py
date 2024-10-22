@@ -74,7 +74,8 @@ def run_docker(container, name = None, command = '', persist = False):
     cwd = os.path.dirname(os.path.realpath(__file__))
     mount = f'-v "{cwd}/usermode:/mount"'
     if name is None:
-        run(f'docker run --rm -it {mount} {container} bash -c "cd /mount; ./setup.sh; {command}"', check = True)
+        run(f'docker run --rm -it {mount} {container} bash -c'
+            f'"cd /mount; ./setup.sh; {command}"', check = True)
     else:
         if not container_is_running(name):
             run(f'docker run --rm -dit --name {name} {mount} {container}', check = True)
@@ -93,37 +94,37 @@ def container_is_running(name):
         return False
 
 def validate_initialized():
-    #TODO: Test if initialized
+    # TODO: Test if initialized
     pass
 
 # pylint: disable=unused-argument
 def make_usermode(image):
-    #TODO: Compile usermode for specific version
+    # TODO: Compile usermode for specific version
     pass
 
 def validate_iso(image):
     try:
-        fo = open(image,'rb')
-        cursor = 0x8000
-        size = os.stat(image).st_size
-        valid = cursor + 5 < size
-        while cursor + 7 < size and valid:
-            fo.seek(cursor)
-            header_type = int.from_bytes(fo.read(1))
-            header_identifier = fo.read(5).decode('ascii')
-            header_version = int.from_bytes(fo.read(1))
-            if header_identifier != 'CD001':
-                valid = False
-            if header_version != 1:
-                valid = False
-            if header_type == 255:
-                break
-            if header_type < 0 or header_type > 3:
-                valid = False
-            cursor += 0x800
-        if not valid:
-            print(f'The file {image} is not a valid kernel image.')
-            sys.exit(1)
+        with open(image,'rb') as fo:
+            cursor = 0x8000
+            size = os.stat(image).st_size
+            valid = cursor + 5 < size
+            while cursor + 7 < size and valid:
+                fo.seek(cursor)
+                header_type = int.from_bytes(fo.read(1))
+                header_identifier = fo.read(5).decode('ascii')
+                header_version = int.from_bytes(fo.read(1))
+                if header_identifier != 'CD001':
+                    valid = False
+                if header_version != 1:
+                    valid = False
+                if header_type == 255:
+                    break
+                if header_type < 0 or header_type > 3:
+                    valid = False
+                cursor += 0x800
+            if not valid:
+                print(f'The file {image} is not a valid kernel image.')
+                sys.exit(1)
     except FileNotFoundError:
         print(f'Could not find {image}.')
         sys.exit(1)

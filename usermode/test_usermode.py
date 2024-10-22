@@ -1,14 +1,14 @@
 import os.path
-from utilities import run_command
+import utilities
 
 def _test_compile_i386():
-    run_commands([
+    utilities.run_commands([
         "pushd usermode",
         "make clean",
         "make all ARCH=arm LIBC=musleabi",
         "popd"])
     assert os.path.isfile("usermode/build/helloworld")
-    assert get_stdout(run_command("usermode/build/helloworld", True)) == "hello world\n"
-    assert get_stderr(run_command("ldd usermode/build/helloworld", True)).strip() \
+    assert utilities.get_stdout(utilities.run_command("usermode/build/helloworld", True)) == "hello world\n"
+    assert utilities.get_stderr(utilities.run_command("ldd usermode/build/helloworld", True)).strip() \
         == "not a dynamic executable"
     print("Task successful!")
