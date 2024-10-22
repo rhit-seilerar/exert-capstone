@@ -1,4 +1,5 @@
 [MAIN]
 
-disable=unused-argument
-disable=fixme
+disable=
+    unused-argument,
+    fixme
