@@ -10,7 +10,8 @@ jobs:
         python-version: ["3.11"]
     container:
       image: pandare/panda
-      volumes: '${GITHUB_WORKSPACE}/usermode:/mount'
+      volumes:
+      - ${GITHUB_WORKSPACE}/usermode:/mount
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
