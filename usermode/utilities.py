@@ -1,18 +1,18 @@
 """Some useful utilities for the pyton scripts"""
 
 import subprocess
-import sys
 
 def run_command(command, capture_output=False):
     """Run a command in a forked child and return the stdout"""
-    return subprocess.run(command, capture_output=capture_output, shell=True)
-    
+    return subprocess.run(command, capture_output = capture_output, shell = True, check = False)
+
 def run_commands(commands, capture_output=False):
     """Run a series of commands"""
     if capture_output:
         return run_command(';'.join(commands), True)
     for command in commands:
         run_command(command, False)
+    return None
 
 def get_stdout(result):
     return result.stdout.decode()

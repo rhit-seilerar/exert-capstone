@@ -1,5 +1,5 @@
-from utilities import *
 import os.path
+from utilities import run_command
 
 def _test_compile_i386():
     run_commands([
@@ -9,5 +9,6 @@ def _test_compile_i386():
         "popd"])
     assert os.path.isfile("usermode/build/helloworld")
     assert get_stdout(run_command("usermode/build/helloworld", True)) == "hello world\n"
-    assert get_stderr(run_command("ldd usermode/build/helloworld", True)).strip() == "not a dynamic executable"
+    assert get_stderr(run_command("ldd usermode/build/helloworld", True)).strip() \
+        == "not a dynamic executable"
     print("Task successful!")

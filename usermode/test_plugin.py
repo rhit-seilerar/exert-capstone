@@ -3,6 +3,7 @@ import plugin
 # Kernel info taken from https://panda.re/kernelinfos/ubuntu:4.4.0-170-generic:32.conf
 
 def test_ground_truth_tasklist():
+    # pylint: disable=unused-argument
     def callback(panda, cpu, tb, hook):
         init_addr = 0xc1b1da80
         parent_offset = 804
@@ -13,10 +14,11 @@ def test_ground_truth_tasklist():
     plugin.main(callback = callback)
 
 def _test_get_current_tasklist():
+    # pylint: disable=unused-argument
     def callback(panda, cpu, tb, hook):
         # We're going to keep using the ground-truth offset for now
         parent_offset = 804
-        # In linux kernel 2.6.26 and up, per-cpu info (such as the current task) was moved to 
+        # In linux kernel 2.6.26 and up, per-cpu info (such as the current task) was moved to
         # a static pointer stored in the .data or .data..percpu section.
         # We can stil test earlier versions though. Previously, a the current task pointer was
         # stored at the base of the stack, e.g. masking off either 12 or 13 bits.

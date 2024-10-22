@@ -1,4 +1,4 @@
-from utilities import *
+from utilities import run_command, run_commands, get_stdout, get_stderr
 
 def test_run_command_success():
     result = run_command('echo hi', True)
