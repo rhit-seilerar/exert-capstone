@@ -27,3 +27,10 @@
 1. Run `python exert.py dev test`
 2. Validate that `setup.sh` is run
 3. Validate that all tests are run
+
+### Ramdisk Generator
+1. Run sudo make_initrd.sh on a Linux machine to generate a ramdisk
+2. Uncomment the lines in plugin.py that run the file
+3. Comment out the generic Panda line and the line for running the uname serial command, as well as the hook
+4. Run plugin.py in Python in the Docker container.
+5. Snapshots will error, but otherwise the container will open and close as expected.
