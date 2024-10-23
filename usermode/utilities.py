@@ -1,10 +1,14 @@
 """Some useful utilities for the pyton scripts"""
 
 import subprocess
+import re
 
 def run_command(command, capture_output=False):
     """Run a command in a forked child and return the stdout"""
-    return subprocess.run(command, capture_output = capture_output, shell = True, check = False)
+    pattern = re.compile('("[^"]+"|[^\\s"]+)')
+    args = re.findall(pattern, command)
+    print(args)
+    return subprocess.run(args, capture_output = capture_output, shell = True, check = False)
 
 def run_commands(commands, capture_output=False):
     """Run a series of commands"""
