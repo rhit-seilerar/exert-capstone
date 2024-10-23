@@ -54,8 +54,8 @@ def init(parsed):
         print('Error: You must have docker installed to run EXERT.')
         return
 
-    run(f'docker pull {PANDA_CONTAINER}:latest', check = True)
-    run(f'docker pull {XMAKE_CONTAINER}:latest', check = True)
+    run(f'docker pull {PANDA_CONTAINER}:latest'.split(), check = True)
+    run(f'docker pull {XMAKE_CONTAINER}:latest'.split(), check = True)
 
     print('EXERT successfully initialized!')
 
@@ -77,15 +77,15 @@ def run_docker(container, name = None, command = '', persist = False):
     cwd = os.path.dirname(os.path.realpath(__file__))
     mount = f'-v "{cwd}/usermode:/mount"'
     if name is None:
-        run(f'docker run --rm -it {mount} {container} bash -c'
-            f'"cd /mount; ./setup.sh; {command}"', check = True)
+        run((f'docker run --rm -it {mount} {container} bash -c'
+            f'"cd /mount; ./setup.sh; {command}"').split(), check = True)
     else:
         if not container_is_running(name):
-            run(f'docker run --rm -dit --name {name} {mount} {container}', check = True)
-            run(f'docker exec -it {name} bash -c "cd /mount; ./setup.sh"', check = True)
-        run(f'docker exec -it {name} bash -c "cd /mount; {command}"', check = True)
+            run(f'docker run --rm -dit --name {name} {mount} {container}'.split(), check = True)
+            run(f'docker exec -it {name} bash -c "cd /mount; ./setup.sh"'.split(), check = True)
+        run(f'docker exec -it {name} bash -c "cd /mount; {command}"'.split(), check = True)
         if persist:
-            run(f'docker exec -it {name} bash"', check = True)
+            run(f'docker exec -it {name} bash"'.split(), check = True)
 
 def container_is_running(name):
     names = run('docker ps --format {{.Names}}'.split(), capture_output = True, check = True) \
