@@ -2,7 +2,7 @@
 apt-get install -y cpio
 
 # Install some pip dependencies
-pip install ipython pytest
+pip install ipython pytest pytest-cov lz4 zstandard git+https://github.com/clubby789/python-lzo@b4e39df git+https://github.com/marin-m/vmlinux-to-elf
 
 # Symlink the qcows to the host so we only download them once
 if [[ ! -d /mount/.panda ]]; then mkdir /mount/.panda; fi

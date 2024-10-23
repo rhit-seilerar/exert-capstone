@@ -41,7 +41,10 @@ def main():
         .add_parser('test', help='Run the unit tests for the EXERT system') \
         .set_defaults(func = lambda parsed:
             run_docker(PANDA_CONTAINER, name = 'pandare', command = 'pytest'))
-
+    dev_subparsers \
+        .add_parser('coverage', help='Analyze test coverage for the EXERT system') \
+        .set_defaults(func = lambda parsed:
+            run_docker(PANDA_CONTAINER, name = 'pandare', command = 'pytest-cov'))
     parsed = parser.parse_args()
     parsed.func(parsed)
 
@@ -85,7 +88,7 @@ def run_docker(container, name = None, command = '', persist = False):
             run(f'docker exec -it {name} bash"', check = True)
 
 def container_is_running(name):
-    names = run('docker ps --format {{.Names}}', capture_output = True, check = True) \
+    names = run('docker ps --format {{.Names}}'.split(), capture_output = True, check = True) \
         .stdout.decode().splitlines()
     try:
         names.index(name)
