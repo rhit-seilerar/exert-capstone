@@ -4,7 +4,7 @@ import argparse
 import os
 import sys
 import shutil
-from subprocess import run
+from usermode import utilities as util
 
 PANDA_CONTAINER = 'pandare/panda'
 XMAKE_CONTAINER = 'ghcr.io/panda-re/embedded-toolchains'
@@ -54,14 +54,14 @@ def init(parsed):
         print('Error: You must have docker installed to run EXERT.')
         return
 
-    run(f'docker pull {PANDA_CONTAINER}:latest'.split(), check = True)
-    run(f'docker pull {XMAKE_CONTAINER}:latest'.split(), check = True)
+    util.run_command(f'docker pull {PANDA_CONTAINER}:latest')
+    util.run_command(f'docker pull {XMAKE_CONTAINER}:latest')
 
     print('EXERT successfully initialized!')
 
 # pylint: disable=unused-argument
 def reset(parsed):
-    run('docker stop pandare', capture_output = True, check = True)
+    run_and_output('docker stop pandare')
 
 def osi(parsed):
     """Validate the provided image, and then generate its OSI information"""
@@ -77,24 +77,26 @@ def run_docker(container, name = None, command = '', persist = False):
     cwd = os.path.dirname(os.path.realpath(__file__))
     mount = f'-v "{cwd}/usermode:/mount"'
     if name is None:
-        run((f'docker run --rm -it {mount} {container} bash -c'
-            f'"cd /mount; ./setup.sh; {command}"').split(), check = True)
+        util.run_command(f'docker run --rm -it {mount} {container} bash -c'
+            f'"cd /mount; ./setup.sh; {command}"')
     else:
         if not container_is_running(name):
-            run(f'docker run --rm -dit --name {name} {mount} {container}'.split(), check = True)
-            run(f'docker exec -it {name} bash -c "cd /mount; ./setup.sh"'.split(), check = True)
-        run(f'docker exec -it {name} bash -c "cd /mount; {command}"'.split(), check = True)
+            util.run_command(f'docker run --rm -dit --name {name} {mount} {container}')
+            util.run_command(f'docker exec -it {name} bash -c "cd /mount; ./setup.sh"')
+        util.run_command(f'docker exec -it {name} bash -c "cd /mount; {command}"')
         if persist:
-            run(f'docker exec -it {name} bash"'.split(), check = True)
+            util.run_command(f'docker exec -it {name} bash"')
 
 def container_is_running(name):
-    names = run('docker ps --format {{.Names}}'.split(), capture_output = True, check = True) \
-        .stdout.decode().splitlines()
+    names = run_and_output('docker ps --format {{.Names}}').splitlines()
     try:
         names.index(name)
         return True
     except ValueError:
         return False
+
+def run_and_output(command):
+    return util.get_stdout(util.run_command(command, True))
 
 def validate_initialized():
     # TODO: Test if initialized
