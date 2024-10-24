@@ -78,7 +78,7 @@ def run_docker(container, name = None, command = '', persist = False):
     else:
         if not container_is_running(name):
             run_command(f'docker run --rm -dit --name {name} {mount} {container}')
-            run_command(f'docker exec -it {name} bash -c "cd /mount; ./setup.sh"')
+            run_command(f'docker exec -it {name} bash -c "cd /mount; chmod +x ./setup.sh; ./setup.sh"')
         run_command(f'docker exec -it {name} bash -c "cd /mount; {command}"', False, False)
         if persist:
             run_command(f'docker exec -it {name} bash"')
