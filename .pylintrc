@@ -6,3 +6,4 @@ disable=
     global-statement,
     missing-function-docstring,
     missing-module-docstring,
+    no-name-in-module

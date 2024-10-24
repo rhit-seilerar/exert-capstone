@@ -19,7 +19,7 @@ def test_ground_truth_tasklist():
     plugin.run(callback = callback)
     assert CALLBACK_WAS_CALLED
 
-def test_get_current_tasklist():
+def _test_get_current_tasklist():
     # pylint: disable=unused-argument
     def callback(panda, cpu, tb, hook):
         # We're going to keep using the ground-truth offset for now

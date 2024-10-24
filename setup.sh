@@ -4,7 +4,9 @@ apt-get install -y cpio
 # Install some pip dependencies
 pip install --upgrade ipython pytest pytest-cov
 
+pandaLoc=/mount/exert/usermode/.panda
+
 # Symlink the qcows to the host so we only download them once
-if [[ ! -d /mount/.panda ]]; then mkdir /mount/exert/usermode/.panda; fi
+if [[ ! -d $pandaLoc ]]; then mkdir $pandaLoc; fi
 if [[ -L /root/.panda ]]; then rm /root/.panda; fi
-ln -sf /mount/exert/usermode/.panda /root/.panda
+ln -sf $pandaLoc /root/.panda
