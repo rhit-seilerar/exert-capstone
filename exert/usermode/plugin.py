@@ -1,9 +1,9 @@
 """The core file for the plugin component of the EXERT system"""
 
 import os
+import IPython
 from pandare import PyPlugin, Panda
 from exert.usermode.filesystem_convert import filesystem_convert
-import IPython
 
 class Exert(PyPlugin):
     """The Exert plugin"""

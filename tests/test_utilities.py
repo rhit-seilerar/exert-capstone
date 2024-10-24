@@ -1,5 +1,5 @@
-import exert.utilities.command as cmd
 import subprocess
+import exert.utilities.command as cmd
 
 def test_run_command_success():
     result = cmd.run_command('echo hi', True)

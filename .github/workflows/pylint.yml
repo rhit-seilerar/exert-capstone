@@ -20,4 +20,4 @@ jobs:
         pip install pylint pandare IPython
     - name: Analysing the code with pylint
       run: |
-        pylint $(git ls-files '*.py') --disable=C0114,C0116,C0115,C0603 --fail-on E --fail-under 8
+        pylint * --rcfile=.pylintrc --fail-on E --fail-under 8

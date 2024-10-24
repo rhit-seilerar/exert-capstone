@@ -8,20 +8,26 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11"]
-    container:
-      image: pandare/panda
-      volumes:
-      - ./usermode:/mount
+    # container:
+    #   image: pandare/panda
+    #   volumes:
+    #   - ./usermode:/mount
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+    # - name: Install dependencies
+    #   run: |
+    #     cd /mount
+    #     ./setup.sh
+    # - name: Running the test
+    #   run: |
+    #     pytest --cov=exert tests/
+    - name: Init EXERT
       run: |
-        cd /mount
-        ./setup.sh
-    - name: Running the test
+        python exert.py init
+    - name: Run Tests
       run: |
-        pytest --cov=exert tests/
+        python exert.py dev test

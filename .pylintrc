@@ -2,4 +2,7 @@
 
 disable=
     unused-argument,
-    fixme
+    fixme,
+    global-statement,
+    missing-function-docstring,
+    missing-module-docstring,
