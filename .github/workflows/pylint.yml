@@ -20,4 +20,4 @@ jobs:
         pip install pylint pandare IPython
     - name: Analysing the code with pylint
       run: |
-        pylint * --rcfile=.pylintrc --fail-on E --fail-under 8
+        pylint $(git ls-files '*.py') --rcfile=.pylintrc --fail-on E --fail-under 8

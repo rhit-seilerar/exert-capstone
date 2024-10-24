@@ -25,6 +25,8 @@ jobs:
     # - name: Running the test
     #   run: |
     #     pytest --cov=exert tests/
+    - name: Set up Docker
+      uses: crazy-max/ghaction-setup-docker@v3
     - name: Init EXERT
       run: |
         python exert.py init
