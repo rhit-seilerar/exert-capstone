@@ -36,7 +36,7 @@ def main():
     dev_subparsers \
         .add_parser('attach', help='Attach a shell to the panda container') \
         .set_defaults(func = lambda parsed:
-            run_docker(PANDA_CONTAINER, name = 'pandare', persist = True))
+            run_docker(PANDA_CONTAINER, name = 'pandare', interactive = True))
     dev_subparsers \
         .add_parser('test', help='Run the unit tests for the EXERT system') \
         .set_defaults(func = lambda parsed:
@@ -68,20 +68,20 @@ def osi(parsed):
 
     print('OSI not implemented.')
 
-def run_docker(container, name = None, command = '', persist = False):
+def run_docker(container, name = None, command = '', interactive = False):
     validate_initialized()
     cwd = os.path.dirname(os.path.realpath(__file__))
     mount = f'-v "{cwd}:/mount"'
+
     if name is None:
         run_command(f'docker run --rm -it {mount} {container} bash -c'
             f'"cd /mount; ./setup.sh; {command}"', False, False)
     else:
         if not container_is_running(name):
             run_command(f'docker run --rm -dit --name {name} {mount} {container}')
-            run_command(f'docker exec -it {name} bash -c '
-                f'"cd /mount; chmod +x ./setup.sh; ./setup.sh"')
-        run_command(f'docker exec -it {name} bash -c "cd /mount; {command}"', False, False)
-        if persist:
+            run_command(f'docker exec {name} bash -c "cd /mount; chmod +x ./setup.sh; ./setup.sh"')
+        run_command(f'docker exec {name} bash -c "cd /mount; {command}"', False, False)
+        if interactive:
             run_command(f'docker exec -it {name} bash"')
 
 def container_is_running(name):
