@@ -32,7 +32,8 @@ def main():
     dev_subparsers = dev_parser.add_subparsers()
     dev_subparsers \
         .add_parser('reset', help = 'Kill all EXERT docker containers') \
-        .set_defaults(func = reset)
+        .set_defaults(func = lambda parsed:
+            run_command('docker stop pandare', capture_output = True, check = False))
     dev_subparsers \
         .add_parser('attach', help='Attach a shell to the panda container') \
         .set_defaults(func = lambda parsed:
@@ -54,10 +55,6 @@ def init(parsed):
     run_command(f'docker pull {XMAKE_CONTAINER}:latest')
 
     print('EXERT successfully initialized!')
-
-# pylint: disable=unused-argument
-def reset(parsed):
-    run_and_output('docker stop pandare')
 
 def osi(parsed):
     """Validate the provided image, and then generate its OSI information"""
@@ -85,15 +82,12 @@ def run_docker(container, name = None, command = '', interactive = False):
             run_command(f'docker exec -it {name} bash"')
 
 def container_is_running(name):
-    names = run_and_output('docker ps --format {{.Names}}').splitlines()
+    names = get_stdout(run_command('docker ps --format {{.Names}}', True)).splitlines()
     try:
         names.index(name)
         return True
     except ValueError:
         return False
-
-def run_and_output(command):
-    return get_stdout(run_command(command, True))
 
 def validate_initialized():
     # TODO: Test if initialized
