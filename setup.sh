@@ -1,8 +1,10 @@
 # Install some useful programs on the container
-apt-get install -y cpio
+apt-get install -y gcc cpio liblzo2-dev
 
 # Install some pip dependencies
-pip install --upgrade ipython pytest pytest-cov
+python3 -m pip install --upgrade pip
+pip install --upgrade ipython pytest pytest-cov lz4 zstandard 
+pip install --upgrade git+https://github.com/clubby789/python-lzo@b4e39df git+https://github.com/zestrada/vmlinux-to-elf
 
 pandaLoc=/mount/exert/usermode/.panda
 
