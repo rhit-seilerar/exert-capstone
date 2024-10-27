@@ -34,3 +34,7 @@
 3. Comment out the generic Panda line and the line for running the uname serial command, as well as the hook
 4. Run plugin.py in Python in the Docker container.
 5. Snapshots will error, but otherwise the container will open and close as expected.
+
+### Dev-compile
+1. Run python exert.py dev compile -arch ARM
+2. Check if exert/usermode/build/helloworld was created

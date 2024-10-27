@@ -42,6 +42,12 @@ def main():
         .add_parser('test', help='Run the unit tests for the EXERT system') \
         .set_defaults(func = lambda parsed:
             run_docker(PANDA_CONTAINER, name = 'pandare', command = 'pytest --cov=exert tests/'))
+    compile_parser = dev_subparsers \
+        .add_parser('compile', help='Compile the usermode program')
+    compile_parser.set_defaults(func = lambda args:
+        make_usermode(args.arch))
+    compile_parser.add_argument('-arch', type= str)
+
     parsed = parser.parse_args()
     parsed.func(parsed)
 
@@ -94,9 +100,11 @@ def validate_initialized():
     pass
 
 # pylint: disable=unused-argument
-def make_usermode(image):
+def make_usermode(arch):
     # TODO: Compile usermode for specific version
-    pass
+    run_docker(XMAKE_CONTAINER, command="make -C exert/usermode clean")
+    run_docker(XMAKE_CONTAINER, command="make -C exert/usermode setup")
+    run_docker(XMAKE_CONTAINER, command="make -C exert/usermode all ARCH=" + arch + " LIBC=musleabi")
 
 def validate_iso(image):
     try:
