@@ -70,12 +70,14 @@ def run_docker(container, name = None, command = '', interactive = False):
     cwd = os.path.dirname(os.path.realpath(__file__))
     mount = f'-v "{cwd}:/mount"'
 
+    privileged = '--privileged' if name == 'pandare' else ''
+
     if name is None:
         run_command(f'docker run --rm -it {mount} {container} bash -c'
             f'"cd /mount; ./setup.sh; {command}"', False, False)
     else:
         if not container_is_running(name):
-            run_command(f'docker run --rm -dit --name {name} {mount} {container}')
+            run_command(f'docker run --rm -dit {privileged} --name {name} {mount} {container}')
             run_command(f'docker exec {name} bash -c "cd /mount; chmod +x ./setup.sh; ./setup.sh"')
         run_command(f'docker exec {name} bash -c "cd /mount; {command}"', False, False)
         if interactive:
