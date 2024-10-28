@@ -68,7 +68,7 @@ def osi(parsed):
     validate_initialized()
     for image in parsed.image:
         validate_iso(image)
-        make_usermode(image)
+        make_usermode(image, 'musleabi')
 
     print('OSI not implemented.')
 
