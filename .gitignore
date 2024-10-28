@@ -12,6 +12,7 @@ usermode/cross/*/share
 usermode/cross/*/usr
 usermode/cross/*/bin/*
 !usermode/cross/*/bin/*gcc
+exert/usermode/build/*
 *.img.gz
 .coverage
 *.elf
