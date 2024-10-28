@@ -45,8 +45,9 @@ def main():
     compile_parser = dev_subparsers \
         .add_parser('compile', help='Compile the usermode program')
     compile_parser.set_defaults(func = lambda args:
-        make_usermode(args.arch))
-    compile_parser.add_argument('-arch', type= str)
+        make_usermode(args.arch, args.libc))
+    compile_parser.add_argument('--arch', type= str)
+    compile_parser.add_argument('--libc', type= str)
 
     parsed = parser.parse_args()
     parsed.func(parsed)
@@ -100,11 +101,11 @@ def validate_initialized():
     pass
 
 # pylint: disable=unused-argument
-def make_usermode(arch):
+def make_usermode(arch, libc):
     # TODO: Compile usermode for specific version
     run_docker(XMAKE_CONTAINER, command="make -C exert/usermode clean")
     run_docker(XMAKE_CONTAINER, command="make -C exert/usermode setup")
-    run_docker(XMAKE_CONTAINER, command="make -C exert/usermode all ARCH=" + arch + " LIBC=musleabi")
+    run_docker(XMAKE_CONTAINER, command="make -C exert/usermode all ARCH=" + arch + " LIBC=" + libc)
 
 def validate_iso(image):
     try:

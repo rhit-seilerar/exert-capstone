@@ -1,6 +1,6 @@
 all: setup helloworld
 
-# CC = ./cross/${ARCH}-linux-${LIBC}-cross/bin/${ARCH}-linux-${LIBC}-gcc
+CC = /opt/cross/${ARCH}-linux-${LIBC}-cross/bin/${ARCH}-linux-${LIBC}-gcc
 
 CFLAGS += -ggdb -static-libgcc -static
 
