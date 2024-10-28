@@ -36,5 +36,8 @@
 5. Snapshots will error, but otherwise the container will open and close as expected.
 
 ### Dev-compile
-1. Run python exert.py dev compile -arch ARM
+1. Run python exert.py dev compile --arch arm --libc musleabi
 2. Check if exert/usermode/build/helloworld was created
+3. Run python exert.py dev attach
+4. Run /mount/exert/usermode/build/helloworld
+5. Verify "hello world" is printed to the terminal
