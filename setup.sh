@@ -6,6 +6,8 @@ python3 -m pip install --upgrade pip
 pip install --upgrade ipython pytest pytest-cov lz4 zstandard 
 pip install --upgrade git+https://github.com/clubby789/python-lzo@b4e39df git+https://github.com/zestrada/vmlinux-to-elf
 
+chmod +x /mount/make_initrd.sh
+
 pandaLoc=/mount/cache/.panda
 
 # Symlink the qcows to the host so we only download them once

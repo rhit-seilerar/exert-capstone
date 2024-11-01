@@ -86,7 +86,7 @@ def run_docker(container, name = None, command = '', interactive = False):
         if not container_is_running(name):
             run_command(f'docker run --rm -dit {privileged} --name {name} {mount} {container}')
             run_command(f'docker exec {name} bash -c "cd /mount; chmod +x ./setup.sh; ./setup.sh"')
-        run_command(f'docker exec {name} bash -c "cd /mount; {command}"', False, False)
+        run_command(f'docker exec {name} bash -c "cd /mount; {command}"', False, True)
         if interactive:
             run_command(f'docker exec -it {name} bash"')
 
