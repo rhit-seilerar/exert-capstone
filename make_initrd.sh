@@ -25,7 +25,7 @@ mkdir /mnt/initrd/proc
 
 # Grab busybox and create the symbolic links
 pushd /mnt/initrd/bin
-cp '/home/aidangfrantz/Documents/Coding Documents/Pandare/exert-capstone/busybox/busybox-armv4l' .
+cp /mount/cache/busybox/busybox-$1 .
 ln -s busybox-armv4l ash
 ln -s busybox-armv4l mount
 ln -s busybox-armv4l echo
@@ -39,8 +39,9 @@ popd
 # Grab the necessary dev files
 cp -a /dev/console /mnt/initrd/dev
 cp -a /dev/null /mnt/initrd/dev
-cp -a /dev/tty1 /mnt/initrd/dev
-cp -a /dev/tty2 /mnt/initrd/dev
+if [[ -e /dev/tty ]]; then cp -a /dev/tty /mnt/initrd/dev; fi
+if [[ -e /dev/tty1 ]]; then cp -a /dev/tty1 /mnt/initrd/dev; fi
+if [[ -e /dev/tty2 ]]; then cp -a /dev/tty2 /mnt/initrd/dev; fi
 
 # Equate sbin with bin
 pushd /mnt/initrd
@@ -55,6 +56,7 @@ echo "Simple initrd is active"
 echo
 mount -t proc /proc /proc
 mount -t sysfs none /sys
+uname -r
 /bin/ash
 EOF
 
@@ -64,5 +66,5 @@ chmod +x /mnt/initrd/linuxrc
 
 # Finish up...
 umount /mnt/initrd
-gzip -9 /tmp/ramdisk.img
+gzip -f -9 /tmp/ramdisk.img
 cp /tmp/ramdisk.img.gz ./ramdisk.img.gz

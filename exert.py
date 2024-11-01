@@ -44,10 +44,10 @@ def main():
             run_docker(PANDA_CONTAINER, name = 'pandare', command = 'pytest --cov=exert tests/'))
     compile_parser = dev_subparsers \
         .add_parser('compile', help='Compile the usermode program')
+    compile_parser.add_argument('arch', type=str)
+    compile_parser.add_argument('libc', type=str)
     compile_parser.set_defaults(func = lambda args:
         make_usermode(args.arch, args.libc))
-    compile_parser.add_argument('--arch', type= str)
-    compile_parser.add_argument('--libc', type= str)
 
     parsed = parser.parse_args()
     parsed.func(parsed)
@@ -77,14 +77,16 @@ def run_docker(container, name = None, command = '', interactive = False):
     cwd = os.path.dirname(os.path.realpath(__file__))
     mount = f'-v "{cwd}:/mount"'
 
+    privileged = '--privileged' if name == 'pandare' else ''
+
     if name is None:
         run_command(f'docker run --rm -it {mount} {container} bash -c'
-            f'"cd /mount; ./setup.sh; {command}"', False, False)
+            f'"cd /mount; {command}"', False, False)
     else:
         if not container_is_running(name):
-            run_command(f'docker run --rm -dit --name {name} {mount} {container}')
+            run_command(f'docker run --rm -dit {privileged} --name {name} {mount} {container}')
             run_command(f'docker exec {name} bash -c "cd /mount; chmod +x ./setup.sh; ./setup.sh"')
-        run_command(f'docker exec {name} bash -c "cd /mount; {command}"', False, False)
+        run_command(f'docker exec {name} bash -c "cd /mount; {command}"', False, True)
         if interactive:
             run_command(f'docker exec -it {name} bash"')
 
@@ -100,12 +102,9 @@ def validate_initialized():
     # TODO: Test if initialized
     pass
 
-# pylint: disable=unused-argument
 def make_usermode(arch, libc):
     # TODO: Compile usermode for specific version
-    run_docker(XMAKE_CONTAINER, command="make -C exert/usermode clean")
-    run_docker(XMAKE_CONTAINER, command="make -C exert/usermode setup")
-    run_docker(XMAKE_CONTAINER, command="make -C exert/usermode all ARCH=" + arch + " LIBC=" + libc)
+    run_docker(XMAKE_CONTAINER, command=f'make -C /mount/exert/usermode ARCH={arch} LIBC={libc}')
 
 def validate_iso(image):
     try:

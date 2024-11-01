@@ -3,6 +3,7 @@
 import os
 import IPython
 from pandare import PyPlugin, Panda
+from exert.utilities.command import run_command
 from exert.usermode.filesystem_convert import filesystem_convert
 
 class Exert(PyPlugin):
@@ -12,13 +13,11 @@ class Exert(PyPlugin):
         self.pypluginmgr = pypluginmgr
         self.args = args
         self.callback = args['callback'] if 'callback' in args else None
-        print(self.callback)
 
     def __init__(self, panda):
         @panda.hook_symbol(None, 'getpid')
         def getpid_hook(cpu, tb, hook):
             print(f"Hooking into {panda.ffi.string(hook.sym.name).decode()}...")
-            print(self.callback)
             if self.callback:
                 self.callback(panda, cpu, tb, hook)
             else:
@@ -26,6 +25,7 @@ class Exert(PyPlugin):
 
 def run(arch = 'i386', callback = None):
     filesystem_convert(f'{os.path.dirname(os.path.abspath(__file__))}/filesystem')
+    run_command(f'./make_initrd.sh {arch}')
     # args="--nographic \
     #     --machine virt-2.6 \
     #     -kernel ./vmlinuz \
