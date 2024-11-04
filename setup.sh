@@ -1,10 +1,9 @@
 # Install some useful programs on the container
-apt-get install -y gcc cpio liblzo2-dev
+apt-get install -y cpio
 
 # Install some pip dependencies
 python3 -m pip install --upgrade pip
-pip install --upgrade ipython pytest pytest-cov lz4 zstandard 
-pip install --upgrade git+https://github.com/clubby789/python-lzo@b4e39df git+https://github.com/zestrada/vmlinux-to-elf
+pip install --upgrade ipython pytest pytest-cov
 
 chmod +x /mount/make_initrd.sh
 
