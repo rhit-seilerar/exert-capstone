@@ -4,6 +4,7 @@ import argparse
 import os
 import sys
 import shutil
+import time
 from exert.utilities.command import run_command, get_stdout
 
 PANDA_CONTAINER = 'pandare/panda'
@@ -30,6 +31,7 @@ def main():
 
     dev_parser = subparsers.add_parser('dev', help = 'Development tools')
     dev_subparsers = dev_parser.add_subparsers()
+<<<<<<< HEAD
     dev_subparsers \
         .add_parser('reset', help = 'Kill all EXERT docker containers') \
         .set_defaults(func = lambda parsed:
@@ -42,6 +44,28 @@ def main():
         .add_parser('test', help='Run the unit tests for the EXERT system') \
         .set_defaults(func = lambda parsed:
             run_docker(PANDA_CONTAINER, name = 'pandare', command = 'pytest --cov=exert tests/', in_docker = parsed.docker))
+=======
+
+    dev_reset_parser = dev_subparsers.add_parser('reset', \
+        help='Kill all EXERT docker containers')
+    dev_reset_parser.set_defaults(func = lambda parsed:
+            dev_reset())
+
+    dev_attach_parser = dev_subparsers.add_parser('attach', \
+        help='Attach a shell to the panda container')
+    dev_attach_parser.add_argument('-r', '--reset', action='store_true', \
+        help='Reset the container first')
+    dev_attach_parser.set_defaults(func = lambda parsed:
+            dev_attach(parsed.reset))
+
+    dev_test_parser = dev_subparsers.add_parser('test', \
+        help='Run the unit tests for the EXERT system')
+    dev_test_parser.add_argument('-r', '--reset', action='store_true', \
+        help='Reset the container first')
+    dev_test_parser.set_defaults(func = lambda parsed:
+            dev_test(parsed.reset))
+
+>>>>>>> c1b4c16dfbaa0ab34afdf79e9dbb1fe61a94620c
     compile_parser = dev_subparsers \
         .add_parser('compile', help='Compile the usermode program')
     compile_parser.add_argument('arch', type=str)
@@ -51,6 +75,22 @@ def main():
 
     parsed = parser.parse_args()
     parsed.func(parsed)
+
+def dev_reset():
+    run_command('docker stop pandare', capture_output = True, check = False)
+
+def dev_attach(reset):
+    if reset:
+        dev_reset()
+        time.sleep(1)
+    run_docker(PANDA_CONTAINER, name = 'pandare', interactive = True)
+
+def dev_test(reset):
+    if reset:
+        dev_reset()
+        time.sleep(1)
+    run_docker(PANDA_CONTAINER, name = 'pandare', \
+        command = 'pytest --cov-config=.coveragerc --cov=exert tests/')
 
 # pylint: disable=unused-argument
 def init(parsed):

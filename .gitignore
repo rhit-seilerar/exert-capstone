@@ -2,6 +2,7 @@ __pycache__/
 .pytest_cache/
 cache/.panda/
 exert/usermode/build/
+exert/usermode/.panda
 .coverage
 *.cpio
 *.img.gz
