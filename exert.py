@@ -37,11 +37,11 @@ def main():
     dev_subparsers \
         .add_parser('attach', help='Attach a shell to the panda container') \
         .set_defaults(func = lambda parsed:
-            run_docker(PANDA_CONTAINER, name = 'pandare', interactive = True))
+            run_docker(PANDA_CONTAINER, name = 'pandare', interactive = True, in_docker = parsed.docker))
     dev_subparsers \
         .add_parser('test', help='Run the unit tests for the EXERT system') \
         .set_defaults(func = lambda parsed:
-            run_docker(PANDA_CONTAINER, name = 'pandare', command = 'pytest --cov=exert tests/'))
+            run_docker(PANDA_CONTAINER, name = 'pandare', command = 'pytest --cov=exert tests/', in_docker = parsed.docker))
     compile_parser = dev_subparsers \
         .add_parser('compile', help='Compile the usermode program')
     compile_parser.add_argument('arch', type=str)
@@ -54,6 +54,10 @@ def main():
 
 # pylint: disable=unused-argument
 def init(parsed):
+    if(parsed.docker):
+        run_command("cd /mount; chmod +x ./setup.sh; ./setup.sh")
+        return
+
     if shutil.which('docker') is None:
         print('Error: You must have docker installed to run EXERT.')
         return
@@ -72,8 +76,16 @@ def osi(parsed):
 
     print('OSI not implemented.')
 
-def run_docker(container, name = None, command = '', interactive = False):
+def run_docker(container, name = None, command = '', interactive = False, in_docker = False):
     validate_initialized()
+    if(in_docker):
+        if(command.startswith('docker')):
+            print('This is only applicable without the -d argument.')
+            return
+
+        run_command(command, False, True)
+        return
+
     cwd = os.path.dirname(os.path.realpath(__file__))
     mount = f'-v "{cwd}:/mount"'
 
