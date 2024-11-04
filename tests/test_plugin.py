@@ -7,7 +7,7 @@ def test_ground_truth_tasklist():
     # pylint: disable=unused-argument
     global CALLBACK_WAS_CALLED
     CALLBACK_WAS_CALLED = False
-    def callback(panda, cpu, tb, hook):
+    def callback(panda, cpu):
         global CALLBACK_WAS_CALLED
         CALLBACK_WAS_CALLED = True
         init_addr = 0xc1b1da80
@@ -21,7 +21,7 @@ def test_ground_truth_tasklist():
 
 def _test_get_current_tasklist():
     # pylint: disable=unused-argument
-    def callback(panda, cpu, tb, hook):
+    def callback(panda, cpu):
         # We're going to keep using the ground-truth offset for now
         parent_offset = 804
         # In linux kernel 2.6.26 and up, per-cpu info (such as the current task) was moved to
