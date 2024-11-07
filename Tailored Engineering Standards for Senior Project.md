@@ -169,70 +169,70 @@
 #### iii.
 ## 4. Relate the architecture to design.
 ### a. Identify software system elements that relate to architectural entities and the nature of these relationships.
-#### i. 
+#### i. f
 #### ii.
 #### iii.
 ### b. Define the interfaces and interactions among the software system elements and external entities.
-#### i. 
-#### ii.
+#### i. e
+#### ii. This is not XP compliant, as these definitions are constantly changing and only defining them once during the project's lifespan will be detrimental.
 #### iii.
 ### c. Partition, align and allocate requirements to architectural entities and system elements.
-#### i. 
+#### i. c
 #### ii.
 #### iii.
 ### d. Map software system elements and architectural entities to design characteristics.
-#### i. 
+#### i. e
 #### ii.
 #### iii.
 ### e. Define principles for the software system design and evolution.
-#### i. 
-#### ii.
-#### iii.
+#### i. b
+#### ii. This is not XP compliant, as principles and other requirements for a project are constantly changing and should not be treated as static guidelines.
+#### iii. We use existing software and research papers in order to see which principles we needed to take into consideration.
 ## 5. Assess architecture candidates.
 ### a. Assess each candidate architecture against constraints and requirements.
-#### i. 
+#### i. g
 #### ii.
 #### iii.
 ### b. Assess each candidate architecture against stakeholder concerns using evaluation criteria.
-#### i. 
-#### ii.
+#### i. g
+#### ii. This is not XP compliant, as there should be only one candidate architecture to consider in the first place using the evaluation criteria.
 #### iii.
 ### c. Select the preferred architecture(s) and capture key decisions and rationale.
-#### i. 
-#### ii.
+#### i. h
+#### ii. This is not XP compliant, there should only be one architecture for the project, not several.
 #### iii.
 ### d. Establish the architecture baseline of the selected architecture.
-#### i. 
-#### ii.
+#### i. d
+#### ii. 
 #### iii.
 ## 6. Assess architecture candidates.
 ### a. Formalize the architecture governance approach and specify governance‐related roles and responsibilities, accountabilities, and authorities related to design, quality, security, and safety.
-#### i. 
+#### i. d
 #### ii.
 #### iii.
 ### b. Obtain explicit acceptance of the architecture by stakeholders.
-#### i. 
-#### ii.
-#### iii.
+#### i. i
+#### ii. XP says to obtain acceptance by allowing stakeholders to be active in developing the architecture. "Generally, the closer customer needs and development capabilities are, the more valuable development becomes." (Chapter 9, real customer development)
+#### iii. We demonstrate our current solutions to the client in weekly meetings so they can provide feedback.
 ### c. Maintain concordance and completeness of the architectural entities and their architectural characteristics.
-#### i. 
+#### i. h
 #### ii.
 #### iii.
 ### d. Organize, assess and control evolution of the architecture models and views to help ensure that the architectural intent is met and the architectural vision and key concepts are correctly implemented.
-#### i. 
+#### i. e
 #### ii.
 #### iii.
 ### e. Maintain the architecture definition and evaluation strategy.
-#### i. 
+#### i. b
 #### ii.
 #### iii.
 ### f. Maintain traceability of the architecture.
-#### i. 
+#### i. k
 #### ii.
 #### iii.
 ### g. Provide key artifacts and information items that have been selected for baselines.
-#### i. 
-#### ii.
+#### i. j
+#### ii. This is not XP compliant, as any artifacts and documentation must be generated from the code itself.
 #### iii.
 
 # 6.4.5 Design Definition process
