@@ -32,24 +32,19 @@ def main():
     dev_parser = subparsers.add_parser('dev', help = 'Development tools')
     dev_subparsers = dev_parser.add_subparsers()
 
-    dev_reset_parser = dev_subparsers.add_parser('reset', \
-        help='Kill all EXERT docker containers')
-    dev_reset_parser.set_defaults(func = lambda parsed:
-            dev_reset())
-
     dev_attach_parser = dev_subparsers.add_parser('attach', \
         help='Attach a shell to the panda container')
     dev_attach_parser.add_argument('-r', '--reset', action='store_true', \
         help='Reset the container first')
     dev_attach_parser.set_defaults(func = lambda parsed:
-            dev_attach(parsed.reset))
+            dev_attach(parsed.docker, parsed.reset))
 
     dev_test_parser = dev_subparsers.add_parser('test', \
         help='Run the unit tests for the EXERT system')
     dev_test_parser.add_argument('-r', '--reset', action='store_true', \
         help='Reset the container first')
     dev_test_parser.set_defaults(func = lambda parsed:
-            dev_test(parsed.reset))
+            dev_test(parsed.docker, parsed.reset))
 
     compile_parser = dev_subparsers \
         .add_parser('compile', help='Compile the usermode program')
@@ -64,21 +59,26 @@ def main():
 def dev_reset():
     run_command('docker stop pandare', capture_output = True, check = False)
 
-def dev_attach(reset):
+def dev_attach(in_docker, reset):
     if reset:
         dev_reset()
         time.sleep(1)
-    run_docker(PANDA_CONTAINER, name = 'pandare', interactive = True)
+    run_docker(PANDA_CONTAINER, name = 'pandare', interactive = True, in_docker = in_docker)
 
-def dev_test(reset):
+def dev_test(in_docker, reset):
     if reset:
         dev_reset()
         time.sleep(1)
     run_docker(PANDA_CONTAINER, name = 'pandare', \
-        command = 'pytest --cov-config=.coveragerc --cov=exert tests/')
+        command = 'pytest --cov-config=.coveragerc --cov=exert tests/', \
+        in_docker = in_docker)
 
 # pylint: disable=unused-argument
 def init(parsed):
+    if(parsed.docker):
+        run_command("cd /mount; chmod +x ./setup.sh; ./setup.sh")
+        return
+
     if shutil.which('docker') is None:
         print('Error: You must have docker installed to run EXERT.')
         return
@@ -97,8 +97,16 @@ def osi(parsed):
 
     print('OSI not implemented.')
 
-def run_docker(container, name = None, command = '', interactive = False):
+def run_docker(container, name = None, command = '', interactive = False, in_docker = False):
     validate_initialized()
+    if(in_docker):
+        if(command.startswith('docker')):
+            print('This is only applicable without the -d argument.')
+            return
+
+        run_command(command, False, True)
+        return
+
     cwd = os.path.dirname(os.path.realpath(__file__))
     mount = f'-v "{cwd}:/mount"'
 
