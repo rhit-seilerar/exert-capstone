@@ -75,7 +75,7 @@ def dev_test(in_docker, reset):
 
 # pylint: disable=unused-argument
 def init(parsed):
-    if(parsed.docker):
+    if parsed.docker:
         run_command("cd /mount; chmod +x ./setup.sh; ./setup.sh")
         return
 
@@ -99,8 +99,8 @@ def osi(parsed):
 
 def run_docker(container, name = None, command = '', interactive = False, in_docker = False):
     validate_initialized()
-    if(in_docker):
-        if(command.startswith('docker')):
+    if in_docker:
+        if command.startswith('docker'):
             print('This is only applicable without the -d argument.')
             return
 
