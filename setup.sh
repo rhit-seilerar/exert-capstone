@@ -1,6 +1,16 @@
 # Install some useful programs on the container
 apt-get install -y cpio
 
+# Install busybox
+mkdir cache
+cd cache
+mkdir busybox
+wget https://www.busybox.net/downloads/binaries/1.21.1/busybox-binaries.tar.bz2
+tar -xf busybox-binaries.tar.bz2
+cp busybox-i486 busybox-i386
+rm busybox-binaries.tar.bz2
+
+
 # Install some pip dependencies
 python3 -m pip install --upgrade pip
 pip install --upgrade ipython pytest pytest-cov
