@@ -60,7 +60,7 @@ def dev_reset():
     run_command('docker stop pandare', capture_output = True, check = False)
 
 def dev_attach(in_docker, reset):
-    if(in_docker):
+    if in_docker:
         print("Cannot execute attach from within a container.")
         return
     if reset:
@@ -70,12 +70,11 @@ def dev_attach(in_docker, reset):
 
 def dev_test(in_docker, reset):
     if reset:
-        if(in_docker):
+        if in_docker:
             print("Cannot reset from within a container. Command cancelled.")
             return
-        else:
-            dev_reset()
-            time.sleep(1)
+        dev_reset()
+        time.sleep(1)
     run_docker(PANDA_CONTAINER, name = 'pandare', \
         command = 'pytest --cov-config=.coveragerc --cov=exert tests/', \
         in_docker = in_docker)
