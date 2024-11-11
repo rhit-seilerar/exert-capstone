@@ -60,6 +60,9 @@ def dev_reset():
     run_command('docker stop pandare', capture_output = True, check = False)
 
 def dev_attach(in_docker, reset):
+    if in_docker:
+        print("Cannot execute attach from within a container.")
+        return
     if reset:
         dev_reset()
         time.sleep(1)
@@ -67,6 +70,9 @@ def dev_attach(in_docker, reset):
 
 def dev_test(in_docker, reset):
     if reset:
+        if in_docker:
+            print("Cannot reset from within a container. Command cancelled.")
+            return
         dev_reset()
         time.sleep(1)
     run_docker(PANDA_CONTAINER, name = 'pandare', \
