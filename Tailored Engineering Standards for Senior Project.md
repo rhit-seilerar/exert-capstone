@@ -103,20 +103,20 @@
 ## 1. Prepare for architecture definition.
 ### a. Review pertinent information and identify key drivers of the architecture.
 #### i. d                                                                                   
-#### ii. "Have the customers pick a week’s worth of stories to implement this week." (Stories)
+#### ii. Beck states that key drivers and concerns should be identified by the client: "Have the customers pick a week’s worth of stories to implement this week." (Stories)
 #### iii. Our client communicates his key requirements for the week at the virtual meeting each Monday.
 ### b. Identify stakeholder concerns.
 #### i. a
-#### ii. "Have the customers pick a week’s worth of stories to implement this week." (Stories, again)
+#### ii. See above.
 #### iii. See above.
 ### c. Define the Architecture Definition roadmap, approach, and strategy.
 #### i. d
-#### ii. "Strive to make the design of the system an excellent fit for the needs of the system that day." (Incremental Design)
-#### iii. Our group meets the day after the week's client meeting to make a more granular plan for the week's changes.
+#### ii. Beck states that detailed design work should be done as needed in response to immediate requirements: "Design done close to when it is used is more efficient." (Incremental Design)
+#### iii. Our group meets the day after the week's client meeting to make a more granular plan for the week's changes and then begin to implement it.
 ### d. Define architecture evaluation criteria based on stakeholder concerns and key requirements.
 #### i.  e
-#### ii. "Design done close to when it is used is more efficient." (Incremental Design, again)
-#### iii. For the rest of the week following the client meeting, our team will redesign sections of our codebase to better meet the needs of the current week's tasks.
+#### ii. Beck claims that design criteria should be directly determined by the customer: "Make people whose lives and business are affected by your system part of the team." (Real Customer Involvement).
+#### iii. Each meeting, our client gives us a set of tasks with desired end-goal criteria for each; we then spend the rest of the week working to ensure those criteria are met.
 ### e. Identify and plan for the necessary enabling systems or services needed to support the Architecture Definition process.
 #### i. j
 #### ii. N/A - not mentioned in XP.
@@ -128,32 +128,32 @@
 ## 2. Develop architecture viewpoints.
 ### a. Select, adapt, or develop viewpoints and model kinds based on stakeholder concerns.
 #### i.  b
-#### ii. "Have the customers pick a week’s worth of stories to implement this week." (Weekly Cycle)
-#### iii. We worked to implement the client's needs as they were specified to us.
+#### ii. Beck states that design work should be done in close concert with the client: "Have the customers pick a week’s worth of stories to implement this week." (Weekly Cycle)
+#### iii. During the client meeting, we worked closely to determine exactly what the client's intent was and how to implement it.
 ### b. Establish or identify potential architecture framework(s) to be used in developing models and views.
 #### i. d
-#### ii. N/A - not mentioned in XP
+#### ii. N/A - not mentioned in XP.
 #### iii. We spent several weeks setting up and employing tools to build a filesystem for our project.
 ### c. Capture rationale for selection of framework(s), viewpoints and model kinds.
 #### i. b
-#### ii. N/A - not mentioned in XP
+#### ii. N/A - not mentioned in XP.
 #### iii. We set up and built tools as needed in response to project requirements, namely the need to create filesystems and validate ISO files.
 ### d. Select or develop supporting modelling techniques and tools.
 #### i. d
-#### ii. N/A - not mentioned in XP
+#### ii. N/A - not mentioned in XP.
 #### iii. We spent several weeks setting up and employing tools to build a filesystem for our project.
 ## 3. Develop models and views of candidate architectures.
 ### a. Define the software system context and boundaries in terms of interfaces and interactions with external entities.
 #### i.  c
-#### ii. "Design done close to when it is used is more efficient." (Incremental Design)
+#### ii. XP makes no mention of how specifically software context and bounds should be defined, but does give the high-level pointer that "design done close to when it is used is more efficient." (Incremental Design)
 #### iii. Our software needs to interface with PANDA to achieve design goals; much of our first few weeks were spent determining how to effectively do so.
 ### b. Identify architectural entities and relationships between entities that address key stakeholder concerns and critical software system requirements.
 #### i. k
-#### ii. "Break the stories into tasks. Team members sign up for tasks and estimate them." (Stories)
+#### ii. Beck again does not define this section in detail, but suggests that detailed design should be done collaboratively with the future end user: "Make people whose lives and business are affected by your system part of the team" (Real Customer Involvement)
 #### iii. During estimation, the individual components of each task (whether prerequisite scaffolding, additional classes/methods, or external tools required to implement the task) are determined and written into the notes for that specific task.
 ### c. Allocate concepts, properties, characteristics, behaviors, functions, or constraints that are significant to architecture decisions of the software system to architectural entities.
 #### i. e
-#### ii. "Break the stories into tasks. Team members sign up for tasks and estimate them." (Stories, again)
+#### ii. Beck states that large requirements should be decomposed into their component parts: "Break the stories into tasks. Team members sign up for tasks and estimate them." (Stories, again)
 #### iii. Deconstruction of individual subtasks is accomplished as described above.
 ### d. Select, adapt, or develop models of the candidate architectures of the software system.
 #### i. g
@@ -165,7 +165,7 @@
 #### iii. After the client gives us his set of tasks, we build an understanding of what work needs to be done (to include installing prerequiste tooling, if needed) to complete each task and then estimate the time needed to complete them all.
 ### f. Harmonize the architecture models and views with each other.
 #### i. i
-#### ii. N/A - not mentioned in XP.
+#### ii. N/A; not mentioned in XP.
 #### iii. We come up with a basic plan for the software in direct accordance with client specifications; because there is only one workflow, harmonization is not necessary.
 ## 4. Relate the architecture to design.
 ### a. Identify software system elements that relate to architectural entities and the nature of these relationships.
