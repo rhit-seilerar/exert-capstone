@@ -102,71 +102,71 @@
 # 6.4.4 Architecture Definition process
 ## 1. Prepare for architecture definition.
 ### a. Review pertinent information and identify key drivers of the architecture.
-#### i. 
-#### ii.
-#### iii.
+#### i. d                                                                                   
+#### ii. "Have the customers pick a week’s worth of stories to implement this week." (Stories)
+#### iii. Our client communicates his key requirements for the week at the virtual meeting each Monday.
 ### b. Identify stakeholder concerns.
-#### i. 
-#### ii.
-#### iii.
+#### i. a
+#### ii. "Have the customers pick a week’s worth of stories to implement this week." (Stories, again)
+#### iii. See above.
 ### c. Define the Architecture Definition roadmap, approach, and strategy.
-#### i. 
-#### ii.
-#### iii.
+#### i. d
+#### ii. "Strive to make the design of the system an excellent fit for the needs of the system that day." (Incremental Design)
+#### iii. Our group meets the day after the week's client meeting to make a more granular plan for the week's changes.
 ### d. Define architecture evaluation criteria based on stakeholder concerns and key requirements.
-#### i. 
-#### ii.
-#### iii.
+#### i.  e
+#### ii. "Design done close to when it is used is more efficient." (Incremental Design, again)
+#### iii. For the rest of the week following the client meeting, our team will redesign sections of our codebase to better meet the needs of the current week's tasks.
 ### e. Identify and plan for the necessary enabling systems or services needed to support the Architecture Definition process.
-#### i. 
-#### ii.
-#### iii.
+#### i. j
+#### ii. N/A - not mentioned in XP.
+#### iii. At our first client meeting, we were informed that we would be building our project off of the PANDA system, and began researching it accordingly.
 ### f. Obtain or acquire access to the enabling systems or services to be used.
-#### i. 
-#### ii.
-#### iii.
+#### i. j
+#### ii. N/A - not mentioned in XP.  
+#### iii. We spent the first week obtaining access to, and setting up, the PANDA system upon which our project is built.
 ## 2. Develop architecture viewpoints.
 ### a. Select, adapt, or develop viewpoints and model kinds based on stakeholder concerns.
-#### i. 
-#### ii.
-#### iii.
+#### i.  b
+#### ii. "Have the customers pick a week’s worth of stories to implement this week." (Weekly Cycle)
+#### iii. We worked to implement the client's needs as they were specified to us.
 ### b. Establish or identify potential architecture framework(s) to be used in developing models and views.
-#### i. 
-#### ii.
-#### iii.
+#### i. d
+#### ii. N/A - not mentioned in XP
+#### iii. We spent several weeks setting up and employing tools to build a filesystem for our project.
 ### c. Capture rationale for selection of framework(s), viewpoints and model kinds.
-#### i. 
-#### ii.
-#### iii.
+#### i. b
+#### ii. N/A - not mentioned in XP
+#### iii. We set up and built tools as needed in response to project requirements, namely the need to create filesystems and validate ISO files.
 ### d. Select or develop supporting modelling techniques and tools.
-#### i. 
-#### ii.
-#### iii.
+#### i. d
+#### ii. N/A - not mentioned in XP
+#### iii. We spent several weeks setting up and employing tools to build a filesystem for our project.
 ## 3. Develop models and views of candidate architectures.
 ### a. Define the software system context and boundaries in terms of interfaces and interactions with external entities.
-#### i. 
-#### ii.
-#### iii.
+#### i.  c
+#### ii. "Design done close to when it is used is more efficient." (Incremental Design)
+#### iii. Our software needs to interface with PANDA to achieve design goals; much of our first few weeks were spent determining how to effectively do so.
 ### b. Identify architectural entities and relationships between entities that address key stakeholder concerns and critical software system requirements.
-#### i. 
-#### ii.
-#### iii.
+#### i. k
+#### ii. "Break the stories into tasks. Team members sign up for tasks and estimate them." (Stories)
+#### iii. During estimation, the individual components of each task (whether prerequisite scaffolding, additional classes/methods, or external tools required to implement the task) are determined and written into the notes for that specific task.
 ### c. Allocate concepts, properties, characteristics, behaviors, functions, or constraints that are significant to architecture decisions of the software system to architectural entities.
-#### i. 
-#### ii.
-#### iii.
+#### i. e
+#### ii. "Break the stories into tasks. Team members sign up for tasks and estimate them." (Stories, again)
+#### iii. Deconstruction of individual subtasks is accomplished as described above.
 ### d. Select, adapt, or develop models of the candidate architectures of the software system.
-#### i. 
-#### ii.
-#### iii.
+#### i. g
+#### ii. N/A - not mentioned in XP.
+#### iii. We design and build our software to meet the specifications of the week.
 ### e. Compose views from the models in accordance with identified viewpoints to express how the architecture addresses stakeholder concerns and meets stakeholder and system/software requirements.
-#### i. 
-#### ii.
-#### iii.
+#### i. k
+#### ii. "Have the customers pick a week’s worth of stories to implement this week." (Weekly Cycle)
+#### iii. After the client gives us his set of tasks, we build an understanding of what work needs to be done (to include installing prerequiste tooling, if needed) to complete each task and then estimate the time needed to complete them all.
 ### f. Harmonize the architecture models and views with each other.
-#### i. 
-#### ii.
-#### iii.
+#### i. i
+#### ii. N/A - not mentioned in XP.
+#### iii. We come up with a basic plan for the software in direct accordance with client specifications.
 ## 4. Relate the architecture to design.
 ### a. Identify software system elements that relate to architectural entities and the nature of these relationships.
 #### i. f
