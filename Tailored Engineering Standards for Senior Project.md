@@ -166,7 +166,7 @@
 ### f. Harmonize the architecture models and views with each other.
 #### i. i
 #### ii. N/A - not mentioned in XP.
-#### iii. We come up with a basic plan for the software in direct accordance with client specifications.
+#### iii. We come up with a basic plan for the software in direct accordance with client specifications; because there is only one workflow, harmonization is not necessary.
 ## 4. Relate the architecture to design.
 ### a. Identify software system elements that relate to architectural entities and the nature of these relationships.
 #### i. f
