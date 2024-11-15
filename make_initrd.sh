@@ -1,55 +1,48 @@
 #!/bin/bash
 
-# Ramdisk Constants
-RDSIZE=4000
-BLKSIZE=1024
+cachedir=$(pwd)/cache
+echo $cachedir
 
-# Referesh
-rm -rf /mnt/initrd
-mkdir /mnt/initrd
-
-# Create an empty ramdisk image
-dd if=/dev/zero of=/tmp/ramdisk.img bs=$BLKSIZE count=$RDSIZE
-
-# Make it an ext2 mountable file system
-/sbin/mke2fs -F -m 0 -b $BLKSIZE /tmp/ramdisk.img $RDSIZE
-
-# Mount it so that we can populate
-mount /tmp/ramdisk.img /mnt/initrd -t ext2 -o loop
+# Refresh
+pushd /tmp/
+rm -rf initramfs
+mkdir initramfs
 
 # Populate the filesystem (subdirectories)
-mkdir /mnt/initrd/bin
-mkdir /mnt/initrd/sys
-mkdir /mnt/initrd/dev
-mkdir /mnt/initrd/proc
+mkdir initramfs/bin
+mkdir initramfs/sys
+mkdir initramfs/dev
+mkdir initramfs/proc
 
 # Grab busybox and create the symbolic links
-pushd /mnt/initrd/bin
-cp /mount/cache/busybox/busybox-$1 .
-ln -s busybox-armv4l ash
-ln -s busybox-armv4l mount
-ln -s busybox-armv4l echo
-ln -s busybox-armv4l ls
-ln -s busybox-armv4l cat
-ln -s busybox-armv4l ps
-ln -s busybox-armv4l dmesg
-ln -s busybox-armv4l sysctl
+pushd initramfs/bin
+cp "$cachedir/busybox/busybox-$1" ./busybox
+ln -s busybox ash
+ln -s busybox mount
+ln -s busybox echo
+ln -s busybox ls
+ln -s busybox cat
+ln -s busybox ps
+ln -s busybox dmesg
+ln -s busybox sysctl
 popd
 
 # Grab the necessary dev files
-cp -a /dev/console /mnt/initrd/dev
-cp -a /dev/null /mnt/initrd/dev
-if [[ -e /dev/tty ]]; then cp -a /dev/tty /mnt/initrd/dev; fi
-if [[ -e /dev/tty1 ]]; then cp -a /dev/tty1 /mnt/initrd/dev; fi
-if [[ -e /dev/tty2 ]]; then cp -a /dev/tty2 /mnt/initrd/dev; fi
+cp -a /dev/console /tmp/initramfs/dev
+cp -a /dev/ram0 /tmp/initramfs/ram0
+cp -a /dev/null /tmp/initramfs/dev
+if [[ -e /dev/ttyS0 ]]; then cp -a /dev/ttyS0 /tmp/initramfs/dev; fi
+if [[ -e /dev/tty ]]; then cp -a /dev/tty /tmp/initramfs/dev; fi
+if [[ -e /dev/tty1 ]]; then cp -a /dev/tty1 /tmp/initramfs/dev; fi
+if [[ -e /dev/tty2 ]]; then cp -a /dev/tty2 /tmp/initramfs/dev; fi
 
 # Equate sbin with bin
-pushd /mnt/initrd
+pushd /tmp/initramfs
 ln -s bin sbin
 popd
 
 # Create the init file
-cat >> /mnt/initrd/linuxrc << EOF
+cat >> /tmp/initramfs/linuxrc << EOF
 #!/bin/ash
 echo
 echo "Simple initrd is active"
@@ -62,9 +55,11 @@ EOF
 
 # cp $1 /$1
 
-chmod +x /mnt/initrd/linuxrc
+chmod +x /tmp/initramfs/linuxrc
 
-# Finish up...
-umount /mnt/initrd
-gzip -f -9 /tmp/ramdisk.img
-cp /tmp/ramdisk.img.gz ./ramdisk.img.gz
+cd /tmp/initramfs
+find . -print0 | cpio --null -ov --format=newc > ../initramfs.cpio
+cd ..
+
+popd
+cp /tmp/initramfs.cpio .
