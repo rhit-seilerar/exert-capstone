@@ -161,8 +161,8 @@
 #### iii. We design and build our software to meet the specifications of the week.
 ### e. Compose views from the models in accordance with identified viewpoints to express how the architecture addresses stakeholder concerns and meets stakeholder and system/software requirements.
 #### i. k
-#### ii. "Have the customers pick a week’s worth of stories to implement this week." (Weekly Cycle)
-#### iii. After the client gives us his set of tasks, we build an understanding of what work needs to be done (to include installing prerequiste tooling, if needed) to complete each task and then estimate the time needed to complete them all.
+#### ii. N/A - not mentioned in XP.
+#### iii. After the client gives us his set of needs for the week, we build an understanding of what work needs to be done (to include installing prerequiste tooling, if needed) to complete each task and then estimate the time needed to complete them all.
 ### f. Harmonize the architecture models and views with each other.
 #### i. i
 #### ii. N/A; not mentioned in XP.
