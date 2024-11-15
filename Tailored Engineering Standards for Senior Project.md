@@ -170,20 +170,20 @@
 ## 4. Relate the architecture to design.
 ### a. Identify software system elements that relate to architectural entities and the nature of these relationships.
 #### i. f
-#### ii.
-#### iii.
+#### ii. This is not XP compliant, as it requires the actual design to be complete. XP would have "an evolutionary design process that lasts as long as the system lasts.(Chapter 1)
+#### iii. We have reworked our code designs based on refactoring existing code, such as the exert.py file.
 ### b. Define the interfaces and interactions among the software system elements and external entities.
 #### i. e
-#### ii. This is not XP compliant, as these definitions are constantly changing and only defining them once during the project's lifespan will be detrimental.
-#### iii.
+#### ii. This is not XP compliant, as these definitions are constantly changing beyond what this standard's notes imply (which suggests refinement over redesigning).
+#### iii. We have done this during weekly cycles when creating tasks.
 ### c. Partition, align and allocate requirements to architectural entities and system elements.
 #### i. c
-#### ii.
-#### iii.
+#### ii. This is not XP compliant, as it needs to be done constantly and not at a single point in time.
+#### iii. We have done this semiweekly during our tasks when restructuring our project.
 ### d. Map software system elements and architectural entities to design characteristics.
 #### i. e
-#### ii.
-#### iii.
+#### ii. This is not XP compliant, as this will need to be done regularly and not at a single stage as the wording in the original ABET Standard implies.
+#### iii. We have actually designed our project around the software system elements instead of mapping system elements to design characteristics.
 ### e. Define principles for the software system design and evolution.
 #### i. b
 #### ii. This is not XP compliant, as principles and other requirements for a project are constantly changing and should not be treated as static guidelines.
@@ -191,49 +191,49 @@
 ## 5. Assess architecture candidates.
 ### a. Assess each candidate architecture against constraints and requirements.
 #### i. g
-#### ii.
-#### iii.
+#### ii. This is not XP compliant, as there should only be one architecture to consider, unless if it's an incremental deployment where there's a parallel environment for testing.
+#### iii. We have done this when redesigning our singular architecture to reflect our client needs for programs that can run out of the docker.
 ### b. Assess each candidate architecture against stakeholder concerns using evaluation criteria.
 #### i. g
 #### ii. This is not XP compliant, as there should be only one candidate architecture to consider in the first place using the evaluation criteria.
-#### iii.
+#### iii. We had a single architecture that was changed based on client feedback.
 ### c. Select the preferred architecture(s) and capture key decisions and rationale.
 #### i. h
 #### ii. This is not XP compliant, there should only be one architecture for the project, not several.
-#### iii.
+#### iii. We only had a single architecture that we had revised based on client feedback and changing requirements and new key decisions.
 ### d. Establish the architecture baseline of the selected architecture.
 #### i. d
-#### ii. 
-#### iii.
+#### ii. This is not XP compliant, as the architecture could change drastically after the baseline is established, and the baseline may need to be changed.
+#### iii. We have not done this, we have changed our baseline multiple times to fit the scope of our tasks.
 ## 6. Assess architecture candidates.
 ### a. Formalize the architecture governance approach and specify governance‐related roles and responsibilities, accountabilities, and authorities related to design, quality, security, and safety.
 #### i. d
-#### ii.
-#### iii.
+#### ii. This is done when negotiating a scope contract, "Write contracts for software development that fix time, costs, and quality but call for an ongoing negotiation of the precise scope of the system. Reduce risk by signing a sequence of short contracts instead of one long one." (Chapter 9)
+#### iii. We have done this during client meetings when requesting copyrighted material and access to classified files.
 ### b. Obtain explicit acceptance of the architecture by stakeholders.
 #### i. i
-#### ii. XP says to obtain acceptance by allowing stakeholders to be active in developing the architecture. "Generally, the closer customer needs and development capabilities are, the more valuable development becomes." (Chapter 9, real customer development)
+#### ii. XP says to obtain acceptance by allowing stakeholders to be active in developing the architecture. "Generally, the closer customer needs and development capabilities are, the more valuable development becomes." (Chapter 9)
 #### iii. We demonstrate our current solutions to the client in weekly meetings so they can provide feedback.
 ### c. Maintain concordance and completeness of the architectural entities and their architectural characteristics.
 #### i. h
-#### ii.
-#### iii.
+#### ii. This is not XP compliant as architectural entities are never completed until the lifespan of the system is complete.
+#### iii. We have not been able to apply this to our project.
 ### d. Organize, assess and control evolution of the architecture models and views to help ensure that the architectural intent is met and the architectural vision and key concepts are correctly implemented.
 #### i. e
-#### ii.
-#### iii.
+#### ii. XP says to have a reliance on "oral communication, tests, and source code to communicate system structure and intent." in order to organize and assess the architecture models based on intent. (Chapter 1)
+#### iii. We do this during weekly meetings and weekly work sessions, as we evaluate our code during our sessions.
 ### e. Maintain the architecture definition and evaluation strategy.
 #### i. b
-#### ii.
-#### iii.
+#### ii. XP says to use an incremental design, which it defines as "an overall plan that is expected to evolve through the life of the project." (Chapter 1)
+#### iii. We have done this when defining our tasks, by revising our system to meet what the client wants for the week.
 ### f. Maintain traceability of the architecture.
 #### i. k
-#### ii.
-#### iii.
+#### ii. This is not XP compliant, as documentation is not beneficial in many cases, as Beck said once here, "Extensive internal documentation of software is an example of a practice that violates mutual benefit." (Chapter 5)
+#### iii. We have not implemented architecture traceability in our project.
 ### g. Provide key artifacts and information items that have been selected for baselines.
 #### i. j
 #### ii. This is not XP compliant, as any artifacts and documentation must be generated from the code itself.
-#### iii.
+#### iii. We have not implemented this, we have generated most of the artifacts and documentation from the code itself. Project task details provide a little more context, but for the most part the code is the documentation we need.
 
 # 6.4.5 Design Definition process
 
