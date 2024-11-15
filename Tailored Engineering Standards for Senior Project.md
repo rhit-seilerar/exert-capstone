@@ -236,75 +236,96 @@
 #### iii.
 
 # 6.4.5 Design Definition process
+
 ## 1. Prepare for software system design definition.
+
 ### a. Define the design definition strategy, consistent with the selected life cycle model and anticipated design artifacts.
-#### i. 
-#### ii.
-#### iii.
+#### i. c
+#### ii. XP defines the design strategy as incremental design with quarterly cycles to review. There are no anticipated design artifacts because XP states to "maintain only the code and the tests as permanent artifacts."
+#### iii. We use XP's practice here. For example, after each weekly client meeting, we plan for the design and work of the next week.
+
 ### b. Select and prioritize design principles and design characteristics.
-#### i. 
-#### ii.
-#### iii.
+#### i. a
+#### ii. XP states to "have the customers pick a week's worth of stories" every week, deferring the selection and prioritization to them.
+#### iii. We select tasks weekly and discuss their priority with our client.
+
 ### c. Identify and plan for the necessary enabling systems or services needed to support design definition.
-#### i. 
-#### ii.
-#### iii.
+#### i. c
+#### ii. XP doesn't mention enabling systems. However, in the case that you can't design without access to some design-enabling system, XP suggests to work on what you can by "[striving] to make the design of the system an excellent fit for the needs of the system that day." Do what you can, and then fix the rest once you get access.
+#### iii. We haven't had any need for design definition-enabling systems yet.
+
 ### d. Obtain or acquire access to the enabling systems or services to be used.
-#### i. 
-#### ii.
-#### iii.
+#### i. g
+#### ii. XP doesn't mention enabling systems. However, XP does suggest to "include on the team people with all the skills and perspectives necessary for the team to succeed," so you might be able to ask a team member for access.
+#### iii. We haven't had any need for design definition-enabling systems yet.
+
 ## 2. Establish designs related to each software system element.
+
 ### a. Transform architectural and design characteristics into the design of software system elements.
-#### i. 
-#### ii.
-#### iii.
+#### i. a
+#### ii. XP states to "make the design of the system an excellent fit for the needs of the system that day," so the design is automatically based on architectural and requirement constraints.
+#### iii. Due to the nature of our project, we automatically consider architectural requirements while we design. For example, the design of the plugin is highly dependent on the architectures we support, since they control how we access the needed data.
+
 ### b. Define and prepare or obtain the necessary design enablers.
-#### i. 
-#### ii.
-#### iii.
+#### i. g
+#### ii. XP doesn't mention design enablers. However, XP states to "make the design of the system an excellent fit for the needs of the system that day," so you should obtain the necessary design enablers as needed on the day of.
+#### iii. We obtain required dependencies as part of our tasks. For example, we only downloaded our busybox dependency once we actually needed to use it.
+
 ### c. Examine design alternatives and feasibility of implementation.
-#### i. 
-#### ii.
-#### iii.
+#### i. e
+#### ii. XP states to "make the design of the system an excellent fit for the needs of the system that day," so there shouldn't be any design alternatives-- simply designs.
+#### iii. Because our system is highly dependent on the client's domain-specific knowledge, when attempted approaches don't pan out, we bring a number of options and their feasibilities to the client for discussion.
+
 ### d. Refine or define the interfaces among the software system elements and with external entities.
-#### i. 
-#### ii.
-#### iii.
+#### i. d
+#### ii. XP states to "make the design of the system an excellent fit for the needs of the system that day" and to "identify bottlenecks, especially those controlled outside the team" quarterly. So, interfaces should be designed and refined as needed day-to-day, and if they're posing a problem, repaired at the end of a quarter.
+#### iii. In order to facilitate the distribution of tasks, we split our system into components early into the project. The interface with external entities, however, is refined daily.
+
 ### e. Establish the design artifacts.
-#### i. 
-#### ii.
-#### iii.
+#### i. f
+#### ii. N/A. XP states to "maintain only the code and the tests as permanent artifacts," so design artifacts are incompatible with XP.
+#### iii. We don't have any design artifacts.
+
 ## 3. Assess alternatives for obtaining software system elements.
+
 ### a. Determine technologies required for each element composing the software system.
-#### i. 
-#### ii.
-#### iii.
+#### i. b
+#### ii. XP designs incrementally, determining required technologies as needed, planning to "initiate repairs" as needed during quarterly meetings. 
+#### iii. We do this during our weekly meetings with the client, to make use of their domain-specific knowledge and preferences. For example, we determined the need for fakeroot when discussing the usermode component with the client.
+
 ### b. Identify candidate alternatives for the software system elements.
-#### i. 
-#### ii.
-#### iii.
+#### i. e
+#### ii. XP states to "invest in the design of the system every day" to make it an "excellent fit for the needs of the system that day," so you should identify candidate alternatives only as necessary.
+#### iii. We similarly discuss these when determining required technologies. Following the same example as above, cpio and dimitri were discussed alternatives.
+
 ### c. Assess each candidate alternative against criteria developed from expected design characteristics and element requirements to determine suitability for the intended application.
-#### i. 
-#### ii.
-#### iii.
+#### i. e
+#### ii. XP doesn't say much to this regard. Design options must obviously be assessed for viability, all XP has to say is that you should defer these decisions to the "last responsible moment."
+#### iii. We have limited time during our client meetings, so we assess listed options during worktime via research and trial-and-error. For example, in order to find the tasklist, we researched and attempted several approaches (stack, fs/gs, symtab) in order to assess their viability.
+
 ### d. Choose the preferred alternatives among candidate design solutions for the software system elements.
-#### i. 
-#### ii.
-#### iii.
+#### i. e
+#### ii. XP attempts to defer design to the "last responsible moment," and to "fit the needs of the system that day." Thus, XP simply chooses the easiest alternative that currently works, and will re-evaluate later if necessary.
+#### iii. Because XP practices the use of the simplest possible working product, we just go with the first viable alternative. For example, parsing instructions from memory is a viable option, but it's significantly more complex than the stack option.
+
 ## 4. Manage the design.
+
 ### a. Capture the design and rationale.
-#### i. 
-#### ii.
-#### iii.
+#### i. f
+#### ii. N/A. XP states to "maintain only the code and the tests as permanent artifacts," so design artifacts are incompatible with XP.
+#### iii. Because design artifacts are incompatible with XP, we don't practice this task. We do, however, discuss our design and rationale with our client weekly.
+
 ### b. Establish traceability between the detailed design elements, the system/software requirements, and the architectural entities of the software system architecture.
-#### i. 
-#### ii.
-#### iii.
+#### i. h
+#### ii. N/A. XP states to "maintain only the code and the tests as permanent artifacts," so design artifacts are incompatible with XP. XP also disagrees with requirements, preferring stories over them because "they [aren't] really mandatory or obligatory".
+#### iii. We don't maintain traceability design artifacts. However, we do practice incremental design, so you can use git history to trace changes to tasks.
+
 ### c. Determine the status of the software system and element design.
-#### i. 
-#### ii.
-#### iii.
+#### i. f
+#### ii. XP recommends weekly meetings where you "review progress to date," and that you should "invest in the design of the system every day." XP also recommends quarterly meetings to "identify bottlenecks" and thus check in on the system's overall status. In short, XP says to determine the status of the system quarterly and the status of the element design weekly.
+#### iii. We check in on design status weekly, such as in our client meetings and during our task-estimation meetings. We also review the status of our system weekly with the client and adivsor.
+
 ### d. Provide key artifacts and information items that have been selected for baselines.
-#### i. 
-#### ii.
-#### iii.
+#### i. f
+#### ii. N/A. XP states to "maintain only the code and the tests as permanent artifacts," so design artifacts are incompatible with XP.
+#### iii. Because design artifacts are incompatible with XP, we don't practice this task.
