@@ -4,7 +4,6 @@ import os
 import IPython
 from pandare import PyPlugin, Panda
 from exert.utilities.command import run_command
-from exert.usermode.filesystem_convert import filesystem_convert
 
 class Exert(PyPlugin):
     """The Exert plugin"""
@@ -40,7 +39,6 @@ class Exert(PyPlugin):
         panda.disable_callback('single_step')
 
 def run(arch = 'i386', callback = None):
-    filesystem_convert(f'{os.path.dirname(os.path.abspath(__file__))}/filesystem')
     run_command(f'./make_initrd.sh {arch}')
     # args="--nographic \
     #     --machine virt-2.6 \
