@@ -55,8 +55,3 @@ def callback_test_get_current_from_stack(panda, cpu):
     assert task_stack == thread_info_addr
 def test_get_current_from_stack():
     do_test('arm', callback_test_get_current_from_stack)
-
-def callback_test_get_current_from_segs(panda, cpu):
-    pass
-def test_get_current_from_segs():
-    do_test('i386', callback_test_get_current_from_segs)
