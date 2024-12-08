@@ -16,7 +16,7 @@ mkdir initramfs/proc
 
 # Grab busybox and create the symbolic links
 pushd initramfs/bin
-cp "$cachedir/busybox/busybox-$1" ./busybox
+cp "$cachedir/busybox-$1" ./busybox
 ln -s busybox ash
 ln -s busybox mount
 ln -s busybox echo
@@ -28,13 +28,13 @@ ln -s busybox sysctl
 popd
 
 # Grab the necessary dev files
-cp -a /dev/console /tmp/initramfs/dev
-cp -a /dev/ram0 /tmp/initramfs/ram0
-cp -a /dev/null /tmp/initramfs/dev
-if [[ -e /dev/ttyS0 ]]; then cp -a /dev/ttyS0 /tmp/initramfs/dev; fi
-if [[ -e /dev/tty ]]; then cp -a /dev/tty /tmp/initramfs/dev; fi
-if [[ -e /dev/tty1 ]]; then cp -a /dev/tty1 /tmp/initramfs/dev; fi
-if [[ -e /dev/tty2 ]]; then cp -a /dev/tty2 /tmp/initramfs/dev; fi
+cp -a /dev/console /tmp/initramfs/dev/console
+cp -a /dev/ram0 /tmp/initramfs/dev/ram0
+cp -a /dev/null /tmp/initramfs/dev/null
+if [[ -e /dev/ttyS0 ]]; then cp -a /dev/ttyS0 /tmp/initramfs/dev/ttyS0; fi
+if [[ -e /dev/tty ]]; then cp -a /dev/tty /tmp/initramfs/dev/tty; fi
+if [[ -e /dev/tty1 ]]; then cp -a /dev/tty1 /tmp/initramfs/dev/tty1; fi
+if [[ -e /dev/tty2 ]]; then cp -a /dev/tty2 /tmp/initramfs/dev/tty2; fi
 
 # Equate sbin with bin
 pushd /tmp/initramfs
@@ -58,8 +58,8 @@ EOF
 chmod +x /tmp/initramfs/linuxrc
 
 cd /tmp/initramfs
-find . -print0 | cpio --null -ov --format=newc > ../initramfs.cpio
+find . -print0 | cpio --null -ov --format=newc | gzip > ../initramfs.cpio.gz
 cd ..
 
 popd
-cp /tmp/initramfs.cpio .
+cp /tmp/initramfs.cpio.gz .

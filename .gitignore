@@ -3,5 +3,6 @@ __pycache__/
 cache/
 .coverage
 *.cpio
-*.img.gz
+*.gz
 *.elf
+linux
