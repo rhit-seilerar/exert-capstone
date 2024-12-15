@@ -1,6 +1,7 @@
 __pycache__/
 .pytest_cache/
-cache/
+cache/*
+!cache/rootfs
 .coverage
 exert/usermode/build
 *.cpio
