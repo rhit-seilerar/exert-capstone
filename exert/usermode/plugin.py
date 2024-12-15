@@ -1,6 +1,5 @@
 """The core file for the plugin component of the EXERT system"""
 
-import os
 import IPython
 from pandare import PyPlugin, Panda
 from exert.utilities.command import run_command
