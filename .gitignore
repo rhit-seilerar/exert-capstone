@@ -2,6 +2,8 @@ __pycache__/
 .pytest_cache/
 cache/*
 !cache/rootfs
+cache/rootfs/user_prog
+cache/rootfs/busybox
 .coverage
 exert/usermode/build
 *.cpio
