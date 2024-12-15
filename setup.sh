@@ -19,7 +19,7 @@ pip install --upgrade ipython pytest pytest-cov
 chmod +x /mount/make_initrd.sh
 
 pandaLoc=/mount/cache/.panda
-rootfsLoc=/mount/cache
+rootfsLoc=/mount/cache/rootfs
 
 # Symlink the qcows to the host so we only download them once
 if [[ ! -d $pandaLoc ]]; then mkdir $pandaLoc; fi
@@ -33,4 +33,4 @@ git clone https://github.com/panda-re/panda.git
 cd panda
 git switch kernelinfo_user
 cd panda/plugins/osi_linux/utils/kernelinfo_user
-cp -r rootfs /mount/cache/rootfs $rootfsLoc
+cp -r rootfs $rootfsLoc
