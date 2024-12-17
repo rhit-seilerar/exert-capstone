@@ -55,3 +55,7 @@ def callback_test_get_current_from_stack(panda, cpu):
     assert task_stack == thread_info_addr
 def test_get_current_from_stack():
     do_test('arm', callback_test_get_current_from_stack)
+
+def _test_nongeneric_kernel():
+    plugin.run(arch='armv5l', generic=False, kernel='./vmlinuz')
+    assert True
