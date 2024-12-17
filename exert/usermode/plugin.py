@@ -37,19 +37,18 @@ class Exert(PyPlugin):
 
         panda.disable_callback('single_step')
 
-def run(arch = 'i386', callback = None):
-    run_command(f'./make_initrd.sh {arch}')
-    # args="--nographic \
-    #     --machine virt-2.6 \
-    #     -kernel ./vmlinuz \
-    #     -initrd ramdisk.img.gz \
-    #     -append 'console=ttyS0 earlyprintk=serial nokaslr init=/linuxrc root=/dev/ram0'"
-    # panda = Panda(arch='arm', mem="1G", extra_args=args)
-    # panda.set_os_name("linux_32_ubuntu:4.4.0-98-generic")
-    panda = Panda(generic = arch)
-    # panda.load_plugin('syscalls2', args = { 'load-info': True })
-    # panda = Panda(generic='i386', extra_args = \
-    #   '-initrd filesystem.cpio -kernel ./vmlinuz init=/helloworld root=/dev/ram1')
+def run(arch = 'i386', callback = None, generic = True, kernel = None):
+    panda = None
+    if generic:
+        panda = Panda(generic = arch)
+    else:
+        run_command(f'./make_initrd.sh {arch}')
+        args = '--nographic \
+            -kernel ./vmlinuz \
+            -initrd ./cache/customfs.cpio \
+            -machine versatilepb \
+            -append "console=ttyAMA0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
+        panda = Panda(arch='arm', mem='256M', extra_args=args, expect_prompt='/.*#', os_version='linux-32-generic')
 
     panda.pyplugins.load(Exert, args={
         'callback': callback
