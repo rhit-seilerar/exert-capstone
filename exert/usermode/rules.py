@@ -27,21 +27,29 @@ class Rule:
         return 'Rule()'
 
 class Int(Rule):
-    def __init__(self, value, size = 4, signed = True):
+    def __init__(self, value = None, size = 4, signed = True):
         self.size = size
         self.signed = signed
         self.value = value
 
     def _test(self, context):
         context.suspend()
-        val = context.next_int(self.size, self.signed)
-        return context.apply(val == self.value)
+        size = context.word_size if self.size is None else self.size
+        val = context.next_int(size, self.signed)
+        return context.apply(self.value is None or val == self.value)
 
     def __str__(self):
         return f'Int({self.value}, {self.size}, {self.signed})'
+    
+class Bool(Int):
+    def __init__(self, value = None):
+        super().__init__(value, size = 1)
+
+    def __str__(self):
+        return f'Bool({self.value})'
 
 class Pointer(Rule):
-    def __init__(self, rule):
+    def __init__(self, rule = None):
         self.rule = rule
 
     def _test(self, context):
@@ -57,7 +65,7 @@ class Pointer(Rule):
         print("Pointer is valid")
         # Test futher rules against the found data
         new_ctx = context.copy(pointer)
-        return context.apply(self.rule.test(new_ctx))
+        return context.apply(self.rule is None or self.rule.test(new_ctx))
 
     def __str__(self):
         return f'Pointer({str(self.rule)})'
@@ -110,6 +118,63 @@ class Struct(Rule):
     def __str__(self):
         return f'Struct(\'{self.name}\', [{", ".join(str(g) for g in self.field_groups)}])'
 
+class _Atomic(Struct):
+    def __init__(self):
+        super().__init__('atomic_t', [FieldGroup([
+            Field('counter', Int())
+        ])])       
+    def __str__(self):
+        return 'Atomic()'
+ATOMIC = _Atomic()
+
+class _LoadWeight(Struct):
+    def __init__(self):
+        super().__init__('load_weight', [FieldGroup([
+            Field('weight', Int(size = None, signed = False)),
+            Field('inv_weight', Int(signed = False))
+        ])])
+        
+    def __str__(self):
+        return 'LoadWeight()'
+LOAD_WEIGHT = _LoadWeight()
+
+class _RBNode(Struct):
+    def __init__(self):
+        super().__init__('rb_node', [FieldGroup([
+            Field('__rb_parent_color', Int(size = None, signed = False)),
+            Field('rb_right', Pointer(self)),
+            Field('rb_left', Pointer(self))
+        ])])
+        
+    def __str__(self):
+        return 'RBNode()'
+RB_NODE = _RBNode()
+
+class _LListNode(Struct):
+    def __init__(self):
+        super().__init__('llist_node', [FieldGroup([
+            Field('next', Pointer(self))
+        ])])
+        
+    def __str__(self):
+        return 'LListNode()'
+LLIST_NODE = _LListNode()
+
+class _SchedAvg(Struct):
+    def __init__(self):
+        super().__init__('sched_avg', [FieldGroup([
+            Field('last_update_time', Int(size = 8, signed = False)),
+            Field('load_sum', Int(size = 8, signed = False)),
+            Field('util_sum', Int(signed = False)),
+            Field('period_contrib', Int(signed = False)),
+            Field('load_avg', Int(size = None, signed = False)),
+            Field('util_avg', Int(size = None, signed = False)),
+        ])])
+        
+    def __str__(self):
+        return 'SchedAvg()'
+SCHED_AVG = _SchedAvg()
+
 class _ListHead(Struct):
     def __init__(self):
         super().__init__('list_head', [FieldGroup([
@@ -141,3 +206,254 @@ class _ListHead(Struct):
     def __str__(self):
         return 'ListHead()'
 LIST_HEAD = _ListHead()
+
+class _SchedInfo(Struct):
+    def __init__(self):
+        super().__init__('sched_info', [FieldGroup([
+                Field('pcount', Int(size = None, signed = False)),
+                Field('run_delay', Int(size = 8, signed = False)),
+                Field('last_arrival', Int(size = 8, signed = False)),
+                Field('last_queued', Int(size = 8, signed = False))
+        ])])
+
+    def __str__(self):
+        return 'SchedInfo()'
+SCHED_INFO = _SchedInfo()
+
+class _SchedStatistics(Struct):
+    def __init__(self):
+        super().__init__('sched_statistics', [FieldGroup([
+            Field('wait_start', Int(size = 8, signed = False)),
+            Field('wait_max', Int(size = 8, signed = False)),
+            Field('wait_count', Int(size = 8, signed = False)),
+            Field('wait_sum', Int(size = 8, signed = False)),
+            Field('iowait_count', Int(size = 8, signed = False)),
+            Field('iowait_sum', Int(size = 8, signed = False)),
+            Field('sleep_start', Int(size = 8, signed = False)),
+            Field('sleep_max', Int(size = 8, signed = False)),
+            Field('sum_sleep_runtime', Int(size = 8)),
+            Field('block_start', Int(size = 8, signed = False)),
+            Field('block_max', Int(size = 8, signed = False)),
+            Field('exec_max', Int(size = 8, signed = False)),
+            Field('slice_max', Int(size = 8, signed = False)),
+            Field('nr_migrations_cold', Int(size = 8, signed = False)),
+            Field('nr_failed_migrations_affine', Int(size = 8, signed = False)),
+            Field('nr_failed_migrations_running', Int(size = 8, signed = False)),
+            Field('nr_failed_migrations_hot', Int(size = 8, signed = False)),
+            Field('nr_forced_migrations', Int(size = 8, signed = False)),
+            Field('nr_wakeups', Int(size = 8, signed = False)),
+            Field('nr_wakeups_sync', Int(size = 8, signed = False)),
+            Field('nr_wakeups_migrate', Int(size = 8, signed = False)),
+            Field('nr_wakeups_local', Int(size = 8, signed = False)),
+            Field('nr_wakeups_remote', Int(size = 8, signed = False)),
+            Field('nr_wakeups_affine', Int(size = 8, signed = False)),
+            Field('nr_wakeups_affine_attempts', Int(size = 8, signed = False)),
+            Field('nr_wakeups_passive', Int(size = 8, signed = False)),
+            Field('nr_wakeups_idle', Int(size = 8, signed = False)),
+        ])])
+
+    def __str__(self):
+        return 'SchedStatistics()'
+SCHED_STATISTICS = _SchedStatistics()
+
+class _SchedEntity(Struct):
+    def __init__(self):
+        super().__init__('sched_entity', [
+            FieldGroup([
+                Field('load', LOAD_WEIGHT),    
+                Field('group_node', LIST_HEAD),
+                Field('run_node', RB_NODE),
+                Field('on_rq', Int(signed = False)),
+                Field('exec_start', Int(size = 8, signed = False)),
+                Field('sum_exec_runtime', Int(size = 8, signed = False)),
+                Field('vruntime', Int(size = 8, signed = False)),
+                Field('prev_sum_exec_runtime', Int(size = 8, signed = False)),
+                Field('nr_migrations', Int(size = 8, signed = False))
+            ]),
+            FieldGroup([ #ifdef CONFIG_SCHEDSTATS
+                Field('statistics', SCHED_STATISTICS)
+            ], True),
+            FieldGroup([ #ifdef CONFIG_FAIR_GROUP_SCHED
+                Field('depth', Int()),
+                Field('parent', Pointer(self)),
+                Field('cfs_rq', Pointer()), #struct cfs_rq
+                Field('my_q', Pointer()) #struct cfs_rq
+            ], True),
+            FieldGroup([ #ifdef CONFIG_SMP
+	            Field('avg', SCHED_AVG)
+            ], True)
+        ])
+        
+    def __str__(self):
+        return 'SchedEntity()'
+SCHED_ENTITY = _SchedEntity()
+
+class _SchedRTEntity(Struct):
+    def __init__(self):
+        super().__init__('sched_rt_entity', [
+            FieldGroup([
+                Field('run_list', LIST_HEAD),
+                Field('timeout', Int(size = None, signed = False)),
+                Field('watchdog_stamp', Int(size = None, signed = False)),
+                Field('time_slice', Int(signed = False)),
+                Field('back', SCHED_RT_ENTITY)
+            ]),
+            FieldGroup([ #ifdef CONFIG_RT_GROUP_SCHED
+                Field('parent', SCHED_RT_ENTITY),
+                Field('rt_rq', SCHED_RT_ENTITY), #struct rt_rq*
+                Field('my_q', SCHED_RT_ENTITY)  #struct rt_rq*
+            ], True)
+        ])
+        
+    def __str__(self):
+        return 'SchedRTEntity()'
+SCHED_RT_ENTITY = _SchedRTEntity()
+
+class _KTimeT(Struct): #supposed to be a union
+    def __init__(self):
+        super().__init__('timerqueue_node', [
+            FieldGroup([
+                Field('tv64', Int(size = 8))
+            ])
+        ])
+    def __str__(self):
+        return 'KTimeT()'
+KTIME_T = _KTimeT()
+
+class _HListHead(Struct): #supposed to be a union
+    def __init__(self):
+        super().__init__('hlist_head', [
+            FieldGroup([
+	        Field('first', Pointer()) #struct hlist_node *first;
+            ])
+        ])
+    def __str__(self):
+        return '_HListHead()'
+HLIST_HEAD = _HListHead()
+
+class _TimerQueueNode(Struct):
+    def __init__(self):
+        super().__init__('timerqueue_node', [
+            FieldGroup([
+	Field('node', RB_NODE),
+	Field('expires', KTIME_T)
+            ])
+        ])
+        
+    def __str__(self):
+        return 'TimerQueueNode()'
+TIMERQUEUENODE = _TimerQueueNode()
+
+class _HRTimer(Struct):
+    def __init__(self):
+        super().__init__('hrtimer', [
+            FieldGroup([
+	Field('node', TIMERQUEUENODE),
+	Field('_softexpires', KTIME_T),
+	Field('function', Pointer()), # enum hrtimer_restart		(*function)(struct hrtimer *);
+    Field('base', Pointer()), #struct hrtimer_clock_base	*base;
+    Field('state', Int(size = 1, signed = False)),
+    Field('is_rel', Int(size = 1, signed = False))
+        ])
+        #TODO
+    #     FieldGroup([ #ifdef CONFIG_TIMER_STATS
+	# int				start_pid;
+	# void				*start_site;
+	# char				start_comm[16];
+    #     ], True)
+    ])
+    def __str__(self):
+        return 'HRTimer()'
+HRTIMER = _HRTimer()
+
+class _SchedDLEntity(Struct):
+    def __init__(self):
+        super().__init__('sched_dl_entity', [
+            FieldGroup([
+            	Field('rb_node', RB_NODE),
+                Field('dl_runtime', Int(size = 8, signed = False)),
+                Field('dl_deadline', Int(size = 8, signed = False)),
+                Field('dl_period', Int(size = 8, signed = False)),
+                Field('dl_bw', Int(size = 8, signed = False)),
+                Field('runtime', Int(size = 8)),
+                Field('deadline', Int(size = 8, signed = False)),
+                Field('flags', Int(signed = False)),
+                Field('dl_throttled', Int()),
+                Field('dl_new', Int()),
+                Field('dl_boosted', Int()),
+                Field('dl_yielded', Int()),
+                Field('dl_timer', HRTIMER)
+            ])
+        ])
+        
+    def __str__(self):
+        return 'SchedDLEntity()'
+SCHED_DL_ENTITY = _SchedDLEntity()
+
+class _TaskStruct(Struct):
+    def __init__(self):
+        super().__init__('task_struct', [
+            FieldGroup([
+                Field('state', Int(size = None)), # -1 unrunnable, 0 runnable, >0 stopped
+	            Field('stack', Pointer()),
+                Field('usage', ATOMIC),
+                Field('flags', Int(signed = False)), #per process flags, defined below
+                Field('ptrace', Int(signed = False))
+            ]),
+            FieldGroup([ #ifdef CONFIG_SMP
+                Field('wake_entry', LLIST_NODE),
+                Field('on_cpu', Int()),
+                Field('wakee_flips', Int(signed = False)),
+                Field('wakee_flip_decay_ts', Int(size = None, signed = False)),
+                Field('last_wakee', Pointer(self)),
+                Field('wake_cpu', Int())
+            ], True),
+            FieldGroup([
+                Field('on_rq', Int()),
+                Field('prio', Int()),
+                Field('static_prio', Int()),
+                Field('normal_prio', Int()),
+                Field('rt_priority', Int(signed = False)),
+                Field('sched_class', Pointer()), #struct sched_class*
+                Field('se', SCHED_ENTITY),
+                Field('rt', SCHED_RT_ENTITY)
+            ]),
+            FieldGroup([ #ifdef CONFIG_CGROUP_SCHED
+                Field('task_group', Pointer()) #struct task_group*
+            ], True),
+            FieldGroup([
+                Field('dl', SCHED_DL_ENTITY)
+            ]),
+            FieldGroup([ #ifdef CONFIG_PREEMPT_NOTIFIERS
+                Field('preempt_notifiers', HLIST_HEAD)
+            ], True),
+            FieldGroup([ #ifdef CONFIG_BLK_DEV_IO_TRACE
+                Field('btrace_seq', Int(signed = False))
+            ], True),
+            FieldGroup([
+                Field('policy', Int(signed = False)),
+                Field('nr_cpus_allowed', Int()),
+               #TODO # cpumask_t cpus_allowed;
+            ]),
+            FieldGroup([ #ifdef CONFIG_PREEMPT_RCU
+                Field('rcu_read_lock_nesting', Int()),
+               #TODO #union rcu_special rcu_read_unlock_special;
+                Field('rcu_node_entry', LIST_HEAD),
+                Field('rcu_blocked_node', Pointer()) #struct rcu_node*
+            ], True),
+            FieldGroup([ #ifdef CONFIG_TASKS_RCU
+                Field('rcu_tasks_nvcsw', Int(size = None, signed = False)),
+                Field('rcu_tasks_holdout', Bool()),
+                Field('rcu_tasks_holdout_list', LIST_HEAD),
+                Field('rcu_tasks_idle_cpu', Int())
+            ], True),
+            FieldGroup([ #ifdef CONFIG_SCHED_INFO
+                Field('sched_info', SCHED_INFO)
+            ], True),
+            FieldGroup([
+                Field('tasks', LIST_HEAD)
+            ])
+        ])
+    def __str__(self):
+        return 'TaskStruct()'
+TASK_STRUCT = _TaskStruct()
