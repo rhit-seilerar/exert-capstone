@@ -43,19 +43,15 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None):
         panda = Panda(generic = arch)
     else:
         run_command(f'./make_initrd.sh {arch}')
-        if (arch == 'armv4l' or arch == 'armv5l' or arch == 'armv6l' or arch =='armv7l'):
+        if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
             args = '--nographic \
                 -kernel ./vmlinuz \
                 -initrd ./cache/customfs.cpio \
                 -machine versatilepb \
                 -append "console=ttyAMA0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
-            panda = Panda(arch='arm', mem='256M', extra_args=args, expect_prompt='/.*#', os_version='linux-32-generic')
-        else:
-            args = '--nographic \
-                -kernel ./vmlinuz \
-                -initrd ./cache/customfs.cpio \
-                -append "console=ttyS0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
-            panda = Panda(arch=arch, mem='256M', extra_args=args, expect_prompt='/.*#', os_version='linux-32-generic')
+            panda = Panda(
+                arch='arm', mem='256M', extra_args=args,
+                expect_prompt='/.*#', os_version='linux-32-generic')
 
     panda.pyplugins.load(Exert, args={
         'callback': callback

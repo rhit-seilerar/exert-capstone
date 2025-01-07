@@ -1,4 +1,5 @@
-from exert.usermode.rules import Rule, Int, Pointer, Field, FieldGroup, Struct, LIST_HEAD
+from exert.usermode import rules
+from exert.usermode.rules import Rule, Int, Pointer, Field, FieldGroup, Struct
 from exert.usermode.context import Context
 from tests.test_context import DummyPanda
 
@@ -70,12 +71,16 @@ def test_struct():
 
 def test_list_head():
     context = Context(DummyPanda(buf = b'\x00\x60\x00\x00\x00\x00\x00\x00'), 0x0)
-    assert not LIST_HEAD.ctest(context) #no valid next pointer
+    assert not rules.LIST_HEAD.ctest(context) #no valid next pointer
     context = Context(DummyPanda(buf = b'\x00\x00\x00\x00\x00\x07\x00\x00'), 0x0)
-    assert not LIST_HEAD.ctest(context) #no valid prev pointer
+    assert not rules.LIST_HEAD.ctest(context) #no valid prev pointer
     context = Context(DummyPanda(buf = b'\x04\x00\x00\x00\x00\x00\x00\x00'), 0x0)
-    assert not LIST_HEAD.ctest(context) #next doesnt point at current
+    assert not rules.LIST_HEAD.ctest(context) #next doesnt point at current
     context = Context(DummyPanda(buf = b'\x00\x00\x00\x00\x04\x00\x00\x00'), 0x0)
-    assert not LIST_HEAD.ctest(context) #prev doesnt point back at current
+    assert not rules.LIST_HEAD.ctest(context) #prev doesnt point back at current
     context = Context(DummyPanda(buf = b'\x00\x00\x00\x00\x00\x00\x00\x00'), 0x0)
-    assert LIST_HEAD.ctest(context) #valid
+    assert rules.LIST_HEAD.ctest(context) #valid
+
+def test_task_struct():
+    context = Context(DummyPanda(buf = bytes(4096)), 0x0)
+    assert rules.TASK_STRUCT.ctest(context)

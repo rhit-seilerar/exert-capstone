@@ -141,3 +141,5 @@ class _ListHead(Struct):
     def __str__(self):
         return 'ListHead()'
 LIST_HEAD = _ListHead()
+
+TASK_STRUCT = Rule()
