@@ -63,7 +63,8 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None):
 
     @panda.queue_blocking
     def drive():
-        panda.revert_sync("root")
+        if generic:
+            panda.revert_sync("root")
         print(panda.run_serial_cmd('uname -r'))
         panda.end_analysis()
 

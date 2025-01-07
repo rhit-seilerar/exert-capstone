@@ -56,7 +56,7 @@ def callback_test_get_current_from_stack(panda, cpu):
 def test_get_current_from_stack():
     do_test('arm', callback_test_get_current_from_stack)
 
-def _test_nongeneric_kernel():
+def test_nongeneric_kernel():
     set_called_back(False)
     def callback(panda, cpu):
         set_called_back(True)
