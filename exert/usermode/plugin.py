@@ -43,12 +43,15 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None):
         panda = Panda(generic = arch)
     else:
         run_command(f'./make_initrd.sh {arch}')
-        args = '--nographic \
-            -kernel ./vmlinuz \
-            -initrd ./cache/customfs.cpio \
-            -machine versatilepb \
-            -append "console=ttyAMA0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
-        panda = Panda(arch='arm', mem='256M', extra_args=args, expect_prompt='/.*#', os_version='linux-32-generic')
+        if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
+            args = '--nographic \
+                -kernel ./vmlinuz \
+                -initrd ./cache/customfs.cpio \
+                -machine versatilepb \
+                -append "console=ttyAMA0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
+            panda = Panda(
+                arch='arm', mem='256M', extra_args=args,
+                expect_prompt='/.*#', os_version='linux-32-generic')
 
     panda.pyplugins.load(Exert, args={
         'callback': callback
@@ -56,7 +59,8 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None):
 
     @panda.queue_blocking
     def drive():
-        panda.revert_sync("root")
+        if generic:
+            panda.revert_sync("root")
         print(panda.run_serial_cmd('uname -r'))
         panda.end_analysis()
 

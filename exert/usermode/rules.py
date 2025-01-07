@@ -15,7 +15,7 @@ class Rule:
 
         # We may end up testing ourselves, so temporarily store True to pass the above check
         Rule._cache[pair] = True
-        print(f'Testing {self}')
+        # print(f'Testing {self}')
         result = self._test(context)
         Rule._cache[pair] = result
         return result
@@ -23,8 +23,8 @@ class Rule:
     def _test(self, context):
         return True
 
-    def __str__(self):
-        return 'Rule()'
+    # def __str__(self):
+    #     return 'Rule()'
 
 class Int(Rule):
     def __init__(self, value = None, size = 4, signed = True):
@@ -37,16 +37,12 @@ class Int(Rule):
         size = context.word_size if self.size is None else self.size
         val = context.next_int(size, self.signed)
         return context.apply(self.value is None or val == self.value)
+    # def __str__(self):
+    #     return f'Int({self.value}, {self.size}, {self.signed})'
 
-    def __str__(self):
-        return f'Int({self.value}, {self.size}, {self.signed})'
-    
 class Bool(Int):
     def __init__(self, value = None):
         super().__init__(value, size = 1)
-
-    def __str__(self):
-        return f'Bool({self.value})'
 
 class Pointer(Rule):
     def __init__(self, rule = None):
@@ -67,8 +63,8 @@ class Pointer(Rule):
         new_ctx = context.copy(pointer)
         return context.apply(self.rule is None or self.rule.test(new_ctx))
 
-    def __str__(self):
-        return f'Pointer({str(self.rule)})'
+    # def __str__(self):
+    #     return f'Pointer({str(self.rule)})'
 
 class Field(Rule):
     def __init__(self, name, rule):
@@ -78,8 +74,8 @@ class Field(Rule):
     def _test(self, context):
         return self.rule.test(context)
 
-    def __str__(self):
-        return f'Field(\'{self.name}\', {str(self.rule)})'
+    # def __str__(self):
+    #     return f'Field(\'{self.name}\', {str(self.rule)})'
 
 class FieldGroup(Rule):
     def __init__(self, fields, optional=False):
@@ -93,8 +89,8 @@ class FieldGroup(Rule):
                 return context.apply(False)
         return context.apply(True)
 
-    def __str__(self):
-        return f'FieldGroup([{", ".join(str(f) for f in self.fields)}], {self.optional})'
+    # def __str__(self):
+    #     return f'FieldGroup([{", ".join(str(f) for f in self.fields)}], {self.optional})'
 
 class Struct(Rule):
     def __init__(self, name, field_groups):
@@ -115,16 +111,14 @@ class Struct(Rule):
             return context.apply(passes)
         return helper(context, self.field_groups)
 
-    def __str__(self):
-        return f'Struct(\'{self.name}\', [{", ".join(str(g) for g in self.field_groups)}])'
+    # def __str__(self):
+    #     return f'Struct(\'{self.name}\', [{", ".join(str(g) for g in self.field_groups)}])'
 
 class _Atomic(Struct):
     def __init__(self):
         super().__init__('atomic_t', [FieldGroup([
             Field('counter', Int())
-        ])])       
-    def __str__(self):
-        return 'Atomic()'
+        ])])
 ATOMIC = _Atomic()
 
 class _LoadWeight(Struct):
@@ -133,9 +127,6 @@ class _LoadWeight(Struct):
             Field('weight', Int(size = None, signed = False)),
             Field('inv_weight', Int(signed = False))
         ])])
-        
-    def __str__(self):
-        return 'LoadWeight()'
 LOAD_WEIGHT = _LoadWeight()
 
 class _RBNode(Struct):
@@ -145,9 +136,6 @@ class _RBNode(Struct):
             Field('rb_right', Pointer(self)),
             Field('rb_left', Pointer(self))
         ])])
-        
-    def __str__(self):
-        return 'RBNode()'
 RB_NODE = _RBNode()
 
 class _LListNode(Struct):
@@ -155,9 +143,6 @@ class _LListNode(Struct):
         super().__init__('llist_node', [FieldGroup([
             Field('next', Pointer(self))
         ])])
-        
-    def __str__(self):
-        return 'LListNode()'
 LLIST_NODE = _LListNode()
 
 class _SchedAvg(Struct):
@@ -170,9 +155,6 @@ class _SchedAvg(Struct):
             Field('load_avg', Int(size = None, signed = False)),
             Field('util_avg', Int(size = None, signed = False)),
         ])])
-        
-    def __str__(self):
-        return 'SchedAvg()'
 SCHED_AVG = _SchedAvg()
 
 class _ListHead(Struct):
@@ -202,9 +184,6 @@ class _ListHead(Struct):
 
         valid = next_prev_pointer == address and prev_next_pointer == address
         return context.apply(valid)
-
-    def __str__(self):
-        return 'ListHead()'
 LIST_HEAD = _ListHead()
 
 class _SchedInfo(Struct):
@@ -215,9 +194,6 @@ class _SchedInfo(Struct):
                 Field('last_arrival', Int(size = 8, signed = False)),
                 Field('last_queued', Int(size = 8, signed = False))
         ])])
-
-    def __str__(self):
-        return 'SchedInfo()'
 SCHED_INFO = _SchedInfo()
 
 class _SchedStatistics(Struct):
@@ -251,18 +227,15 @@ class _SchedStatistics(Struct):
             Field('nr_wakeups_passive', Int(size = 8, signed = False)),
             Field('nr_wakeups_idle', Int(size = 8, signed = False)),
         ])])
-
-    def __str__(self):
-        return 'SchedStatistics()'
 SCHED_STATISTICS = _SchedStatistics()
 
 class _SchedEntity(Struct):
     def __init__(self):
         super().__init__('sched_entity', [
             FieldGroup([
-                Field('load', LOAD_WEIGHT),    
-                Field('group_node', LIST_HEAD),
+                Field('load', LOAD_WEIGHT),
                 Field('run_node', RB_NODE),
+                Field('group_node', LIST_HEAD),
                 Field('on_rq', Int(signed = False)),
                 Field('exec_start', Int(size = 8, signed = False)),
                 Field('sum_exec_runtime', Int(size = 8, signed = False)),
@@ -283,9 +256,6 @@ class _SchedEntity(Struct):
 	            Field('avg', SCHED_AVG)
             ], True)
         ])
-        
-    def __str__(self):
-        return 'SchedEntity()'
 SCHED_ENTITY = _SchedEntity()
 
 class _SchedRTEntity(Struct):
@@ -296,17 +266,14 @@ class _SchedRTEntity(Struct):
                 Field('timeout', Int(size = None, signed = False)),
                 Field('watchdog_stamp', Int(size = None, signed = False)),
                 Field('time_slice', Int(signed = False)),
-                Field('back', SCHED_RT_ENTITY)
+                Field('back', Pointer(self))
             ]),
             FieldGroup([ #ifdef CONFIG_RT_GROUP_SCHED
-                Field('parent', SCHED_RT_ENTITY),
-                Field('rt_rq', SCHED_RT_ENTITY), #struct rt_rq*
-                Field('my_q', SCHED_RT_ENTITY)  #struct rt_rq*
+                Field('parent', Pointer(self)),
+                Field('rt_rq', Pointer()), #struct rt_rq*
+                Field('my_q', Pointer())  #struct rt_rq*
             ], True)
         ])
-        
-    def __str__(self):
-        return 'SchedRTEntity()'
 SCHED_RT_ENTITY = _SchedRTEntity()
 
 class _KTimeT(Struct): #supposed to be a union
@@ -316,8 +283,6 @@ class _KTimeT(Struct): #supposed to be a union
                 Field('tv64', Int(size = 8))
             ])
         ])
-    def __str__(self):
-        return 'KTimeT()'
 KTIME_T = _KTimeT()
 
 class _HListHead(Struct): #supposed to be a union
@@ -327,43 +292,34 @@ class _HListHead(Struct): #supposed to be a union
 	        Field('first', Pointer()) #struct hlist_node *first;
             ])
         ])
-    def __str__(self):
-        return '_HListHead()'
 HLIST_HEAD = _HListHead()
 
 class _TimerQueueNode(Struct):
     def __init__(self):
-        super().__init__('timerqueue_node', [
-            FieldGroup([
-	Field('node', RB_NODE),
-	Field('expires', KTIME_T)
-            ])
-        ])
-        
-    def __str__(self):
-        return 'TimerQueueNode()'
+        super().__init__('timerqueue_node', [FieldGroup([
+            Field('node', RB_NODE),
+            Field('expires', KTIME_T)
+        ])])
 TIMERQUEUENODE = _TimerQueueNode()
 
 class _HRTimer(Struct):
     def __init__(self):
         super().__init__('hrtimer', [
             FieldGroup([
-	Field('node', TIMERQUEUENODE),
-	Field('_softexpires', KTIME_T),
-	Field('function', Pointer()), # enum hrtimer_restart		(*function)(struct hrtimer *);
-    Field('base', Pointer()), #struct hrtimer_clock_base	*base;
-    Field('state', Int(size = 1, signed = False)),
-    Field('is_rel', Int(size = 1, signed = False))
+                Field('node', TIMERQUEUENODE),
+                Field('_softexpires', KTIME_T),
+                Field('function', Pointer()), # enum hrtimer_restart		(*function)(struct hrtimer *);
+                Field('base', Pointer()), #struct hrtimer_clock_base	*base;
+                Field('state', Int(size = 1, signed = False)),
+                Field('is_rel', Int(size = 1, signed = False))
+            ])
+            #TODO
+        #     FieldGroup([ #ifdef CONFIG_TIMER_STATS
+        # int				start_pid;
+        # void				*start_site;
+        # char				start_comm[16];
+        #     ], True)
         ])
-        #TODO
-    #     FieldGroup([ #ifdef CONFIG_TIMER_STATS
-	# int				start_pid;
-	# void				*start_site;
-	# char				start_comm[16];
-    #     ], True)
-    ])
-    def __str__(self):
-        return 'HRTimer()'
 HRTIMER = _HRTimer()
 
 class _SchedDLEntity(Struct):
@@ -385,9 +341,6 @@ class _SchedDLEntity(Struct):
                 Field('dl_timer', HRTIMER)
             ])
         ])
-        
-    def __str__(self):
-        return 'SchedDLEntity()'
 SCHED_DL_ENTITY = _SchedDLEntity()
 
 class _TaskStruct(Struct):
@@ -433,11 +386,11 @@ class _TaskStruct(Struct):
             FieldGroup([
                 Field('policy', Int(signed = False)),
                 Field('nr_cpus_allowed', Int()),
-               #TODO # cpumask_t cpus_allowed;
+                #TODO # cpumask_t cpus_allowed;
             ]),
             FieldGroup([ #ifdef CONFIG_PREEMPT_RCU
                 Field('rcu_read_lock_nesting', Int()),
-               #TODO #union rcu_special rcu_read_unlock_special;
+                #TODO #union rcu_special rcu_read_unlock_special;
                 Field('rcu_node_entry', LIST_HEAD),
                 Field('rcu_blocked_node', Pointer()) #struct rcu_node*
             ], True),
@@ -454,6 +407,4 @@ class _TaskStruct(Struct):
                 Field('tasks', LIST_HEAD)
             ])
         ])
-    def __str__(self):
-        return 'TaskStruct()'
 TASK_STRUCT = _TaskStruct()

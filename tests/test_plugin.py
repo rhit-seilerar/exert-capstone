@@ -16,19 +16,19 @@ def set_called_back(called_back):
 
 TEST_PREFIX = """
 import tests.test_plugin
-tests.test_plugin.run_test('{}', tests.test_plugin.{})
+tests.test_plugin.run_test('{}', {}, '{}', tests.test_plugin.{})
 """
-def do_test(arch, test):
-    print(TEST_PREFIX.format(arch, test.__name__))
-    subprocess.run(['python'], input = TEST_PREFIX.format(arch, test.__name__),
-        check = True, text = True)
+def do_test(test, arch, generic = True, kernel = None):
+    formatted = TEST_PREFIX.format(arch, generic, kernel, test.__name__)
+    print(formatted)
+    subprocess.run(['python'], input = formatted, check = True, text = True)
 
-def run_test(arch, test):
+def run_test(arch, generic, kernel, test):
     set_called_back(False)
     def callback(panda, cpu):
         set_called_back(True)
         test(panda, cpu)
-    plugin.run(arch = arch, callback = callback)
+    plugin.run(arch = arch, generic = generic, kernel = kernel, callback = callback)
     assert CALLED_BACK
 
 def callback_test_ground_truth_tasklist(panda, cpu):
@@ -40,7 +40,7 @@ def callback_test_ground_truth_tasklist(panda, cpu):
     parent_addr = read_word(init_task, parent_offset)
     assert parent_addr == init_addr
 def test_ground_truth_tasklist():
-    do_test('i386', callback_test_ground_truth_tasklist)
+    do_test(callback_test_ground_truth_tasklist, 'i386')
 
 def callback_test_get_current_from_stack(panda, cpu):
     sp = panda.arch.get_reg(cpu, 'SP')
@@ -54,8 +54,9 @@ def callback_test_get_current_from_stack(panda, cpu):
     task_stack = read_word(task, 4)
     assert task_stack == thread_info_addr
 def test_get_current_from_stack():
-    do_test('arm', callback_test_get_current_from_stack)
+    do_test(callback_test_get_current_from_stack, 'arm')
 
-def _test_nongeneric_kernel():
-    plugin.run(arch='armv5l', generic=False, kernel='./vmlinuz')
-    assert True
+def callback_test_nongeneric_kernel(panda, cpu):
+    pass
+def test_nongeneric_kernel():
+    do_test(callback_test_nongeneric_kernel, 'armv5l', generic=False, kernel='./vmlinuz')
