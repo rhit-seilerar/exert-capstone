@@ -3,8 +3,8 @@ from exert.usermode.context import Context
 class Rule:
     _cache = {}
 
-    def __init__(self, key_val = 'Rule'):
-        self.str = key_val
+    def __init__(self):
+        self.key = None
 
     def test(self, context, address, clear_cache = False):
         return self.test_all(context, {address}, clear_cache)
@@ -27,7 +27,6 @@ class Rule:
                 # We may end up testing ourselves, so temporarily store something
                 # to pass the above check
                 Rule._cache[key] = set()
-                # print(f'Testing {str(self)}')
                 Rule._cache[key] = self._test(context, address)
             results |= Rule._cache[key]
 
@@ -36,20 +35,28 @@ class Rule:
     def _test(self, context, address):
         return {address}
 
+    def _get_key(self):
+        return 'Rule'
+
     def __str__(self):
-        return self.str
+        if not self.key:
+            self.key = self._get_key()
+        return self.key
 
 class Int(Rule):
     def __init__(self, size = 4, signed = True, min_value = None, max_value = None):
-        super().__init__(f'Int({size}, {signed}, {min_value}, {max_value})')
+        super().__init__()
         self.size = size
         self.signed = signed
         self.min_value = min_value
-        self.max_value = max_value
+        self.max_value = max_value if max_value is not None else min_value
+
+    def _get_key(self):
+        return f'Int({self.size}, {self.signed}, {self.min_value}, {self.max_value})'
 
     def _test(self, context, address):
         size = context.word_size if self.size is None else self.size
-        val, address = context.read_int(address, size, self.signed)
+        val, address = context.next_int(address, size, self.signed)
         if val is None:
             return set()
         if self.min_value is not None and val < self.min_value:
@@ -61,25 +68,33 @@ class Int(Rule):
 class Bool(Int):
     def __init__(self):
         super().__init__(size = 1, min_value = 0, max_value = 1)
-        self.str = 'Bool'
+
+    def _get_key(self):
+        return 'Bool'
 
 class Pointer(Rule):
     def __init__(self, rule = None):
-        super().__init__(f'Pointer({str(rule)})')
+        super().__init__()
         self.rule = rule
 
+    def _get_key(self):
+        return f'Pointer({str(self.rule)})'
+
     def _test(self, context, address):
-        pointer, address = context.read_pointer(address)
-        if not pointer or len(self.rule.test(context, pointer)) == 0:
+        pointer, address = context.next_pointer(address)
+        if pointer is None or (self.rule and not self.rule.test(context, pointer)):
             return set()
         return {address}
 
 class Array(Rule):
     def __init__(self, rule, count_min, count_max):
-        super().__init__(f'Array({str(rule)}, {count_min}, {count_max})')
+        super().__init__()
         self.rule = rule
         self.count_min = count_min
         self.count_max = count_max
+
+    def _get_key(self):
+        return f'Array({str(self.rule)}, {self.count_min}, {self.count_max})'
 
     def _test(self, context, address):
         passing = {address}
@@ -94,9 +109,12 @@ class Array(Rule):
 
 class Field(Rule):
     def __init__(self, name, rule):
-        super().__init__(f"Field('{name}', {str(rule)})")
+        super().__init__()
         self.name = name
         self.rule = rule
+
+    def _get_key(self):
+        return f"Field('{self.name}', {str(self.rule)})"
 
     def _test(self, context, address):
         return self.rule.test(context, address)
@@ -108,6 +126,12 @@ class FieldGroup:
             assert isinstance(field, Field)
         self.condition = condition
 
+    def test_all(self, context, addresses):
+        passing = set()
+        for field in self.fields:
+            passing |= field.test_all(context, addresses)
+        return passing
+
     def __str__(self):
         fields_str = ', '.join(str(f) for f in self.fields)
         cond_str = 'None' if self.condition is None else f"'{self.condition}'"
@@ -115,23 +139,26 @@ class FieldGroup:
 
 class Struct(Rule):
     def __init__(self, name, field_groups):
-        super().__init__(f"Struct('{name}', [{', '.join([str(g) for g in field_groups])}])")
+        super().__init__()
         self.name = name
         self.field_groups = field_groups
+
+    def _get_key(self):
+        groups_str = ', '.join([str(g) for g in self.field_groups])
+        return f"Struct('{self.name}', [{groups_str}])"
 
     def _test(self, context, address):
         passing = {address}
         for group in self.field_groups:
             if group.condition:
-                passing |= group.fields.test_all(context, passing)
+                passing |= group.test_all(context, passing)
             else:
-                passing = group.fields.test_all(context, passing)
+                passing = group.test_all(context, passing)
         return passing
 
 class _Struct(Struct):
-    def __init__(self, name, field_groups):
-        super().__init__(name, field_groups)
-        self.str = f'{self.__class__.__name__}'
+    def _get_key(self):
+        return f'{self.__class__.__name__}'
 
 class _Atomic(_Struct):
     def __init__(self):
@@ -185,23 +212,23 @@ class _ListHead(_Struct):
 
     def _test(self, context, address):
         original = address
-        next_pointer, address = context.read_pointer(address)
-        if not next_pointer:
+        next_pointer, address = context.next_pointer(address)
+        if next_pointer is None:
             return set()
         next_prev_address = next_pointer + context.word_size
         next_prev_pointer = context.read_pointer(next_prev_address)
         if next_prev_pointer != original:
             return set()
 
-        prev_pointer, address = context.read_pointer(address)
-        if not prev_pointer:
+        prev_pointer, address = context.next_pointer(address)
+        if prev_pointer is None:
             return set()
         prev_next_address = prev_pointer + 0
         prev_next_pointer = context.read_pointer(prev_next_address)
         if prev_next_pointer != original:
             return set()
 
-        return self.test(context, address)
+        return {address}
 LIST_HEAD = _ListHead()
 
 class _SchedInfo(_Struct):
