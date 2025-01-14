@@ -508,7 +508,7 @@ class _SchedEntity(_Struct):
             FieldGroup([
 	            Field('avg', SCHED_AVG)
             ], 'CONFIG_SMP')
-        # ])
+        ])
 SCHED_ENTITY = _SchedEntity()
 
 class _SchedRTEntity(_Struct):
@@ -585,9 +585,9 @@ class _CFSRQ(_Struct):
                 Field('exec_clock', Int(size = 8, signed = False)),
                 Field('min_vruntime', Int(size = 8, signed = False))
             ]),
-            FieldGroup([#ifndef CONFIG_64BIT
+            FieldGroup([
                 Field('min_vruntime_copy', Int(size = 8, signed = False))
-            ]),
+            ], '!CONFIG_64BIT'),
             FieldGroup([
                 Field('tasks_timeline', RB_ROOT),
                 Field('rb_leftmost', Pointer(RB_NODE))
