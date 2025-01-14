@@ -274,53 +274,6 @@ class _SchedStatistics(_Struct):
         ])])
 SCHED_STATISTICS = _SchedStatistics()
 
-class _SchedEntity(_Struct):
-    def __init__(self):
-        super().__init__('sched_entity', [
-            FieldGroup([
-                Field('load', LOAD_WEIGHT),
-                Field('run_node', RB_NODE),
-                Field('group_node', LIST_HEAD),
-                Field('on_rq', Int(signed = False)),
-                Field('exec_start', Int(size = 8, signed = False)),
-                Field('sum_exec_runtime', Int(size = 8, signed = False)),
-                Field('vruntime', Int(size = 8, signed = False)),
-                Field('prev_sum_exec_runtime', Int(size = 8, signed = False)),
-                Field('nr_migrations', Int(size = 8, signed = False))
-            ]),
-            FieldGroup([
-                Field('statistics', SCHED_STATISTICS)
-            ], 'CONFIG_SCHEDSTATS'),
-            FieldGroup([
-                Field('depth', Int()),
-                Field('parent', Pointer(self)),
-                Field('cfs_rq', Pointer(CFSRQ)), #struct cfs_rq*
-                Field('my_q', Pointer()) #struct cfs_rq*
-            ], 'CONFIG_FAIR_GROUP_SCHED'),
-            FieldGroup([
-	            Field('avg', SCHED_AVG)
-            ], 'CONFIG_SMP')
-        ])
-SCHED_ENTITY = _SchedEntity()
-
-class _SchedRTEntity(_Struct):
-    def __init__(self):
-        super().__init__('sched_rt_entity', [
-            FieldGroup([
-                Field('run_list', LIST_HEAD),
-                Field('timeout', Int(size = None, signed = False)),
-                Field('watchdog_stamp', Int(size = None, signed = False)),
-                Field('time_slice', Int(signed = False)),
-                Field('back', Pointer(self))
-            ]),
-            FieldGroup([
-                Field('parent', Pointer(self)),
-                Field('rt_rq', Pointer()), #struct rt_rq*
-                Field('my_q', Pointer())  #struct rt_rq*
-            ], 'CONFIG_RT_GROUP_SCHED')
-        ])
-SCHED_RT_ENTITY = _SchedRTEntity()
-
 class _KTimeT(_Struct): #supposed to be a union
     def __init__(self):
         super().__init__('timerqueue_node', [
@@ -383,7 +336,6 @@ class _StackTrace(_Struct):
         ])
 STACK_TRACE = _StackTrace()
 
-
 class _LockClass(_Struct):
     def __init__(self):
         super().__init__('lock_class', [
@@ -424,7 +376,6 @@ class _LockdepMap(_Struct):
             ],'CONFIG_LOCK_STAT')
 ])
 LOCKDEP_MAP = _LockdepMap()
-
 
 class _ArchSpinlockT(_Struct):
     def __init__(self):
@@ -467,6 +418,40 @@ class _SeqCountT(_Struct):
         ])
 SEQCOUNT_T = _SeqCountT() # seqcount_t
 
+class _HRTimerClockBase(_Struct):
+    def __init__(self):
+        super().__init__('hrtimer_clock_base', [
+            FieldGroup([
+                # Field('cpu_base', Pointer(HRTIMER_CPU_BASE)),
+                Field('cpu_base', Pointer()),
+                Field('index', Int()),
+                Field('clockid', Int()), #clockid_t
+                Field('get_time', Pointer()), #ktime_t			(*get_time)(void);
+                Field('offset', KTIME_T)
+            ])
+        ])
+#TODO this is an  __attribute__((__aligned__(HRTIMER_CLOCK_BASE_ALIGN)));
+HRTIMER_CLOCK_BASE = _HRTimerClockBase()
+
+class _HRTimer(_Struct):
+    def __init__(self):
+        super().__init__('hrtimer', [
+            FieldGroup([
+                Field('node', TIMERQUEUENODE),
+                Field('_softexpires', KTIME_T),
+                Field('function', Pointer()), # enum hrtimer_restart		(*function)(struct hrtimer *);
+                Field('base', Pointer(HRTIMER_CLOCK_BASE)),
+                Field('state', Int(size = 1, signed = False)),
+                Field('is_rel', Int(size = 1, signed = False))
+            ]),
+            FieldGroup([
+                Field('start_pid', Int()),
+                Field('start_site', Pointer()),
+                Field('start_comm', Array(Int(size = 1), 16, 16))
+            ], 'CONFIG_TIMER_STATS')
+        ])
+HRTIMER = _HRTimer()
+
 class _HrTimerCpuBase(_Struct):
     def __init__(self):
         super().__init__('hrtimer_cpu_base', [
@@ -497,24 +482,52 @@ class _HrTimerCpuBase(_Struct):
         ])
 HRTIMER_CPU_BASE = _HrTimerCpuBase() #TODO this is an  ____cacheline_aligned;
 
-class _HRTimer(_Struct):
+class _SchedEntity(_Struct):
     def __init__(self):
-        super().__init__('hrtimer', [
+        super().__init__('sched_entity', [
             FieldGroup([
-                Field('node', TIMERQUEUENODE),
-                Field('_softexpires', KTIME_T),
-                Field('function', Pointer()), # enum hrtimer_restart		(*function)(struct hrtimer *);
-                Field('base', Pointer(HRTIMER_CLOCK_BASE)),
-                Field('state', Int(size = 1, signed = False)),
-                Field('is_rel', Int(size = 1, signed = False))
+                Field('load', LOAD_WEIGHT),
+                Field('run_node', RB_NODE),
+                Field('group_node', LIST_HEAD),
+                Field('on_rq', Int(signed = False)),
+                Field('exec_start', Int(size = 8, signed = False)),
+                Field('sum_exec_runtime', Int(size = 8, signed = False)),
+                Field('vruntime', Int(size = 8, signed = False)),
+                Field('prev_sum_exec_runtime', Int(size = 8, signed = False)),
+                Field('nr_migrations', Int(size = 8, signed = False))
             ]),
             FieldGroup([
-                Field('start_pid', Int()),
-                Field('start_site', Pointer()),
-                Field('start_comm', Array(Int(size = 1), 16, 16))
-            ], 'CONFIG_TIMER_STATS')
+                Field('statistics', SCHED_STATISTICS)
+            ], 'CONFIG_SCHEDSTATS'),
+            FieldGroup([
+                Field('depth', Int()),
+                Field('parent', Pointer(self)),
+                Field('cfs_rq', Pointer()), #struct cfs_rq*
+                Field('my_q', Pointer()) #struct cfs_rq*
+            ], 'CONFIG_FAIR_GROUP_SCHED'),
+            FieldGroup([
+	            Field('avg', SCHED_AVG)
+            ], 'CONFIG_SMP')
+        # ])
+SCHED_ENTITY = _SchedEntity()
+
+class _SchedRTEntity(_Struct):
+    def __init__(self):
+        super().__init__('sched_rt_entity', [
+            FieldGroup([
+                Field('run_list', LIST_HEAD),
+                Field('timeout', Int(size = None, signed = False)),
+                Field('watchdog_stamp', Int(size = None, signed = False)),
+                Field('time_slice', Int(signed = False)),
+                Field('back', Pointer(self))
+            ]),
+            FieldGroup([
+                Field('parent', Pointer(self)),
+                Field('rt_rq', Pointer()), #struct rt_rq*
+                Field('my_q', Pointer())  #struct rt_rq*
+            ], 'CONFIG_RT_GROUP_SCHED')
         ])
-HRTIMER = _HRTimer()
+SCHED_RT_ENTITY = _SchedRTEntity()
 
 class _SchedDLEntity(_Struct):
     def __init__(self):
@@ -546,73 +559,6 @@ class _CpuMask(_Struct):
             Field('bits', Array(Int(size = None, signed = False), 1, 64))
         ])])
 CPUMASK = _CpuMask()
-
-class _TaskStruct(_Struct):
-    def __init__(self):
-        super().__init__('task_struct', [
-            FieldGroup([
-                Field('state', Int(size = None)), # -1 unrunnable, 0 runnable, >0 stopped
-	            Field('stack', Pointer()),
-                Field('usage', ATOMIC),
-                Field('flags', Int(signed = False)), #per process flags, defined below
-                Field('ptrace', Int(signed = False))
-            ]),
-            FieldGroup([
-                Field('wake_entry', LLIST_NODE),
-                Field('on_cpu', Int()),
-                Field('wakee_flips', Int(signed = False)),
-                Field('wakee_flip_decay_ts', Int(size = None, signed = False)),
-                Field('last_wakee', Pointer(self)),
-                Field('wake_cpu', Int())
-            ], 'CONFIG_SMP'),
-            FieldGroup([
-                Field('on_rq', Int()),
-                Field('prio', Int()),
-                Field('static_prio', Int()),
-                Field('normal_prio', Int()),
-                Field('rt_priority', Int(signed = False)),
-                Field('sched_class', Pointer()), #struct sched_class*
-                Field('se', SCHED_ENTITY),
-                Field('rt', SCHED_RT_ENTITY)
-            ]),
-            FieldGroup([
-                Field('task_group', Pointer()) #struct task_group*
-            ], 'CONFIG_CGROUP_SCHED'),
-            FieldGroup([
-                Field('dl', SCHED_DL_ENTITY)
-            ]),
-            FieldGroup([
-                Field('preempt_notifiers', HLIST_HEAD)
-            ], 'CONFIG_PREEMPT_NOTIFIERS'),
-            FieldGroup([
-                Field('btrace_seq', Int(signed = False))
-            ], 'CONFIG_BLK_DEV_IO_TRACE'),
-            FieldGroup([
-                Field('policy', Int(signed = False)),
-                Field('nr_cpus_allowed', Int()),
-                Field('cpus_allowed', CPUMASK)
-            ]),
-            FieldGroup([
-                Field('rcu_read_lock_nesting', Int()),
-                #TODO this should be 'union rcu_special'
-                Field('rcu_read_unlock_special', Int(signed = False)),
-                Field('rcu_node_entry', LIST_HEAD),
-                Field('rcu_blocked_node', Pointer()) #struct rcu_node*
-            ], 'CONFIG_PREEMPT_RCU'),
-            FieldGroup([
-                Field('rcu_tasks_nvcsw', Int(size = None, signed = False)),
-                Field('rcu_tasks_holdout', Bool()),
-                Field('rcu_tasks_holdout_list', LIST_HEAD),
-                Field('rcu_tasks_idle_cpu', Int())
-            ], 'CONFIG_TASKS_RCU'),
-            FieldGroup([
-                Field('sched_info', SCHED_INFO)
-            ], 'CONFIG_SCHED_INFO'),
-            FieldGroup([
-                Field('tasks', LIST_HEAD)
-            ])
-        ])
-TASK_STRUCT = _TaskStruct()
 
 class _LoadWeight(_Struct):
     def __init__(self):
@@ -702,16 +648,69 @@ class _CFSRQ(_Struct):
         ])
 CFSRQ = _CFSRQ()
 
-class _HRTimerClockBase(_Struct):
+class _TaskStruct(_Struct):
     def __init__(self):
-        super().__init__('hrtimer_clock_base', [
+        super().__init__('task_struct', [
             FieldGroup([
-                Field('cpu_base', Pointer(HRTIMER_CPU_BASE)),
-                Field('index', Int()),
-                Field('clockid', Int()), #clockid_t
-                Field('get_time', Pointer()), #ktime_t			(*get_time)(void);
-                Field('offset', KTIME_T)
+                Field('state', Int(size = None)), # -1 unrunnable, 0 runnable, >0 stopped
+	            Field('stack', Pointer()),
+                Field('usage', ATOMIC),
+                Field('flags', Int(signed = False)), #per process flags, defined below
+                Field('ptrace', Int(signed = False))
+            ]),
+            FieldGroup([
+                Field('wake_entry', LLIST_NODE),
+                Field('on_cpu', Int()),
+                Field('wakee_flips', Int(signed = False)),
+                Field('wakee_flip_decay_ts', Int(size = None, signed = False)),
+                Field('last_wakee', Pointer(self)),
+                Field('wake_cpu', Int())
+            ], 'CONFIG_SMP'),
+            FieldGroup([
+                Field('on_rq', Int()),
+                Field('prio', Int()),
+                Field('static_prio', Int()),
+                Field('normal_prio', Int()),
+                Field('rt_priority', Int(signed = False)),
+                Field('sched_class', Pointer()), #struct sched_class*
+                Field('se', SCHED_ENTITY),
+                Field('rt', SCHED_RT_ENTITY)
+            ]),
+            FieldGroup([
+                Field('task_group', Pointer()) #struct task_group*
+            ], 'CONFIG_CGROUP_SCHED'),
+            FieldGroup([
+                Field('dl', SCHED_DL_ENTITY)
+            ]),
+            FieldGroup([
+                Field('preempt_notifiers', HLIST_HEAD)
+            ], 'CONFIG_PREEMPT_NOTIFIERS'),
+            FieldGroup([
+                Field('btrace_seq', Int(signed = False))
+            ], 'CONFIG_BLK_DEV_IO_TRACE'),
+            FieldGroup([
+                Field('policy', Int(signed = False)),
+                Field('nr_cpus_allowed', Int()),
+                Field('cpus_allowed', CPUMASK)
+            ]),
+            FieldGroup([
+                Field('rcu_read_lock_nesting', Int()),
+                #TODO this should be 'union rcu_special'
+                Field('rcu_read_unlock_special', Int(signed = False)),
+                Field('rcu_node_entry', LIST_HEAD),
+                Field('rcu_blocked_node', Pointer()) #struct rcu_node*
+            ], 'CONFIG_PREEMPT_RCU'),
+            FieldGroup([
+                Field('rcu_tasks_nvcsw', Int(size = None, signed = False)),
+                Field('rcu_tasks_holdout', Bool()),
+                Field('rcu_tasks_holdout_list', LIST_HEAD),
+                Field('rcu_tasks_idle_cpu', Int())
+            ], 'CONFIG_TASKS_RCU'),
+            FieldGroup([
+                Field('sched_info', SCHED_INFO)
+            ], 'CONFIG_SCHED_INFO'),
+            FieldGroup([
+                Field('tasks', LIST_HEAD)
             ])
         ])
-#TODO this is an  __attribute__((__aligned__(HRTIMER_CLOCK_BASE_ALIGN)));
-HRTIMER_CLOCK_BASE = _HRTimerClockBase()
+TASK_STRUCT = _TaskStruct()
