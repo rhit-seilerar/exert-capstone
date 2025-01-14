@@ -1,86 +1,99 @@
 from exert.usermode import rules
-from exert.usermode.rules import Rule, Int, Pointer, Field, FieldGroup, Struct
-from exert.usermode.context import Context
-from tests.test_context import DummyPanda
+from exert.usermode.rules import Rule, Bool, Int, Pointer, Array, Field, FieldGroup, Struct
+from tests.test_context import DummyContext
+
+def results(rule, buf = b'', address = 0x0, bits = 32):
+    return rule.test(DummyContext(buf, bits = bits), address, True)
 
 def test_base():
-    assert Rule().ctest(Context(DummyPanda(), 0x0))
+    out = Rule().test(DummyContext(), 0x5, True)
+    assert out == {0x5}
 
 def test_cache():
     class DummyRule(Rule):
         def __init__(self):
+            super().__init__()
             self.count = 0
 
-        def _test(self, context):
-            self.count += 1
-            return self._cache[(self, context.address)] and self.count == 1
+        def _get_str(self):
+            return 'DummyRule'
 
-    context = Context(DummyPanda(), 0x0)
+        def _test(self, context, address):
+            self.count += 1
+            return set() if self.count > 1 else {address}
+
     rule = DummyRule()
-    assert rule.test(context)
-    assert rule.test(context)
-    assert not rule.ctest(context)
+    assert rule.test(DummyContext(), 0x0, False) # count should be 0
+    assert rule.test(DummyContext(), 0x0, False) # count should be 1, but the result is cached
+    assert not rule.test(DummyContext(), 0x0, True)  # cache is empty, count is 1 -> fail
+
+def test_bool():
+    buf = b'\x00\x01\x02\x80'
+    assert results(Bool(), buf, 0x0) == {1}
+    assert results(Bool(), buf, 0x1) == {2}
+    assert not results(Bool(), buf, 0x2)
+    assert not results(Bool(), buf, 0x3)
 
 def test_int():
-    context = Context(DummyPanda(buf = b'\x00\x00\x00\x80\xFF\xFF\xFF\xFF'), 0x0)
-    assert not Int(-1, 4, True).ctest(context)
-    assert Int(2147483648, 4, False).ctest(context)
-    assert Int(-1, 4, True).ctest(context)
-    assert not Int(-1, 4, True).ctest(context)
+    buf = b'\x00\x00\x00\x80\xFF\xFF\xFF\xFF'
+    assert not results(Int(4, True, min_value = -1), buf, 0x0)
+    assert results(Int(4, False, min_value = 2147483648), buf, 0x0) == {4}
+    assert results(Int(4, True, min_value = -1), buf, 0x4) == {8}
+    assert not results(Int(4, True, min_value = -1), buf, 0x8)
+
+def test_long():
+    buf = b'\x01\x00\x00\x00\x00\x00\x00\x80'
+    assert results(Int(None, True, 1), buf, 0x0, 32) == {4}
+    assert results(Int(None, False, 0x8000000000000001), buf, 0x0, 64) == {8}
 
 def test_pointer():
-    context = Context(DummyPanda(buf = b'\x04\x00\x00\x00\x00\x00\x00\x00'), 0x0)
-    assert not Pointer(Int(2)).ctest(context)
-    assert Pointer(Int(0)).ctest(context)
-    assert Pointer(Pointer(Int(0))).ctest(context)
-    assert not Pointer(Int(2)).ctest(context)
+    buf = b'\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80'
+    assert not results(Pointer(Int(min_value = 2)), buf, 0x0)
+    assert results(Pointer(Int(min_value = 0)), buf, 0x0) == {4}
+    assert results(Pointer(Pointer(Int(min_value = 0))), buf, 0x4) == {8}
+    assert not results(Pointer(Int(min_value = 2)), buf, 0x8)
+    assert results(Pointer(Int(None, False, min_value = 0x8000000000000000)), buf, 0x0, 64)
 
-def test_field_group():
-    context = Context(DummyPanda(buf = b'\x00\x00\x00\x00\x00\x00\x00\x00'), 0x0)
-    # Passes when empty
-    assert FieldGroup([]).ctest(context)
-    # Passes when all of two fields passes
-    assert FieldGroup([Field('',Rule()), Field('',Rule())]).ctest(context)
-    # Fails when one of the fields fails
-    assert not FieldGroup([Field('',Rule()), Field('',Int(3))]).ctest(context)
+def test_array():
+    array = Array(Int(1, min_value = 2), 2, 4)
+    assert not results(array, b'\x02\x03')
+    assert results(array, b'\x02\x02\x03') == {2}
+    assert results(array, b'\x02\x02\x02\x03') == {2, 3}
+    assert results(array, b'\x02\x02\x02\x02\x03') == {2, 3, 4}
+    assert results(array, b'\x02\x02\x02\x02\x02') == {2, 3, 4}
+    assert results(array, b'\x02\x02\x03\x02\x02') == {2}
 
 def test_struct():
-    context = Context(DummyPanda(buf = b'\x00\x00\x00\x00\x00\x00\x00\x00'), 0x0)
-    passing_group = FieldGroup([])
-    failing_group = FieldGroup([Field('',Int(3))])
-    passing_group_opt = FieldGroup([], True)
-    failing_group_opt = FieldGroup([Field('',Int(3))], True)
-    # Base case - len(groups) == 0
-    assert Struct('', [passing_group]).ctest(context)
-    # test passing required and true
-    assert Struct('', [passing_group, passing_group]).ctest(context)
-    # test passing required and false
-    assert not Struct('', [passing_group, failing_group]).ctest(context)
-    # test failing required and true
-    assert not Struct('', [failing_group, passing_group]).ctest(context)
-    # test failing required and false
-    assert not Struct('', [failing_group, failing_group]).ctest(context)
-    # test passing optional and true
-    assert Struct('', [passing_group_opt, passing_group]).ctest(context)
-    # test passing optional and false
-    assert not Struct('', [passing_group_opt, failing_group]).ctest(context)
-    # test failing optional and true
-    assert Struct('', [failing_group_opt, passing_group]).ctest(context)
-    # test failing optional and false
-    assert not Struct('', [failing_group_opt, failing_group]).ctest(context)
+    struct = Struct('', [
+        FieldGroup([Field('', Int(size = 1, min_value = 3))], 'COND1'),
+        FieldGroup([Field('', Int(size = 1, min_value = 5))]),
+        FieldGroup([Field('', Int(size = 1, min_value = 9))], 'COND2')
+    ])
+    assert not results(struct, b'')                   # ___
+    assert not results(struct, b'\x09')               # __9
+    assert results(struct, b'\x05') == {1}            # _5_
+    assert results(struct, b'\x05\x09') == {1, 2}     # _59
+    assert not results(struct, b'\x03')               # 3__
+    assert not results(struct, b'\x03\x09')           # 3_9
+    assert results(struct, b'\x03\x05') == {2}        # 35_
+    assert results(struct, b'\x03\x05\x09') == {2, 3} # 359
+
+    fully_opt = Struct('', [
+        FieldGroup([Field('', Int(size = 1, min_value = 2))], 'COND1'),
+        FieldGroup([Field('', Int(size = 1, min_value = 4))], 'COND2')
+    ])
+    assert results(fully_opt, b'') == {0}
+    assert results(fully_opt, b'\x02') == {0, 1}
+    assert results(fully_opt, b'\x04') == {0, 1}
+    assert results(fully_opt, b'\x02\x04') == {0, 1, 2}
 
 def test_list_head():
-    context = Context(DummyPanda(buf = b'\x00\x60\x00\x00\x00\x00\x00\x00'), 0x0)
-    assert not rules.LIST_HEAD.ctest(context) #no valid next pointer
-    context = Context(DummyPanda(buf = b'\x00\x00\x00\x00\x00\x07\x00\x00'), 0x0)
-    assert not rules.LIST_HEAD.ctest(context) #no valid prev pointer
-    context = Context(DummyPanda(buf = b'\x04\x00\x00\x00\x00\x00\x00\x00'), 0x0)
-    assert not rules.LIST_HEAD.ctest(context) #next doesnt point at current
-    context = Context(DummyPanda(buf = b'\x00\x00\x00\x00\x04\x00\x00\x00'), 0x0)
-    assert not rules.LIST_HEAD.ctest(context) #prev doesnt point back at current
-    context = Context(DummyPanda(buf = b'\x00\x00\x00\x00\x00\x00\x00\x00'), 0x0)
-    assert rules.LIST_HEAD.ctest(context) #valid
-
-def test_task_struct():
-    context = Context(DummyPanda(buf = bytes(4096)), 0x0)
-    assert rules.TASK_STRUCT.ctest(context)
+    assert not results(rules.LIST_HEAD, b'') # no next data
+    assert not results(rules.LIST_HEAD, b'\x08\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00', 0x8)
+    assert not results(rules.LIST_HEAD,
+        b'\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00', 0x8)
+    assert not results(rules.LIST_HEAD, b'\x00\x60\x00\x00\x00\x00\x00\x00') # no next ptr
+    assert not results(rules.LIST_HEAD, b'\x00\x00\x00\x00\x00\x07\x00\x00') # no prev ptr
+    assert not results(rules.LIST_HEAD, b'\x04\x00\x00\x00\x00\x00\x00\x00') # bad next link
+    assert not results(rules.LIST_HEAD, b'\x00\x00\x00\x00\x04\x00\x00\x00') # bad prev link
+    assert results(rules.LIST_HEAD, b'\x00\x00\x00\x00\x00\x00\x00\x00') # valid
