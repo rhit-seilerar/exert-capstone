@@ -172,7 +172,7 @@ class _SchedAvg(_Struct):
             Field('util_sum', Int(signed = False)),
             Field('period_contrib', Int(signed = False)),
             Field('load_avg', Int(size = None, signed = False)),
-            Field('util_avg', Int(size = None, signed = False)),
+            Field('util_avg', Int(size = None, signed = False))
         ])])
 SCHED_AVG = _SchedAvg()
 
@@ -243,7 +243,7 @@ class _SchedStatistics(_Struct):
             Field('nr_wakeups_affine', Int(size = 8, signed = False)),
             Field('nr_wakeups_affine_attempts', Int(size = 8, signed = False)),
             Field('nr_wakeups_passive', Int(size = 8, signed = False)),
-            Field('nr_wakeups_idle', Int(size = 8, signed = False)),
+            Field('nr_wakeups_idle', Int(size = 8, signed = False))
         ])])
 SCHED_STATISTICS = _SchedStatistics()
 
@@ -267,7 +267,7 @@ class _SchedEntity(_Struct):
             FieldGroup([
                 Field('depth', Int()),
                 Field('parent', Pointer(self)),
-                Field('cfs_rq', Pointer()), #struct cfs_rq*
+                Field('cfs_rq', Pointer(CFSRQ)), #struct cfs_rq*
                 Field('my_q', Pointer()) #struct cfs_rq*
             ], 'CONFIG_FAIR_GROUP_SCHED'),
             FieldGroup([
@@ -303,11 +303,21 @@ class _KTimeT(_Struct): #supposed to be a union
         ])
 KTIME_T = _KTimeT()
 
+class _HListNode(_Struct): #supposed to be a union
+    def __init__(self):
+        super().__init__('hlist_node', [
+            FieldGroup([
+	        Field('next', Pointer(self)),
+	        Field('pprev', Pointer(Pointer(self)))
+            ])
+        ])
+HLIST_NODE = _HListNode()
+
 class _HListHead(_Struct): #supposed to be a union
     def __init__(self):
         super().__init__('hlist_head', [
             FieldGroup([
-	        Field('first', Pointer()) #struct hlist_node *first;
+	        Field('first', Pointer(HLIST_NODE)) #struct hlist_node *first;
             ])
         ])
 HLIST_HEAD = _HListHead()
@@ -320,6 +330,144 @@ class _TimerQueueNode(_Struct):
         ])])
 TIMERQUEUENODE = _TimerQueueNode()
 
+class _LockdepSubclassKey(_Struct):
+    def __init__(self):
+        super().__init__('lockdep_subclass_key', [FieldGroup([
+            Field('__one_byte', Int(size = 1))
+        ])])
+LOCKDEP_SUBCLASS_KEY = _LockdepSubclassKey() #TODO  __attribute__ ((__packed__));
+
+class _LockClassKey(_Struct):
+    def __init__(self):
+        super().__init__('lock_class_key', [FieldGroup([
+            Field('subkeys', Array(LOCKDEP_SUBCLASS_KEY, 8, 8))
+        ])])
+LOCK_CLASS_KEY = _LockClassKey()
+
+class _StackTrace(_Struct):
+    def __init__(self):
+        super().__init__('stack_trace', [
+            FieldGroup([
+                Field('nr_entries', Int(signed = False)),
+                Field('max_entries', Int(signed = False)),
+                Field('entries', Pointer(Int(size = None, signed = False))),
+                Field('skip', Int())
+            ])
+        ])
+STACK_TRACE = _StackTrace()
+
+
+class _LockClass(_Struct):
+    def __init__(self):
+        super().__init__('lock_class', [
+            FieldGroup([
+                Field('hash_entry', LIST_HEAD),
+                Field('lock_entry', LIST_HEAD),
+                Field('key', Pointer(LOCKDEP_SUBCLASS_KEY)),
+                Field('subclass', Int(signed = False)),
+                Field('dep_gen_id', Int(signed = False)),
+                Field('usage_mask', Int(size = None, signed = False)),
+                Field('usage_traces', Array(STACK_TRACE, 13,13)),
+                Field('locks_after', LIST_HEAD),
+                Field('locks_before', LIST_HEAD),
+                Field('version', Int(signed = False)),
+                Field('ops', Int(size = None, signed = False)),
+                Field('name', Pointer(Int(size = 1))),
+                Field('name_version', Int())
+            ]),
+            FieldGroup([
+                Field('hash_entry', LIST_HEAD),
+                Field('contention_point', Array(Int(size = None, signed = False), 4, 4)),
+                Field('contending_point', Array(Int(size = None, signed = False), 4, 4))
+            ], 'CONFIG_LOCK_STAT')
+        ])
+LOCK_CLASS = _LockClass()
+
+class _LockdepMap(_Struct):
+    def __init__(self):
+        super().__init__('lockdep_map', [
+            FieldGroup([
+                Field('key', Pointer(LOCK_CLASS_KEY)),
+                Field('class_cache', Array(Pointer(LOCK_CLASS), 2, 2)),
+                Field('name', Pointer(Int(size = 1)))
+            ]),
+        FieldGroup([
+            Field('cpu', Int()),
+            Field('ip', Int(size = None, signed = False))
+            ],'CONFIG_LOCK_STAT')
+])
+LOCKDEP_MAP = _LockdepMap()
+
+
+class _ArchSpinlockT(_Struct):
+    def __init__(self):
+        super().__init__('arch_spinlock_t', [
+             FieldGroup([
+                Field('slock', Int(signed = False))
+            ])#please look at the documentation for arch_spinlock_t
+])
+ARCH_SPINLOCK_T = _ArchSpinlockT()
+
+class _RawSpinlockT(_Struct):
+    def __init__(self):
+        super().__init__('raw_spinlock_t', [
+            FieldGroup([
+                Field('raw_lock', ARCH_SPINLOCK_T)
+            ]),
+            FieldGroup([
+                Field('break_lock', Int(signed = False))
+            ], 'CONFIG_GENERIC_LOCKBREAK'),
+            FieldGroup([
+                Field('magic', Int(signed = False)),
+                Field('owner_cpu', Int(signed = False)),
+                Field('owner', Pointer())
+            ], 'CONFIG_DEBUG_SPINLOCK'),
+            FieldGroup([
+                Field('dep_map', LOCKDEP_MAP)
+            ], 'CONFIG_DEBUG_SPINLOCK')
+        ]) #raw_spinlock_t, not spinlock
+RAW_SPINLOCK_T = _RawSpinlockT()
+
+class _SeqCountT(_Struct):
+    def __init__(self):
+        super().__init__('seqcount_t', [
+            FieldGroup([
+                Field('sequence', Int(signed = False))
+            ]),
+            FieldGroup([
+                Field('dep_map', LOCKDEP_MAP)
+            ], 'CONFIG_DEBUG_LOCK_ALLOC')
+        ])
+SEQCOUNT_T = _SeqCountT() # seqcount_t
+
+class _HRTimer_CPU_Base(_Struct):
+    def __init__(self):
+        super().__init__('hrtimer_cpu_base', [
+            FieldGroup([
+                Field('lock', RAW_SPINLOCK_T),
+                Field('seq', SEQCOUNT_T),
+                Field('running', Pointer(HRTIMER)),
+	            Field('cpu', Int(signed = False)),
+	            Field('active_bases', Int(signed = False)),
+	            Field('clock_was_set_seq', Int(signed = False)),
+	            Field('migration_enabled', Bool()),
+	            Field('nohz_active', Bool())
+            ]),
+            FieldGroup([
+                Field('bit_field', Int(signed = False)), #in_hrtirq : 1, hres_active : 1,hang_detected : 1
+                Field('expires_next', KTIME_T),
+                Field('next_timer', Pointer(HRTIMER)),
+	            Field('nr_events', Int(signed = False)),
+	            Field('nr_retries', Int(signed = False)),
+	            Field('nr_hangs', Int(signed = False)),
+	            Field('max_hang_time', Int(signed = False))
+            ], 'CONFIG_HIGH_RES_TIMERS'),
+            FieldGroup([
+                Field('clock_base', Array(HRTIMER_CLOCK_BASE, 4, 4)) #clock_base[HRTIMER_MAX_CLOCK_BASES];
+            ])
+        ])
+HRTIMER_CPU_BASE = _HRTimer_CPU_Base() #TODO this is an  ____cacheline_aligned;
+
 class _HRTimer(_Struct):
     def __init__(self):
         super().__init__('hrtimer', [
@@ -327,7 +475,7 @@ class _HRTimer(_Struct):
                 Field('node', TIMERQUEUENODE),
                 Field('_softexpires', KTIME_T),
                 Field('function', Pointer()), # enum hrtimer_restart		(*function)(struct hrtimer *);
-                Field('base', Pointer()), #struct hrtimer_clock_base	*base;
+                Field('base', Pointer(HRTIMER_CLOCK_BASE)),
                 Field('state', Int(size = 1, signed = False)),
                 Field('is_rel', Int(size = 1, signed = False))
             ]),
@@ -436,3 +584,103 @@ class _TaskStruct(_Struct):
             ])
         ])
 TASK_STRUCT = _TaskStruct()
+
+class _LoadWeight(_Struct):
+    def __init__(self):
+        super().__init__('load_weight', [FieldGroup([
+            Field('weight', Int(size = None, signed = False)),
+            Field('inv_weight', Int(size = 4, signed = False))
+        ])])
+LOAD_WEIGHT = _LoadWeight()
+
+class _RBRoot(_Struct):
+    def __init__(self):
+        super().__init__('rb_root', [FieldGroup([
+            Field('rb_node', Pointer(RB_NODE))
+        ])])
+RB_ROOT = _RBRoot()
+
+class _CFSRQ(_Struct):
+    def __init__(self):
+        super().__init__('cfs_rq', [
+            FieldGroup([
+                Field('load', LOAD_WEIGHT),
+                Field('nr_running', Int(signed = False)),
+                Field('h_nr_running', Int(signed = False)),
+                Field('exec_clock', Int(size = 8, signed = False)),
+                Field('min_vruntime', Int(size = 8, signed = False))
+            ]),
+            FieldGroup([#ifndef CONFIG_64BIT
+                Field('min_vruntime_copy', Int(size = 8, signed = False))
+            ]),
+            FieldGroup([
+                Field('tasks_timeline', RB_ROOT),
+                Field('rb_leftmost', Pointer(RB_NODE))
+            ]),
+            FieldGroup([
+                Field('curr', Pointer(SCHED_ENTITY)),
+                Field('next', Pointer(SCHED_ENTITY)),
+                Field('last', Pointer(SCHED_ENTITY)),
+                Field('skip', Pointer(SCHED_ENTITY))
+            ]),
+            FieldGroup([
+                Field('nr_spread_over', Int(signed = False))
+            ], 'CONFIG_SCHED_DEBUG'),
+            FieldGroup([
+                Field('avg', _SchedAvg()),
+                Field('runnable_load_sum', Int(size = 8, signed = False)),
+                Field('runnable_load_sum', Int(size = None, signed = False))
+            ], 'CONFIG_SMP'),
+            FieldGroup([
+                Field('tg_load_avg_contrib', Int(size = None, signed = False))
+            ], 'CONFIG_FAIR_GROUP_SCHED'),
+            FieldGroup([
+                Field('removed_load_avg', Int(size = None, signed = False)),
+                Field('removed_util_avg', Int(size = 8, signed = False)) #	atomic_long_t removed_load_avg, removed_util_avg;
+            ]),
+            FieldGroup([
+                Field('load_last_update_time_copy', Int(size = 8, signed = False))
+            ], 'CONFIG_64BIT'),
+            FieldGroup([
+                Field('h_load', Int(size = None, signed = False)),
+                Field('last_h_load_update', Int(size = 8, signed = False)),
+                Field('h_load_next', Pointer(SCHED_ENTITY))
+            ], 'CONFIG_FAIR_GROUP_SCHED'),
+            FieldGroup([
+                Field('h_load', Int(size = None, signed = False)),
+                Field('last_h_load_update', Int(size = 8, signed = False)),
+                Field('h_load_next', Pointer(SCHED_ENTITY))
+            ],'CONFIG_FAIR_GROUP_SCHED'),
+            FieldGroup([
+                Field('rq', Pointer()), #struct rq
+                Field('on_list', Int()),
+                Field('leaf_cfs_rq_list', _ListHead()),
+                Field('tg', Pointer()) #struct task_group
+            ], 'CONFIG_FAIR_GROUP_SCHED'),
+            FieldGroup([
+                Field('runtime_enabled', Int()),
+	            Field('runtime_expires', Int(size = 8, signed = False)),
+	            Field('runtime_remaining', Int(size = 8, signed = True)),
+	            Field('throttled_clock',Int(size = 8, signed = False)),
+                Field('throttled_clock_task', Int(size = 8, signed = False)),
+	            Field('throttled_clock_task_time', Int(size = 8, signed = False)),
+	            Field('throttled', Int()),
+                Field('throttle_count', Int()),
+                Field('throttle_uptodate', Int()),
+                Field('throttled_list', LIST_HEAD)
+            ],'CONFIG_CFS_BANDWIDTH')
+        ])
+CFSRQ = _CFSRQ()
+
+class _HRTimerClockBase(_Struct):
+    def __init__(self):
+        super().__init__('hrtimer_clock_base', [
+            FieldGroup([
+                Field('cpu_base', Pointer(HRTIMER_CPU_BASE)),
+                Field('index', Int()),
+                Field('clockid', Int()), #clockid_t
+                Field('get_time', Pointer()), #ktime_t			(*get_time)(void);
+                Field('offset', KTIME_T)
+            ])
+        ])
+HRTIMER_CLOCK_BASE = _HRTimerClockBase() #TODO this is an  __attribute__((__aligned__(HRTIMER_CLOCK_BASE_ALIGN)));
