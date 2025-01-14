@@ -52,7 +52,7 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None):
             panda = Panda(
                 arch='arm', mem='256M', extra_args=args,
                 expect_prompt='/.*#', os_version='linux-32-generic')
-        elif (arch in ['aarch64']):
+        elif arch in ['aarch64']:
             args = f'--nographic \
                 -kernel {kernel} \
                 -initrd ./cache/customfs.cpio \
@@ -61,7 +61,7 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None):
                 -append "console=ttyAMA0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
             panda = Panda(
                 arch='aarch64', mem='256M', extra_args=args,
-                expect_prompt='\~ # ', os_version='linux-32-generic')
+                expect_prompt='~ # ', os_version='linux-32-generic')
         else:
             args = f'--nographic \
                 -kernel {kernel} \
