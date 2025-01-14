@@ -21,7 +21,7 @@ class Context:
         return self.parse_int(self.read(address, size), 0, size, signed)
 
     def next_int(self, address, size, signed):
-        val = self.read_int(address.val, size, signed)
+        val = self.read_int(address, size, signed)
         return val, address + size
 
 
