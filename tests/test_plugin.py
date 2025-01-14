@@ -1,5 +1,7 @@
 import subprocess
 from exert.usermode import plugin
+from exert.usermode.context import Context
+from exert.usermode.rules import TASK_STRUCT
 
 # Kernel info taken from https://panda.re/kernelinfos/ubuntu:4.4.0-170-generic:32.conf
 
@@ -53,16 +55,23 @@ def callback_test_get_current_from_stack(panda, cpu):
 
     task_stack = read_word(task, 4)
     assert task_stack == thread_info_addr
+    return task_addr
 def test_get_current_from_stack():
     do_test(callback_test_get_current_from_stack, 'arm')
+
+def callback_test_get_task_from_current(panda, cpu):
+    task_addr = callback_test_get_current_from_stack(panda, cpu)
+    context = Context(panda)
+    results = TASK_STRUCT.test(context, task_addr)
+    assert results
+def test_get_task_from_current():
+    do_test(callback_test_get_task_from_current, 'arm')
 
 def callback_test_nongeneric_kernel(panda, cpu):
     pass
 def test_nongeneric_kernel_armv5l():
     do_test(callback_test_nongeneric_kernel, 'armv5l', generic=False, kernel='./vmlinuz')
-
 def test_nongeneric_kernel_aarch64():
     do_test(callback_test_nongeneric_kernel, 'aarch64', generic=False, kernel='./vmlinuz-aarch64')
-
 def test_nongeneric_kernel_x86_64():
     do_test(callback_test_nongeneric_kernel, 'x86_64', generic=False, kernel='./vmlinuz-x86_64')
