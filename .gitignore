@@ -10,3 +10,8 @@ exert/usermode/build
 *.gz
 *.elf
 linux
+cache/rootfs/bin/sh
+cache/rootfs/dev/fd
+cache/rootfs/dev/stderr
+cache/rootfs/dev/stdin
+cache/rootfs/dev/stdout
