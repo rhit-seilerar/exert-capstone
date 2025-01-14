@@ -58,5 +58,11 @@ def test_get_current_from_stack():
 
 def callback_test_nongeneric_kernel(panda, cpu):
     pass
-def test_nongeneric_kernel():
+def test_nongeneric_kernel_armv5l():
     do_test(callback_test_nongeneric_kernel, 'armv5l', generic=False, kernel='./vmlinuz')
+
+def test_nongeneric_kernel_aarch64():
+    do_test(callback_test_nongeneric_kernel, 'aarch64', generic=False, kernel='./vmlinuz-aarch64')
+
+def test_nongeneric_kernel_x86_64():
+    do_test(callback_test_nongeneric_kernel, 'x86_64', generic=False, kernel='./vmlinuz-x86_64')
