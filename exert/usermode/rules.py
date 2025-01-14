@@ -1,127 +1,146 @@
+from exert.usermode.context import Context
+
 class Rule:
     _cache = {}
 
-    def ctest(self, context):
-        return self.test(context, True)
+    def __init__(self, key_val = 'Rule'):
+        self.str = key_val
 
-    def test(self, context, clear_cache = False):
+    def test(self, context, address, clear_cache = False):
+        return self.test_all(context, {address}, clear_cache)
+
+    def test_all(self, context, addresses, clear_cache = False):
+        assert isinstance(context, Context)
+        assert isinstance(addresses, set)
+
+        if len(addresses) == 0:
+            return addresses
+
+        # For efficiency, we memoize the test() method by caching results
         if clear_cache:
             Rule._cache.clear()
 
-        # For efficiency, we memoize the test() method by caching results
-        pair = (self, context.address)
-        if pair in Rule._cache:
-            return Rule._cache[pair]
+        results = set()
+        for address in addresses:
+            key = f'{address}:{str(self)}'
+            if key not in Rule._cache:
+                # We may end up testing ourselves, so temporarily store something
+                # to pass the above check
+                Rule._cache[key] = set()
+                # print(f'Testing {str(self)}')
+                Rule._cache[key] = self._test(context, address)
+            results |= Rule._cache[key]
 
-        # We may end up testing ourselves, so temporarily store True to pass the above check
-        Rule._cache[pair] = True
-        # print(f'Testing {self}')
-        result = self._test(context)
-        Rule._cache[pair] = result
-        return result
+        return results
 
-    def _test(self, context):
-        return True
+    def _test(self, context, address):
+        return {address}
 
-    # def __str__(self):
-    #     return 'Rule()'
+    def __str__(self):
+        return self.str
 
 class Int(Rule):
-    def __init__(self, value = None, size = 4, signed = True):
+    def __init__(self, size = 4, signed = True, min_value = None, max_value = None):
+        super().__init__(f'Int({size}, {signed}, {min_value}, {max_value})')
         self.size = size
         self.signed = signed
-        self.value = value
+        self.min_value = min_value
+        self.max_value = max_value
 
-    def _test(self, context):
-        context.suspend()
+    def _test(self, context, address):
         size = context.word_size if self.size is None else self.size
-        val = context.next_int(size, self.signed)
-        return context.apply(self.value is None or val == self.value)
-    # def __str__(self):
-    #     return f'Int({self.value}, {self.size}, {self.signed})'
+        val, address = context.read_int(address, size, self.signed)
+        if val is None:
+            return set()
+        if self.min_value is not None and val < self.min_value:
+            return set()
+        if self.max_value is not None and val > self.max_value:
+            return set()
+        return {address}
 
 class Bool(Int):
-    def __init__(self, value = None):
-        super().__init__(value, size = 1)
+    def __init__(self):
+        super().__init__(size = 1, min_value = 0, max_value = 1)
+        self.str = 'Bool'
 
 class Pointer(Rule):
     def __init__(self, rule = None):
+        super().__init__(f'Pointer({str(rule)})')
         self.rule = rule
 
-    def _test(self, context):
-        context.suspend()
+    def _test(self, context, address):
+        pointer, address = context.read_pointer(address)
+        if not pointer or len(self.rule.test(context, pointer)) == 0:
+            return set()
+        return {address}
 
-        # Test if the pointer points to a valid memory address
-        pointer = context.next_pointer()
-        data = context.read(pointer, 0)
-        if pointer != 0 and data is None:
-            print("Pointer is invalid: " + str(context.panda.buf))
-            return context.apply(False)
+class Array(Rule):
+    def __init__(self, rule, count_min, count_max):
+        super().__init__(f'Array({str(rule)}, {count_min}, {count_max})')
+        self.rule = rule
+        self.count_min = count_min
+        self.count_max = count_max
 
-        print("Pointer is valid")
-        # Test futher rules against the found data
-        new_ctx = context.copy(pointer)
-        return context.apply(self.rule is None or self.rule.test(new_ctx))
-
-    # def __str__(self):
-    #     return f'Pointer({str(self.rule)})'
+    def _test(self, context, address):
+        passing = {address}
+        for _ in range(0, self.count_min):
+            passing = self.rule.test_all(context, passing)
+        to_test = passing
+        for _ in range(self.count_min, self.count_max):
+            elem_passing = self.rule.test_all(context, to_test)
+            to_test = elem_passing - passing
+            passing |= elem_passing
+        return passing
 
 class Field(Rule):
     def __init__(self, name, rule):
+        super().__init__(f"Field('{name}', {str(rule)})")
         self.name = name
         self.rule = rule
 
-    def _test(self, context):
-        return self.rule.test(context)
+    def _test(self, context, address):
+        return self.rule.test(context, address)
 
-    # def __str__(self):
-    #     return f'Field(\'{self.name}\', {str(self.rule)})'
-
-class FieldGroup(Rule):
-    def __init__(self, fields, optional=False):
+class FieldGroup:
+    def __init__(self, fields, condition=None):
         self.fields = fields
-        self.optional = optional
-
-    def _test(self, context):
-        context.suspend()
         for field in self.fields:
-            if not field.test(context):
-                return context.apply(False)
-        return context.apply(True)
+            assert isinstance(field, Field)
+        self.condition = condition
 
-    # def __str__(self):
-    #     return f'FieldGroup([{", ".join(str(f) for f in self.fields)}], {self.optional})'
+    def __str__(self):
+        fields_str = ', '.join(str(f) for f in self.fields)
+        cond_str = 'None' if self.condition is None else f"'{self.condition}'"
+        return f'FieldGroup([{fields_str}], {cond_str})'
 
 class Struct(Rule):
     def __init__(self, name, field_groups):
+        super().__init__(f"Struct('{name}', [{', '.join([str(g) for g in field_groups])}])")
         self.name = name
         self.field_groups = field_groups
 
-    def _test(self, context):
-        def helper(context, groups):
-            if len(groups) == 0:
-                return True
-            context.suspend()
-            group = groups[0]
-            context_copy = context.copy()
-            passes = group.test(context) and helper(context, groups[1:])
-            if group.optional and helper(context_copy, groups[1:]):
-                passes = True
-                context = context_copy
-            return context.apply(passes)
-        return helper(context, self.field_groups)
+    def _test(self, context, address):
+        passing = {address}
+        for group in self.field_groups:
+            if group.condition:
+                passing |= group.fields.test_all(context, passing)
+            else:
+                passing = group.fields.test_all(context, passing)
+        return passing
 
-    # def __str__(self):
-    #     return f'Struct(\'{self.name}\', [{", ".join(str(g) for g in self.field_groups)}])'
+class _Struct(Struct):
+    def __init__(self, name, field_groups):
+        super().__init__(name, field_groups)
+        self.str = f'{self.__class__.__name__}'
 
-class _Atomic(Struct):
+class _Atomic(_Struct):
     def __init__(self):
         super().__init__('atomic_t', [FieldGroup([
             Field('counter', Int())
         ])])
 ATOMIC = _Atomic()
 
-class _LoadWeight(Struct):
+class _LoadWeight(_Struct):
     def __init__(self):
         super().__init__('load_weight', [FieldGroup([
             Field('weight', Int(size = None, signed = False)),
@@ -129,7 +148,7 @@ class _LoadWeight(Struct):
         ])])
 LOAD_WEIGHT = _LoadWeight()
 
-class _RBNode(Struct):
+class _RBNode(_Struct):
     def __init__(self):
         super().__init__('rb_node', [FieldGroup([
             Field('__rb_parent_color', Int(size = None, signed = False)),
@@ -138,14 +157,14 @@ class _RBNode(Struct):
         ])])
 RB_NODE = _RBNode()
 
-class _LListNode(Struct):
+class _LListNode(_Struct):
     def __init__(self):
         super().__init__('llist_node', [FieldGroup([
             Field('next', Pointer(self))
         ])])
 LLIST_NODE = _LListNode()
 
-class _SchedAvg(Struct):
+class _SchedAvg(_Struct):
     def __init__(self):
         super().__init__('sched_avg', [FieldGroup([
             Field('last_update_time', Int(size = 8, signed = False)),
@@ -157,36 +176,35 @@ class _SchedAvg(Struct):
         ])])
 SCHED_AVG = _SchedAvg()
 
-class _ListHead(Struct):
+class _ListHead(_Struct):
     def __init__(self):
         super().__init__('list_head', [FieldGroup([
             Field('next', Pointer(self)),
             Field('prev', Pointer(self))
         ])])
 
-    def _test(self, context):
-        context.suspend()
-        if not super()._test(context):
-            return context.apply(False)
-        context.apply(False)
-
-        # Validate that neighboring list heads maintain a full loop
-        context.suspend()
-        address = context.address
-
-        next_pointer = context.next_pointer()
+    def _test(self, context, address):
+        original = address
+        next_pointer, address = context.read_pointer(address)
+        if not next_pointer:
+            return set()
         next_prev_address = next_pointer + context.word_size
         next_prev_pointer = context.read_pointer(next_prev_address)
+        if next_prev_pointer != original:
+            return set()
 
-        prev_pointer = context.next_pointer()
+        prev_pointer, address = context.read_pointer(address)
+        if not prev_pointer:
+            return set()
         prev_next_address = prev_pointer + 0
         prev_next_pointer = context.read_pointer(prev_next_address)
+        if prev_next_pointer != original:
+            return set()
 
-        valid = next_prev_pointer == address and prev_next_pointer == address
-        return context.apply(valid)
+        return self.test(context, address)
 LIST_HEAD = _ListHead()
 
-class _SchedInfo(Struct):
+class _SchedInfo(_Struct):
     def __init__(self):
         super().__init__('sched_info', [FieldGroup([
                 Field('pcount', Int(size = None, signed = False)),
@@ -196,7 +214,7 @@ class _SchedInfo(Struct):
         ])])
 SCHED_INFO = _SchedInfo()
 
-class _SchedStatistics(Struct):
+class _SchedStatistics(_Struct):
     def __init__(self):
         super().__init__('sched_statistics', [FieldGroup([
             Field('wait_start', Int(size = 8, signed = False)),
@@ -229,7 +247,7 @@ class _SchedStatistics(Struct):
         ])])
 SCHED_STATISTICS = _SchedStatistics()
 
-class _SchedEntity(Struct):
+class _SchedEntity(_Struct):
     def __init__(self):
         super().__init__('sched_entity', [
             FieldGroup([
@@ -243,22 +261,22 @@ class _SchedEntity(Struct):
                 Field('prev_sum_exec_runtime', Int(size = 8, signed = False)),
                 Field('nr_migrations', Int(size = 8, signed = False))
             ]),
-            FieldGroup([ #ifdef CONFIG_SCHEDSTATS
+            FieldGroup([
                 Field('statistics', SCHED_STATISTICS)
-            ], True),
-            FieldGroup([ #ifdef CONFIG_FAIR_GROUP_SCHED
+            ], 'CONFIG_SCHEDSTATS'),
+            FieldGroup([
                 Field('depth', Int()),
                 Field('parent', Pointer(self)),
-                Field('cfs_rq', Pointer()), #struct cfs_rq
-                Field('my_q', Pointer()) #struct cfs_rq
-            ], True),
-            FieldGroup([ #ifdef CONFIG_SMP
+                Field('cfs_rq', Pointer()), #struct cfs_rq*
+                Field('my_q', Pointer()) #struct cfs_rq*
+            ], 'CONFIG_FAIR_GROUP_SCHED'),
+            FieldGroup([
 	            Field('avg', SCHED_AVG)
-            ], True)
+            ], 'CONFIG_SMP')
         ])
 SCHED_ENTITY = _SchedEntity()
 
-class _SchedRTEntity(Struct):
+class _SchedRTEntity(_Struct):
     def __init__(self):
         super().__init__('sched_rt_entity', [
             FieldGroup([
@@ -268,15 +286,15 @@ class _SchedRTEntity(Struct):
                 Field('time_slice', Int(signed = False)),
                 Field('back', Pointer(self))
             ]),
-            FieldGroup([ #ifdef CONFIG_RT_GROUP_SCHED
+            FieldGroup([
                 Field('parent', Pointer(self)),
                 Field('rt_rq', Pointer()), #struct rt_rq*
                 Field('my_q', Pointer())  #struct rt_rq*
-            ], True)
+            ], 'CONFIG_RT_GROUP_SCHED')
         ])
 SCHED_RT_ENTITY = _SchedRTEntity()
 
-class _KTimeT(Struct): #supposed to be a union
+class _KTimeT(_Struct): #supposed to be a union
     def __init__(self):
         super().__init__('timerqueue_node', [
             FieldGroup([
@@ -285,7 +303,7 @@ class _KTimeT(Struct): #supposed to be a union
         ])
 KTIME_T = _KTimeT()
 
-class _HListHead(Struct): #supposed to be a union
+class _HListHead(_Struct): #supposed to be a union
     def __init__(self):
         super().__init__('hlist_head', [
             FieldGroup([
@@ -294,7 +312,7 @@ class _HListHead(Struct): #supposed to be a union
         ])
 HLIST_HEAD = _HListHead()
 
-class _TimerQueueNode(Struct):
+class _TimerQueueNode(_Struct):
     def __init__(self):
         super().__init__('timerqueue_node', [FieldGroup([
             Field('node', RB_NODE),
@@ -302,7 +320,7 @@ class _TimerQueueNode(Struct):
         ])])
 TIMERQUEUENODE = _TimerQueueNode()
 
-class _HRTimer(Struct):
+class _HRTimer(_Struct):
     def __init__(self):
         super().__init__('hrtimer', [
             FieldGroup([
@@ -312,17 +330,16 @@ class _HRTimer(Struct):
                 Field('base', Pointer()), #struct hrtimer_clock_base	*base;
                 Field('state', Int(size = 1, signed = False)),
                 Field('is_rel', Int(size = 1, signed = False))
-            ])
-            #TODO
-        #     FieldGroup([ #ifdef CONFIG_TIMER_STATS
-        # int				start_pid;
-        # void				*start_site;
-        # char				start_comm[16];
-        #     ], True)
+            ]),
+            FieldGroup([
+                Field('start_pid', Int()),
+                Field('start_site', Pointer()),
+                Field('start_comm', Array(Int(size = 1), 16, 16))
+            ], 'CONFIG_TIMER_STATS')
         ])
 HRTIMER = _HRTimer()
 
-class _SchedDLEntity(Struct):
+class _SchedDLEntity(_Struct):
     def __init__(self):
         super().__init__('sched_dl_entity', [
             FieldGroup([
@@ -343,7 +360,17 @@ class _SchedDLEntity(Struct):
         ])
 SCHED_DL_ENTITY = _SchedDLEntity()
 
-class _TaskStruct(Struct):
+class _CpuMask(_Struct):
+    def __init__(self):
+        super().__init__('cpumask_t', [FieldGroup([
+            # TODO What if there are more than 64?
+            # maybe we use some kind of callback to generate more?
+            # Or just make it a user parameter
+            Field('bits', Array(Int(size = None, signed = False), 1, 64))
+        ])])
+CPUMASK = _CpuMask()
+
+class _TaskStruct(_Struct):
     def __init__(self):
         super().__init__('task_struct', [
             FieldGroup([
@@ -353,14 +380,14 @@ class _TaskStruct(Struct):
                 Field('flags', Int(signed = False)), #per process flags, defined below
                 Field('ptrace', Int(signed = False))
             ]),
-            FieldGroup([ #ifdef CONFIG_SMP
+            FieldGroup([
                 Field('wake_entry', LLIST_NODE),
                 Field('on_cpu', Int()),
                 Field('wakee_flips', Int(signed = False)),
                 Field('wakee_flip_decay_ts', Int(size = None, signed = False)),
                 Field('last_wakee', Pointer(self)),
                 Field('wake_cpu', Int())
-            ], True),
+            ], 'CONFIG_SMP'),
             FieldGroup([
                 Field('on_rq', Int()),
                 Field('prio', Int()),
@@ -371,38 +398,39 @@ class _TaskStruct(Struct):
                 Field('se', SCHED_ENTITY),
                 Field('rt', SCHED_RT_ENTITY)
             ]),
-            FieldGroup([ #ifdef CONFIG_CGROUP_SCHED
+            FieldGroup([
                 Field('task_group', Pointer()) #struct task_group*
-            ], True),
+            ], 'CONFIG_CGROUP_SCHED'),
             FieldGroup([
                 Field('dl', SCHED_DL_ENTITY)
             ]),
-            FieldGroup([ #ifdef CONFIG_PREEMPT_NOTIFIERS
+            FieldGroup([
                 Field('preempt_notifiers', HLIST_HEAD)
-            ], True),
-            FieldGroup([ #ifdef CONFIG_BLK_DEV_IO_TRACE
+            ], 'CONFIG_PREEMPT_NOTIFIERS'),
+            FieldGroup([
                 Field('btrace_seq', Int(signed = False))
-            ], True),
+            ], 'CONFIG_BLK_DEV_IO_TRACE'),
             FieldGroup([
                 Field('policy', Int(signed = False)),
                 Field('nr_cpus_allowed', Int()),
-                #TODO # cpumask_t cpus_allowed;
+                Field('cpus_allowed', CPUMASK)
             ]),
-            FieldGroup([ #ifdef CONFIG_PREEMPT_RCU
+            FieldGroup([
                 Field('rcu_read_lock_nesting', Int()),
-                #TODO #union rcu_special rcu_read_unlock_special;
+                #TODO this should be 'union rcu_special'
+                Field('rcu_read_unlock_special', Int(signed = False)),
                 Field('rcu_node_entry', LIST_HEAD),
                 Field('rcu_blocked_node', Pointer()) #struct rcu_node*
-            ], True),
-            FieldGroup([ #ifdef CONFIG_TASKS_RCU
+            ], 'CONFIG_PREEMPT_RCU'),
+            FieldGroup([
                 Field('rcu_tasks_nvcsw', Int(size = None, signed = False)),
                 Field('rcu_tasks_holdout', Bool()),
                 Field('rcu_tasks_holdout_list', LIST_HEAD),
                 Field('rcu_tasks_idle_cpu', Int())
-            ], True),
-            FieldGroup([ #ifdef CONFIG_SCHED_INFO
+            ], 'CONFIG_TASKS_RCU'),
+            FieldGroup([
                 Field('sched_info', SCHED_INFO)
-            ], True),
+            ], 'CONFIG_SCHED_INFO'),
             FieldGroup([
                 Field('tasks', LIST_HEAD)
             ])

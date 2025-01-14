@@ -1,23 +1,8 @@
 class Context:
-    def __init__(self, panda, address):
+    def __init__(self, panda):
         self.panda = panda
         self.endianness = panda.endianness
         self.word_size = panda.bits // 8
-        self.address = address
-        self.suspended = []
-
-    def copy(self, address = None):
-        return Context(self.panda, self.address if address is None else address)
-
-    def suspend(self):
-        self.suspended.append(self.address)
-
-    def apply(self, val):
-        if len(self.suspended) > 0:
-            old = self.suspended.pop()
-            if not val:
-                self.address = old
-        return val
 
     def read(self, address, size):
         try:
@@ -35,10 +20,9 @@ class Context:
     def read_int(self, address, size, signed):
         return self.parse_int(self.read(address, size), 0, size, signed)
 
-    def next_int(self, size, signed):
-        val = self.read_int(self.address, size, signed)
-        self.address += size
-        return val
+    def next_int(self, address, size, signed):
+        val = self.read_int(address.val, size, signed)
+        return val, address + size
 
 
 
@@ -48,5 +32,5 @@ class Context:
     def read_pointer(self, address):
         return self.parse_pointer(self.read(address, self.word_size), 0)
 
-    def next_pointer(self):
-        return self.next_int(self.word_size, False)
+    def next_pointer(self, address):
+        return self.next_int(address, self.word_size, False)
