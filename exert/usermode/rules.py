@@ -467,7 +467,7 @@ class _SeqCountT(_Struct):
         ])
 SEQCOUNT_T = _SeqCountT() # seqcount_t
 
-class _HRTimer_CPU_Base(_Struct):
+class _HrTimerCpuBase(_Struct):
     def __init__(self):
         super().__init__('hrtimer_cpu_base', [
             FieldGroup([
@@ -481,7 +481,8 @@ class _HRTimer_CPU_Base(_Struct):
 	            Field('nohz_active', Bool())
             ]),
             FieldGroup([
-                Field('bit_field', Int(signed = False)), #in_hrtirq : 1, hres_active : 1,hang_detected : 1
+                #in_hrtirq : 1, hres_active : 1,hang_detected : 1
+                Field('bit_field', Int(signed = False)),
                 Field('expires_next', KTIME_T),
                 Field('next_timer', Pointer(HRTIMER)),
 	            Field('nr_events', Int(signed = False)),
@@ -490,10 +491,11 @@ class _HRTimer_CPU_Base(_Struct):
 	            Field('max_hang_time', Int(signed = False))
             ], 'CONFIG_HIGH_RES_TIMERS'),
             FieldGroup([
-                Field('clock_base', Array(HRTIMER_CLOCK_BASE, 4, 4)) #clock_base[HRTIMER_MAX_CLOCK_BASES];
+                #clock_base[HRTIMER_MAX_CLOCK_BASES];
+                Field('clock_base', Array(HRTIMER_CLOCK_BASE, 4, 4))
             ])
         ])
-HRTIMER_CPU_BASE = _HRTimer_CPU_Base() #TODO this is an  ____cacheline_aligned;
+HRTIMER_CPU_BASE = _HrTimerCpuBase() #TODO this is an  ____cacheline_aligned;
 
 class _HRTimer(_Struct):
     def __init__(self):
@@ -663,7 +665,8 @@ class _CFSRQ(_Struct):
             ], 'CONFIG_FAIR_GROUP_SCHED'),
             FieldGroup([
                 Field('removed_load_avg', Int(size = None, signed = False)),
-                Field('removed_util_avg', Int(size = 8, signed = False)) #	atomic_long_t removed_load_avg, removed_util_avg;
+                # atomic_long_t removed_load_avg, removed_util_avg;
+                Field('removed_util_avg', Int(size = 8, signed = False))
             ]),
             FieldGroup([
                 Field('load_last_update_time_copy', Int(size = 8, signed = False))
@@ -710,4 +713,5 @@ class _HRTimerClockBase(_Struct):
                 Field('offset', KTIME_T)
             ])
         ])
-HRTIMER_CLOCK_BASE = _HRTimerClockBase() #TODO this is an  __attribute__((__aligned__(HRTIMER_CLOCK_BASE_ALIGN)));
+#TODO this is an  __attribute__((__aligned__(HRTIMER_CLOCK_BASE_ALIGN)));
+HRTIMER_CLOCK_BASE = _HRTimerClockBase()
