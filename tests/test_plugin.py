@@ -75,3 +75,5 @@ def test_nongeneric_kernel_aarch64():
     do_test(callback_test_nongeneric_kernel, 'aarch64', generic=False, kernel='./vmlinuz-aarch64')
 def test_nongeneric_kernel_x86_64():
     do_test(callback_test_nongeneric_kernel, 'x86_64', generic=False, kernel='./vmlinuz-x86_64')
+def test_nongeneric_kernel_mips():
+    do_test(callback_test_nongeneric_kernel, 'mips', generic=False, kernel='./vmlinux-mips')
