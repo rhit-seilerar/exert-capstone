@@ -77,6 +77,7 @@ def dev_attach(in_docker, reset):
     if reset:
         dev_reset()
         time.sleep(1)
+    sync_volume()
     run_docker(interactive = True, in_docker = in_docker)
 
 def dev_test(in_docker, reset):
@@ -86,6 +87,7 @@ def dev_test(in_docker, reset):
             return
         dev_reset()
         time.sleep(1)
+    sync_volume()
     run_docker(command = 'pytest --cov-config=.coveragerc --cov=exert tests/',
         in_docker = in_docker)
 
@@ -96,6 +98,7 @@ def dev_rules(in_docker, version, reset):
             return
         dev_reset()
         time.sleep(1)
+    sync_volume()
     run_docker(command = f'python -m exert.utilities.generator {version}',
         in_docker = in_docker)
 
@@ -122,25 +125,28 @@ def init(parsed):
     run_command(f'docker pull {PANDA_CONTAINER}:latest')
     run_command(f'docker pull {XMAKE_CONTAINER}:latest')
 
-    dev_reset()
-    local_mount = f'-v "{os.path.dirname(os.path.realpath(__file__))}:/local"'
-
     print('Copying local data to volume...')
-    ls_out = run_command('docker volume ls -q -f "name=pandare"', True, True)
+    sync_volume()
+    run_command('docker stop pandare-init')
+
+    print('EXERT successfully initialized!')
+
+def sync_volume():
+    local_mount = f'-v "{os.path.dirname(os.path.realpath(__file__))}:/local"'
     exclude = '--exclude .git'
+
+    ls_out = run_command('docker volume ls -q -f "name=pandare"', True, True)
     if 'pandare' not in get_stdout(ls_out).splitlines():
         run_command('docker volume create pandare', True, True)
     else:
         exclude += ' --exclude cache'
 
-    run_docker(name = 'pandare-init',
-        command = 'apt-get update && apt-get install -y rsync',
-        extra_args = local_mount)
+    if not container_is_running('pandare-init'):
+        run_docker(name = 'pandare-init',
+            command = 'apt-get update && apt-get install -y rsync',
+            extra_args = local_mount)
     run_docker(name = 'pandare-init',
         command = f'rsync -av --progress {exclude} /local/ /mount')
-    run_command('docker stop pandare-init')
-
-    print('EXERT successfully initialized!')
 
 def osi(parsed):
     """Validate the provided image, and then generate its OSI information"""

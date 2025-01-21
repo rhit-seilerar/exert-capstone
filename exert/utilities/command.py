@@ -3,11 +3,11 @@
 import subprocess
 import re
 
-def run_command(command, capture_output=False, check=True):
+def run_command(command, capture_output=False, check=True, cwd=None):
     """Run a command in a forked child and return the stdout"""
     pattern = re.compile('("[^"]+"|[^\\s"]+)')
     args = [arg.replace('"', '') for arg in re.findall(pattern, command)]
-    return subprocess.run(args, capture_output = capture_output, check = check)
+    return subprocess.run(args, capture_output = capture_output, check = check, cwd = cwd)
 
 def get_stdout(result):
     return result.stdout.decode()
