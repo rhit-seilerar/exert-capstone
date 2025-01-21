@@ -24,35 +24,44 @@ def main():
         help = 'Initialize the required dependencies and docker containers')
     init_parser.set_defaults(func = init)
 
-    osi_parser = subparsers.add_parser('osi', \
+    osi_parser = subparsers.add_parser('osi',
         help = 'Generate OSI information for the given kernel image')
-    osi_parser.add_argument('image', nargs = '+', \
+    osi_parser.add_argument('image', nargs = '+',
         help = 'The kernel image to generate OSI information for.')
     osi_parser.set_defaults(func = osi)
 
     dev_parser = subparsers.add_parser('dev', help = 'Development tools')
     dev_subparsers = dev_parser.add_subparsers()
 
-    dev_attach_parser = dev_subparsers.add_parser('attach', \
+    dev_attach_parser = dev_subparsers.add_parser('attach',
         help='Attach a shell to the panda container')
-    dev_attach_parser.add_argument('-r', '--reset', action='store_true', \
+    dev_attach_parser.add_argument('-r', '--reset', action='store_true',
         help='Reset the container first')
     dev_attach_parser.set_defaults(func = lambda parsed:
             dev_attach(parsed.docker, parsed.reset))
 
-    dev_test_parser = dev_subparsers.add_parser('test', \
+    dev_test_parser = dev_subparsers.add_parser('test',
         help='Run the unit tests for the EXERT system')
-    dev_test_parser.add_argument('-r', '--reset', action='store_true', \
+    dev_test_parser.add_argument('-r', '--reset', action='store_true',
         help='Reset the container first')
     dev_test_parser.set_defaults(func = lambda parsed:
             dev_test(parsed.docker, parsed.reset))
 
-    compile_parser = dev_subparsers \
-        .add_parser('compile', help='Compile the usermode program')
+    compile_parser = dev_subparsers.add_parser('compile',
+        help='Compile the usermode program')
     compile_parser.add_argument('arch', type=str)
     compile_parser.add_argument('libc', type=str)
     compile_parser.set_defaults(func = lambda args:
         make_usermode(args.arch, args.libc))
+
+    dev_rules_parser = dev_subparsers.add_parser('rules',
+        help='Generate a ruleset from a specified linux version')
+    dev_rules_parser.add_argument('version', type=str,
+        help='The version to generate the ruleset for. Format like 4.4.100.')
+    dev_rules_parser.add_argument('-r', '--reset', action='store_true',
+        help='Reset the container first')
+    dev_rules_parser.set_defaults(func = lambda parsed:
+            dev_rules(parsed.docker, parsed.version, parsed.reset))
 
     parsed = parser.parse_args()
     parsed.func(parsed)
@@ -67,7 +76,7 @@ def dev_attach(in_docker, reset):
     if reset:
         dev_reset()
         time.sleep(1)
-    run_docker(PANDA_CONTAINER, name = 'pandare', interactive = True, in_docker = in_docker)
+    run_docker(name = 'pandare', interactive = True, in_docker = in_docker)
 
 def dev_test(in_docker, reset):
     if reset:
@@ -76,29 +85,49 @@ def dev_test(in_docker, reset):
             return
         dev_reset()
         time.sleep(1)
-    run_docker(PANDA_CONTAINER, name = 'pandare', \
-        command = 'pytest --cov-config=.coveragerc --cov=exert tests/', \
+    run_docker(name = 'pandare', command = 'pytest --cov-config=.coveragerc --cov=exert tests/',
+        in_docker = in_docker)
+
+def dev_rules(in_docker, version, reset):
+    if reset:
+        if in_docker:
+            print("Cannot reset from within a container. Command cancelled.")
+            return
+        dev_reset()
+        time.sleep(1)
+    run_docker(name = 'pandare', command = f'python exert/utilities/generator.py {version}',
         in_docker = in_docker)
 
 # pylint: disable=unused-argument
 def init(parsed):
-    try:
-        run_command("docker ps", True, True)
-    except ValueError:
-        print("Docker is not running") #To do, may need more attention
-        return
     if parsed.docker:
-        run_command("cd /mount; chmod +x ./setup.sh; ./setup.sh")
+        run_command('cd /mount; chmod +x ./setup.sh; ./setup.sh')
         return
-    #
-   # if parsed.docker
 
+    # Ensure docker exists
+    print('Validating Docker...')
     if shutil.which('docker') is None:
         print('Error: You must have docker installed to run EXERT.')
         return
 
+    # Ensure docker engine is running
+    try:
+        run_command('docker ps', True, True)
+    except ValueError:
+        print('Error: Please start the docker engine.')
+        return
+
+    print('Pulling containers...')
     run_command(f'docker pull {PANDA_CONTAINER}:latest')
     run_command(f'docker pull {XMAKE_CONTAINER}:latest')
+
+    local_mount = f'-v "{os.path.dirname(os.path.realpath(__file__))}:/local"'
+
+    ls_out = run_command('docker volume ls -q -f "name=pandare"', True, True)
+    if 'pandare' not in get_stdout(ls_out).splitlines():
+        print('Copying local data to volume...')
+        run_command('docker volume create pandare', True, True)
+        run_docker(command = 'cp -r /local/* /mount', extra_args = local_mount)
 
     print('EXERT successfully initialized!')
 
@@ -111,7 +140,8 @@ def osi(parsed):
 
     print('OSI not implemented.')
 
-def run_docker(container, name = None, command = '', interactive = False, in_docker = False):
+def run_docker(container = PANDA_CONTAINER, name = None, command = '',
+    interactive = False, in_docker = False, extra_args = ''):
     try:
         validate_initialized()
         if in_docker:
@@ -122,18 +152,16 @@ def run_docker(container, name = None, command = '', interactive = False, in_doc
             run_command(command, False, True)
             return
 
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        mount = f'-v "{cwd}:/mount"'
-
-        privileged = '--privileged' if name == 'pandare' else ''
+        mount = '-v "pandare:/mount"'
+        name_arg = '' if name is None else f'--name {name}'
+        args = f'--rm -it {name_arg} {mount} {extra_args} {container}'
 
         if name is None:
-            run_command(f'docker run --rm -it {mount} {container} bash -c'
-                f'"cd /mount; {command}"', False, False)
+            run_command(f'docker run {args} bash -c "cd /mount; {command}"', False, False)
         else:
             if not container_is_running(name):
-                run_command(f'docker run --rm -dit {privileged} --name {name} {mount} {container}')
-                run_command(f'docker exec {name} bash -c ' \
+                run_command(f'docker run -d {args}')
+                run_command(f'docker exec {name} bash -c '
                     '"cd /mount; chmod +x ./setup.sh; ./setup.sh"')
             run_command(f'docker exec {name} bash -c "cd /mount; {command}"', False, True)
             if interactive:
