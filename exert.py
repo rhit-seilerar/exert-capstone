@@ -67,7 +67,8 @@ def main():
     parsed.func(parsed)
 
 def dev_reset():
-    run_command('docker stop pandare', capture_output = True, check = False)
+    run_command('docker stop pandare', True, False)
+    run_command('docker stop pandare-init', True, False)
 
 def dev_attach(in_docker, reset):
     if in_docker:
@@ -76,7 +77,7 @@ def dev_attach(in_docker, reset):
     if reset:
         dev_reset()
         time.sleep(1)
-    run_docker(name = 'pandare', interactive = True, in_docker = in_docker)
+    run_docker(interactive = True, in_docker = in_docker)
 
 def dev_test(in_docker, reset):
     if reset:
@@ -85,7 +86,7 @@ def dev_test(in_docker, reset):
             return
         dev_reset()
         time.sleep(1)
-    run_docker(name = 'pandare', command = 'pytest --cov-config=.coveragerc --cov=exert tests/',
+    run_docker(command = 'pytest --cov-config=.coveragerc --cov=exert tests/',
         in_docker = in_docker)
 
 def dev_rules(in_docker, version, reset):
@@ -95,7 +96,7 @@ def dev_rules(in_docker, version, reset):
             return
         dev_reset()
         time.sleep(1)
-    run_docker(name = 'pandare', command = f'python exert/utilities/generator.py {version}',
+    run_docker(command = f'python -m exert.utilities.generator {version}',
         in_docker = in_docker)
 
 # pylint: disable=unused-argument
@@ -121,13 +122,23 @@ def init(parsed):
     run_command(f'docker pull {PANDA_CONTAINER}:latest')
     run_command(f'docker pull {XMAKE_CONTAINER}:latest')
 
+    dev_reset()
     local_mount = f'-v "{os.path.dirname(os.path.realpath(__file__))}:/local"'
 
+    print('Copying local data to volume...')
     ls_out = run_command('docker volume ls -q -f "name=pandare"', True, True)
+    exclude = '--exclude .git'
     if 'pandare' not in get_stdout(ls_out).splitlines():
-        print('Copying local data to volume...')
         run_command('docker volume create pandare', True, True)
-        run_docker(command = 'cp -r /local/* /mount', extra_args = local_mount)
+    else:
+        exclude += ' --exclude cache'
+
+    run_docker(name = 'pandare-init',
+        command = 'apt-get update && apt-get install -y rsync',
+        extra_args = local_mount)
+    run_docker(name = 'pandare-init',
+        command = f'rsync -av --progress {exclude} /local/ /mount')
+    run_command('docker stop pandare-init')
 
     print('EXERT successfully initialized!')
 
@@ -140,7 +151,7 @@ def osi(parsed):
 
     print('OSI not implemented.')
 
-def run_docker(container = PANDA_CONTAINER, name = None, command = '',
+def run_docker(container = PANDA_CONTAINER, name = 'pandare', command = '',
     interactive = False, in_docker = False, extra_args = ''):
     try:
         validate_initialized()
@@ -161,8 +172,9 @@ def run_docker(container = PANDA_CONTAINER, name = None, command = '',
         else:
             if not container_is_running(name):
                 run_command(f'docker run -d {args}')
-                run_command(f'docker exec {name} bash -c '
-                    '"cd /mount; chmod +x ./setup.sh; ./setup.sh"')
+                if name == 'pandare':
+                    run_command(f'docker exec {name} bash -c '
+                        '"cd /mount; chmod +x ./setup.sh; ./setup.sh"')
             run_command(f'docker exec {name} bash -c "cd /mount; {command}"', False, True)
             if interactive:
                 run_command(f'docker exec -it {name} bash"')
@@ -184,7 +196,8 @@ def validate_initialized():
 
 def make_usermode(arch, libc):
     # TODO: Compile usermode for specific version
-    run_docker(XMAKE_CONTAINER, command=f'make -C /mount/exert/usermode ARCH={arch} LIBC={libc}')
+    run_docker(XMAKE_CONTAINER, name = None,
+        command=f'make -C /mount/exert/usermode ARCH={arch} LIBC={libc}')
 
 def validate_iso(image):
     try:

@@ -23,7 +23,7 @@ cd ..
 
 # Install some pip dependencies
 python3 -m pip install --upgrade pip
-pip install --upgrade ipython pytest pytest-cov
+pip install --upgrade ipython pyclibrary pytest pytest-cov
 
 chmod +x /mount/make_initrd.sh
 
