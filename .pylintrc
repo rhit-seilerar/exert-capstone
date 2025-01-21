@@ -8,4 +8,5 @@ disable=
     missing-module-docstring,
     missing-class-docstring,
     no-name-in-module,
-    too-few-public-methods
+    too-few-public-methods,
+    too-many-arguments
