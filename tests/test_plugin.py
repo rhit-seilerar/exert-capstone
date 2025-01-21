@@ -77,3 +77,6 @@ def test_nongeneric_kernel_x86_64():
     do_test(callback_test_nongeneric_kernel, 'x86_64', generic=False, kernel='./vmlinuz-x86_64')
 def test_nongeneric_kernel_mips():
     do_test(callback_test_nongeneric_kernel, 'mips', generic=False, kernel='./vmlinux-mips')
+
+def test_get_current_from_stack_nongeneric():
+    do_test(callback_test_get_current_from_stack, 'armv5l', generic=False, kernel='./vmlinuz')
