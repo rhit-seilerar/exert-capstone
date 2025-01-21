@@ -82,9 +82,16 @@ def dev_test(in_docker, reset):
 
 # pylint: disable=unused-argument
 def init(parsed):
+    try:
+        run_command("docker ps", True, True)
+    except ValueError:
+        print("Docker is not running") #To do, may need more attention
+        return
     if parsed.docker:
         run_command("cd /mount; chmod +x ./setup.sh; ./setup.sh")
         return
+    #
+   # if parsed.docker
 
     if shutil.which('docker') is None:
         print('Error: You must have docker installed to run EXERT.')
