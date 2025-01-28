@@ -223,19 +223,8 @@ class Path():
         path.mnt_parent_offset = {self.mnt_parent_offset}
         path.mnt_mountpoint_offset = {self.mnt_mountpoint_offset}\n'''
 
-def main():
-    header_line = HeaderLine()
-    osi_name = Name()
-    osi_version = Version()
-    task = Task()
-    cred = Cred()
-    mm = MM()
-    vma = VMA()
-    fs = FS()
-    qstr = QSTR()
-    osi_path = Path()
-
-    with open("demo_osi.osi", "w", encoding='utf-8') as f:
+def main(header_line, osi_name, osi_version, task, cred, mm, vma, fs, qstr, osi_path, demo_path):
+    with open(demo_path, "w", encoding='utf-8') as f:
         f.write(header_line.to_string())
         f.write(osi_name.to_string())
         f.write(osi_version.to_string())
@@ -247,5 +236,3 @@ def main():
         f.write(qstr.to_string())
         f.write(osi_path.to_string())
         f.close()
-
-main()
