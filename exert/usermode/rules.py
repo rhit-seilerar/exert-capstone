@@ -43,6 +43,18 @@ class Rule:
             self.key = self._get_key()
         return self.key
 
+class Any(Rule):
+    def __init__(self, *rules):
+        super().__init__()
+        self.rules = rules
+
+    def _get_key(self):
+        return f"Any({', '.join(str(r) for r in self.rules)})"
+
+    def _test(self, context, address):
+        #TODO
+        pass
+
 class Int(Rule):
     def __init__(self, size = 4, signed = True, min_value = None, max_value = None):
         super().__init__()

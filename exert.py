@@ -99,7 +99,7 @@ def dev_rules(in_docker, version, reset):
         dev_reset()
         time.sleep(1)
     sync_volume()
-    run_docker(command = f'python -m exert.utilities.generator {version}',
+    run_docker(command = f'python -u -m exert.utilities.parser {version}',
         in_docker = in_docker)
 
 # pylint: disable=unused-argument
