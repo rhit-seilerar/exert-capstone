@@ -79,7 +79,8 @@ def test_get_current_from_stack_arm():
     do_test(callback_test_get_current_from_stack, 'arm')
 
 def test_get_current_from_stack_x86_64():
-    do_test(callback_test_get_current_from_stack_x86_64, 'x86_64', generic=False, kernel='./vmlinuz-x86_64-2')
+    do_test(callback_test_get_current_from_stack_x86_64, 'x86_64',
+            generic=False, kernel='./vmlinuz-x86_64-2')
 
 def callback_test_get_task_from_current(panda, cpu):
     task_addr = callback_test_get_current_from_stack(panda, cpu)

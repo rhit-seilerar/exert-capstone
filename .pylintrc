@@ -9,4 +9,7 @@ disable=
     missing-class-docstring,
     no-name-in-module,
     too-few-public-methods,
-    too-many-arguments
+    too-many-arguments,
+    too-many-positional-arguments,
+    too-many-instance-attributes,
+    too-many-locals,
