@@ -11,6 +11,9 @@ def read_mem(panda, cpu, addr, size):
 def read_word(mem, offset):
     return int.from_bytes(mem[offset:offset+4], byteorder='little', signed=False)
 
+def read_long(mem, offset):
+    return int.from_bytes(mem[offset:offset+8], byteorder='little', signed=False)
+
 CALLED_BACK = False
 def set_called_back(called_back):
     global CALLED_BACK
@@ -58,8 +61,28 @@ def callback_test_get_current_from_stack(panda, cpu):
     assert task_stack == thread_info_addr
     print(f"@@@@@@@@@@@@@FOUND TASK ADDR AT {task_addr}")
     return task_addr
-def test_get_current_from_stack():
+
+def callback_test_get_current_from_stack_x86_64(panda, cpu): # Tested with 4.4.100
+    sp0_offset = 4
+    esp0_ptr = cpu.env_ptr.tr.base + sp0_offset
+    esp0_bytes = read_mem(panda, cpu, esp0_ptr, 8)
+    esp0 = read_long(esp0_bytes, 0)
+
+    thread_info_addr = esp0 - 16384
+    thread_info = read_mem(panda, cpu, thread_info_addr, 36)
+    task_addr = read_long(thread_info, 0)
+    task = read_mem(panda, cpu, task_addr, 16)
+
+    task_stack = read_long(task, 8)
+    assert task_stack == thread_info_addr
+    return task_addr
+
+def test_get_current_from_stack_arm():
     do_test(callback_test_get_current_from_stack, 'arm')
+
+def test_get_current_from_stack_x86_64():
+    do_test(callback_test_get_current_from_stack_x86_64, 'x86_64',
+            generic=False, kernel='./vmlinuz-x86_64-2')
 
 def callback_test_get_task_from_current(panda, cpu):
     task_addr = callback_test_get_current_from_stack(panda, cpu)
@@ -80,6 +103,8 @@ def test_nongeneric_kernel_aarch64():
     do_test(callback_test_nongeneric_kernel, 'aarch64', generic=False, kernel='./vmlinuz-aarch64')
 def test_nongeneric_kernel_x86_64():
     do_test(callback_test_nongeneric_kernel, 'x86_64', generic=False, kernel='./vmlinuz-x86_64')
+def test_nongeneric_kernel_x86_64_2():
+    do_test(callback_test_nongeneric_kernel, 'x86_64', generic=False, kernel='./vmlinuz-x86_64-2')
 def test_nongeneric_kernel_mips():
     print("TESTING TESTING TESTING")
     do_test(callback_test_nongeneric_kernel, 'mips', generic=False, kernel='./vmlinux-mips')
