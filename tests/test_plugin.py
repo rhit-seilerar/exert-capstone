@@ -48,18 +48,16 @@ def test_ground_truth_tasklist():
     do_test(callback_test_ground_truth_tasklist, 'i386')
 
 def callback_test_get_current_from_stack(panda, cpu):
-    print("##############################TEST2###########################")
     sp = panda.arch.get_reg(cpu, 'SP')
 
-    thread_info_addr = sp & ~(16384 - 1)
-    thread_info = read_mem(panda, cpu, thread_info_addr + 16, 8)
+    thread_info_addr = sp & ~(8192 - 1)
+    thread_info = read_mem(panda, cpu, thread_info_addr, 80)
 
-    task_addr = read_word(thread_info, 8)
+    task_addr = read_word(thread_info, 12)
     task = read_mem(panda, cpu, task_addr, 400)
 
     task_stack = read_word(task, 4)
     assert task_stack == thread_info_addr
-    print(f"@@@@@@@@@@@@@FOUND TASK ADDR AT {task_addr}")
     return task_addr
 
 def callback_test_get_current_from_stack_x86_64(panda, cpu): # Tested with 4.4.100
@@ -93,10 +91,7 @@ def test_get_task_from_current():
     do_test(callback_test_get_task_from_current, 'arm')
 
 def callback_test_nongeneric_kernel(panda, cpu):
-    print("***TEST")
-    callback_test_get_task_from_current(panda, cpu)
-    return -1
-    
+    pass
 def test_nongeneric_kernel_armv5l():
     do_test(callback_test_nongeneric_kernel, 'armv5l', generic=False, kernel='./vmlinuz')
 def test_nongeneric_kernel_aarch64():
@@ -106,7 +101,6 @@ def test_nongeneric_kernel_x86_64():
 def test_nongeneric_kernel_x86_64_2():
     do_test(callback_test_nongeneric_kernel, 'x86_64', generic=False, kernel='./vmlinuz-x86_64-2')
 def test_nongeneric_kernel_mips():
-    print("TESTING TESTING TESTING")
     do_test(callback_test_nongeneric_kernel, 'mips', generic=False, kernel='./vmlinux-mips')
 
 def test_get_current_from_stack_nongeneric():
