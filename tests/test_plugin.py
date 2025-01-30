@@ -92,12 +92,13 @@ def test_get_current_from_stack_arm():
     do_test(callback_test_get_current_from_stack, 'arm')
 
 def test_get_current_from_stack_arm_nongeneric():
-    do_test(callback_test_get_current_from_stack, 'armv5l', generic=False, kernel='./kernels/vmlinuz-arm')
+    do_test(callback_test_get_current_from_stack, 'armv5l',
+            generic=False, kernel='./kernels/vmlinuz-arm')
 
 def test_get_current_from_stack_x86_64():
     do_test(callback_test_get_current_from_stack_x86_64, 'x86_64',
             generic=False, kernel='./kernels/vmlinuz-x86_64-2')
-    
+
 def test_get_current_from_stack_i386():
     do_test(callback_test_get_current_from_stack_i386, 'i386',
             generic=False, kernel='./kernels/vmlinuz-i386')
@@ -112,14 +113,23 @@ def test_get_task_from_current():
 
 def callback_test_nongeneric_kernel(panda, cpu):
     pass
-def test_nongeneric_kernel_armv5l():
-    do_test(callback_test_nongeneric_kernel, 'armv5l', generic=False, kernel='./kernels/vmlinuz-arm')
-def test_nongeneric_kernel_aarch64():
-    do_test(callback_test_nongeneric_kernel, 'aarch64', generic=False, kernel='./kernels/vmlinuz-aarch64')
-def test_nongeneric_kernel_x86_64():
-    do_test(callback_test_nongeneric_kernel, 'x86_64', generic=False, kernel='./kernels/vmlinuz-x86_64')
-def test_nongeneric_kernel_x86_64_2():
-    do_test(callback_test_nongeneric_kernel, 'x86_64', generic=False, kernel='./kernels/vmlinuz-x86_64-2')
-def test_nongeneric_kernel_mips():
-    do_test(callback_test_nongeneric_kernel, 'mips', generic=False, kernel='./kernels/vmlinux-mips')
 
+def test_nongeneric_kernel_armv5l():
+    do_test(callback_test_nongeneric_kernel, 'armv5l', generic=False,
+            kernel='./kernels/vmlinuz-arm')
+
+def test_nongeneric_kernel_aarch64():
+    do_test(callback_test_nongeneric_kernel, 'aarch64',
+            generic=False, kernel='./kernels/vmlinuz-aarch64')
+
+def test_nongeneric_kernel_x86_64():
+    do_test(callback_test_nongeneric_kernel, 'x86_64',
+            generic=False, kernel='./kernels/vmlinuz-x86_64')
+
+def test_nongeneric_kernel_x86_64_2():
+    do_test(callback_test_nongeneric_kernel, 'x86_64',
+            generic=False, kernel='./kernels/vmlinuz-x86_64-2')
+
+def test_nongeneric_kernel_mips():
+    do_test(callback_test_nongeneric_kernel, 'mips',
+            generic=False, kernel='./kernels/vmlinux-mips')

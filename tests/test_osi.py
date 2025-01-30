@@ -1,5 +1,5 @@
-from exert.usermode import osi
 import os
+from exert.usermode import osi
 
 def test_file_print():
     header_line = osi.HeaderLine()
