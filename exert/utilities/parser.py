@@ -28,6 +28,42 @@ def switch_to_version(version):
     print(f'Checking out version {version}...')
     run_command(f'git checkout v{version}', True, True, './cache/linux')
 
+SOURCE = """
+#ifndef _LINUX_SCHED_H
+#define _LINUX_SCHED_H
+
+#include <uapi/linux/sched.h>
+
+#include <linux/sched/prio.h>
+
+
+struct sched_param {
+	int sched_priority;
+};
+
+#include <asm/param.h>	/* for HZ */
+
+#include <linux/capability.h>
+//#include <linux/threads.h>
+//#include <linux/kernel.h>
+//#include <linux/types.h>
+//#include <linux/timex.h>
+//#include <linux/jiffies.h>
+//#include <linux/plist.h>
+//#include <linux/rbtree.h>
+//#include <linux/thread_info.h>
+//#include <linux/cpumask.h>
+//#include <linux/errno.h>
+//#include <linux/nodemask.h>
+//#include <linux/mm_types.h>
+//#include <linux/preempt.h>
+"""
+
+def remove_asm(path):
+    if path.startswith('asm/'):
+        return path[4:]
+    return path
+
 def parse(filename, arch):
     tokenizer = Tokenizer()
 
@@ -36,11 +72,13 @@ def parse(filename, arch):
         includes = [
             f'{SOURCE_PATH}/include/',
             f'{SOURCE_PATH}/include/uapi/',
+            (f'{SOURCE_PATH}/include/asm-generic', remove_asm),
+            (f'{SOURCE_PATH}/include/uapi/asm-generic', remove_asm),
             f'{SOURCE_PATH}/arch/{arch}/include/',
-            f'{SOURCE_PATH}/arch/{arch}/include/uapi/'
+            f'{SOURCE_PATH}/arch/{arch}/include/uapi/',
         ]
     )
-    preprocessor.preprocess(f'#include "{filename}"')
+    preprocessor.preprocess(SOURCE)
     print(str(preprocessor))
     # parser = Parser(
     #     Preprocessor(

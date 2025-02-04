@@ -41,7 +41,7 @@ class Tokenizer:
         elif self.consume('/*'):
             while not self.consume('*/'):
                 assert self.has_next(), \
-                    "[Tokenizer::Comment] Reached EOF without finding the closing '*/'"
+                    "Reached EOF without finding the closing '*/'"
                 self.bump()
             return True
         return False
@@ -106,8 +106,11 @@ class Tokenizer:
         if delim:
             start = self.index
             while not self.consume(delim):
-                assert self.has_next(), \
-                    '[Tokenizer::String] Reached EOF without finding the closing quation mark'
+                if not self.has_next():
+                    assert delim != '#', \
+                        'Reached EOF without finding the closing quation mark'
+                    self.index = old
+                    return None
                 if not self.consume('\\"'):
                     self.bump()
             return ('string', self.data[start:self.index-1], modifier)
@@ -148,7 +151,6 @@ class Tokenizer:
         self.in_directive = False
         self.can_be_directive = True
         self.tokens = []
-        print(data)
 
         while self.has_next():
             if self.consume(' ', '\t'):

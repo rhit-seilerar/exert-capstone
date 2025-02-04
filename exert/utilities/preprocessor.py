@@ -12,14 +12,25 @@ class Preprocessor(TokenManager):
         includes = [os.path.dirname(self.file)] if is_relative else []
         includes += self.includes
         for include in includes:
-            load_path = os.path.join(include, path)
-            data = self.load_data(load_path)
-            print(f'Loading path: {load_path}')
+            load_path = ''
+            if isinstance(include, tuple):
+                load_path = os.path.join(include[0], include[1](path))
+            else:
+                load_path = os.path.join(include, path)
+            
+            data = ''
+            try:
+                with open(load_path, 'r', encoding = 'utf-8') as file:
+                    print(f'Loading path: {load_path}')
+                    data = file.read()
+            except IOError:
+                continue
             prefix = f'#line 1 "{load_path}"\n'
             suffix = f'\n#line 1 "{self.file}"' if self.file else '\n#line 1'
             to_insert = prefix + data + suffix
             self.insert(to_insert)
             return True
+        self.index -= 4
         return self.err(f"Failed to include '{path}'")
 
     def push_optional(self, name):
@@ -56,13 +67,15 @@ class Preprocessor(TokenManager):
             return self.err('#include cannot have string literal modifiers')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        self.remove(4)
-        return self.load_file(file[1], file[2] != '<')
+        index = self.index
+        result = self.load_file(file[1], file[2] != '<')
+        self.remove(4, index)
+        return result
 
     def handle_define(self):
         if not (name := self.parse_identifier()):
             return self.err('#define must be followed by an identifier')
-        if not (tokens := self.skip_to_newline(1)):
+        if (tokens := self.skip_to_newline(1)) is None:
             return False
         self.definitions[name] = (arr := self.definitions.get(name, list()))
         arr.append(tokens)
@@ -176,18 +189,12 @@ class Preprocessor(TokenManager):
         if before:
             self.index += size
 
-    def remove(self, count):
-        del self.tokens[self.index-count:self.index]
+    def remove(self, count, index = None):
+        index = index if index else self.index
+        assert index <= self.index
+        del self.tokens[index-count:index]
         self.len -= count
         self.index -= count
-
-    def load_data(self, filename):
-        try:
-            with open(filename, 'r', encoding = 'utf-8') as file:
-                data = file.read()
-                return data
-        except IOError:
-            return self.err(f'Error loading source file {filename}!')
 
     def substitute_identifier(self, ident):
         def recurse(tokens):
@@ -227,22 +234,7 @@ class Preprocessor(TokenManager):
         return self
 
     def __str__(self):
-        def tok_seq(tokens):
-            return ''.join(
-                '#endif\n' if n == ('optional', None)
-                else f'#if {n[1]}\n' if n[0] == 'optional'
-                else '#' if n[0] == 'directive'
-                else f'{n[1]}\n' if n[0] == 'operator' and n[1] in [';', '{', '}']
-                else f'{n[1]} ' if n[0] == 'operator'
-                else f'{n[1]} ' if n[0] in ['keyword', 'identifier', 'integer', 'string']
-                else f'<ANY>[ {", ".join(tok_seq(t) for t in n[1])}] ' if n[0] == 'any'
-                else str(n[1])
-                for n in tokens
-            )
-
-        tokens = tok_seq(self.tokens)
-
-        definitions = '\n'.join(f'{d[0]}: [ {", ".join(tok_seq(t) for t in d[1])}]' \
+        tokens = self.tok_seq(self.tokens)
+        definitions = '\n'.join(f'{d[0]}: {self.tok_seq_list(d[1])}' \
             for d in self.definitions.items())
-
         return f'\n===== TOKENS =====\n{tokens}\n\n===== DEFINITIONS =====\n{definitions}\n'
