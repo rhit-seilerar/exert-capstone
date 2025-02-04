@@ -7,17 +7,19 @@ class Preprocessor(TokenManager):
         self.tokenizer = tokenizer
         self.includes = includes
         self.definitions = dict()
+        self.unresolved = list()
 
     def load_file(self, path, is_relative):
-        includes = [os.path.dirname(self.file)] if is_relative else []
-        includes += self.includes
+        includes = self.includes.copy()
+        if is_relative:
+            includes.insert(0, os.path.dirname(self.file))
         for include in includes:
             load_path = ''
             if isinstance(include, tuple):
                 load_path = os.path.join(include[0], include[1](path))
             else:
                 load_path = os.path.join(include, path)
-            
+
             data = ''
             try:
                 with open(load_path, 'r', encoding = 'utf-8') as file:
@@ -30,8 +32,9 @@ class Preprocessor(TokenManager):
             to_insert = prefix + data + suffix
             self.insert(to_insert)
             return True
-        self.index -= 4
-        return self.err(f"Failed to include '{path}'")
+        self.unresolved.append(path)
+        print(f"Failed to include '{path}'")
+        return True
 
     def push_optional(self, name):
         self.conditions.append(name)
@@ -67,13 +70,11 @@ class Preprocessor(TokenManager):
             return self.err('#include cannot have string literal modifiers')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        index = self.index
-        result = self.load_file(file[1], file[2] != '<')
-        self.remove(4, index)
-        return result
+        self.remove(4)
+        return self.load_file(file[1], file[2] != '<')
 
     def handle_define(self):
-        if not (name := self.parse_identifier()):
+        if not (name := self.parse_ident_or_keyword()):
             return self.err('#define must be followed by an identifier')
         if (tokens := self.skip_to_newline(1)) is None:
             return False
@@ -82,7 +83,7 @@ class Preprocessor(TokenManager):
         return True
 
     def handle_undef(self):
-        if not self.parse_identifier():
+        if not self.parse_ident_or_keyword():
             return self.err('#undef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
@@ -90,27 +91,30 @@ class Preprocessor(TokenManager):
         return True
 
     def handle_ifdef(self):
-        if not (name := self.parse_identifier()):
+        if not (name := self.parse_ident_or_keyword()):
             return self.err('#ifdef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         self.remove(4)
         self.push_optional(f'defined({name})')
+        self.depth += 1
         return True
 
     def handle_ifndef(self):
-        if not (name := self.parse_identifier()):
+        if not (name := self.parse_ident_or_keyword()):
             return self.err('#ifndef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         self.remove(4)
         self.push_optional(f'!defined({name})')
+        self.depth += 1
         return True
 
     def handle_if(self):
         if not (tokens := self.skip_to_newline()):
             return False
         self.push_optional(' '.join(str(n[1]) for n in tokens))
+        self.depth += 1
         return True
 
     def handle_elif(self):
@@ -132,6 +136,7 @@ class Preprocessor(TokenManager):
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         self.remove(3)
+        self.depth -= 1
         self.pop_optional()
         return True
 
@@ -196,27 +201,36 @@ class Preprocessor(TokenManager):
         self.len -= count
         self.index -= count
 
-    def substitute_identifier(self, ident):
-        def recurse(tokens):
-            new_tokens = []
-            for token in tokens:
-                if token[0] != 'identifier':
-                    new_tokens.append(token)
-                elif (definition := self.definitions.get(token[1])):
-                    new_tokens += recurse(definition)
-            return new_tokens
+    def substitute(self):
+        def subst(token):
+            if token[0] not in ['identifier', 'keyword']:
+                return None
+            substitutions = []
+            definitions = self.definitions.get(token[1])
+            if not definitions:
+                return None
+            for definition in definitions:
+                tokens = []
+                for token in (definition or []):
+                    tokens += subst(token) or [token]
+                if tokens:
+                    substitutions.append(tokens)
+            if len(substitutions) > 1:
+                return [('any', substitutions)]
+            elif len(substitutions) == 1:
+                return substitutions[0]
+            return []
 
-        if ident[1] in self.definitions:
+        result = subst(self.next())
+        if result is not None:
             self.remove(1)
-            tokens = recurse([ident])
-            if len(tokens) > 1:
-                self.insert(('any', tokens))
-            elif len(tokens) == 1:
-                self.insert(tokens[0])
+            self.insert(result)
 
     def preprocess(self, data):
         super().reset()
         self.conditions = []
+        self.depth = 0
+        self.remove_block = None
         self.file = ''
         self.insert(data)
 
@@ -226,10 +240,17 @@ class Preprocessor(TokenManager):
         while self.has_next() and not self.has_error:
             if self.consume_directive('#'):
                 self.parse_directive()
-            elif (ident := self.consume_type('identifier')):
-                self.substitute_identifier(ident)
-            else:
-                self.bump()
+                continue
+
+            if self.remove_block:
+                self.next()
+                continue
+
+            if self.peek_type() in ['identifier', 'keyword']:
+                self.substitute()
+                continue
+
+            self.bump()
 
         return self
 

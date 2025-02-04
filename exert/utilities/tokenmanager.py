@@ -20,7 +20,7 @@ class TokenManager:
         return None
 
     def peek_type(self, offset = 0):
-        return tok[0] if (tok := self.peek(0)) else None
+        return tok[0] if (tok := self.peek(offset)) else None
 
     def next(self, offset = 0):
         if (token := self.peek(offset)):
@@ -54,6 +54,11 @@ class TokenManager:
     def parse_identifier(self):
         if (token := self.consume_type('identifier')):
             return token[1]
+        return ''
+
+    def parse_ident_or_keyword(self):
+        if (self.peek_type() in ['identifier', 'keyword']):
+            return self.next()[1]
         return ''
 
     def err(self, message):
