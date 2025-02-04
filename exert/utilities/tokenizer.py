@@ -1,12 +1,5 @@
 class Tokenizer:
-    def __init__(self, filename):
-        self.filename = filename
-        self.data = b''
-        with open(filename, 'r', encoding = 'utf-8') as file:
-            self.data = file.read()
-        self.len = len(self.data)
-        self.index = 0
-        self.in_directive = False
+    def __init__(self):
         self.keywords = [
             'void', 'char', 'int', 'float', 'double',
             'signed', 'unsigned', 'short', 'long',
@@ -19,7 +12,6 @@ class Tokenizer:
             '_Alignas', '_Alignof', '_Atomic', '_Bool', '_Complex', '_Generic',
             '_Imaginary', '_Noreturn', '_Static_assert', '_Thread_local',
         ]
-        self.tokens = []
 
     def has_next(self):
         return self.index < self.len
@@ -104,6 +96,7 @@ class Tokenizer:
         return ('integer', num, '')
 
     def parse_string(self):
+        # String combination not implemented
         old = self.index
         modifier = self.consume('u8', 'u', 'U', 'L')
         delim = self.consume('"')
@@ -133,8 +126,9 @@ class Tokenizer:
             return ('operator', op2)
         if (op1 := self.peek(1)) in '-=[]\\;,./~!#%^&*()+{}|:<>?':
             self.bump()
-            if op1 == '#':
+            if self.can_be_directive and op1 == '#':
                 self.in_directive = True
+                return ('directive', '#')
             return ('operator', op1)
         return None
 
@@ -148,7 +142,15 @@ class Tokenizer:
         token = token or self.parse_operator()
         return token
 
-    def tokenize(self):
+    def tokenize(self, data):
+        self.data = data
+        self.len = len(data)
+        self.index = 0
+        self.in_directive = False
+        self.can_be_directive = True
+        self.tokens = []
+
+        last = None
         while self.has_next():
             if self.consume(' ', '\t'):
                 continue
@@ -160,12 +162,22 @@ class Tokenizer:
                 continue
             if (newline := self.consume('\n', '\r\n')):
                 if self.in_directive:
+                    self.can_be_directive = True
                     self.in_directive = False
                     self.tokens.append(('newline', newline))
+                elif last == ('operator', ';'):
+                    self.can_be_directive = True
                 continue
 
             token = self.parse_token()
+            self.can_be_directive = False
             if token:
+                last = token
                 self.tokens.append(token)
             else:
                 self.bump()
+
+        if self.in_directive:
+            self.tokens.append(('newline', ''))
+
+        return self.tokens

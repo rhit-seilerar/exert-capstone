@@ -58,10 +58,12 @@ def main():
         help='Generate a ruleset from a specified linux version')
     dev_rules_parser.add_argument('version', type=str,
         help='The version to generate the ruleset for. Format like 4.4.100.')
+    dev_rules_parser.add_argument('arch', type=str,
+        help='The architecture to generate the ruleset for. Use names like x86, arm64, etc.')
     dev_rules_parser.add_argument('-r', '--reset', action='store_true',
         help='Reset the container first')
     dev_rules_parser.set_defaults(func = lambda parsed:
-            dev_rules(parsed.docker, parsed.version, parsed.reset))
+            dev_rules(parsed.docker, parsed.version, parsed.arch, parsed.reset))
 
     parsed = parser.parse_args()
     parsed.func(parsed)
@@ -77,7 +79,8 @@ def dev_attach(in_docker, reset):
     if reset:
         dev_reset()
         time.sleep(1)
-    sync_volume()
+    if not in_docker:
+        sync_volume()
     run_docker(interactive = True, in_docker = in_docker)
 
 def dev_test(in_docker, reset):
@@ -87,19 +90,21 @@ def dev_test(in_docker, reset):
             return
         dev_reset()
         time.sleep(1)
-    sync_volume()
+    if not in_docker:
+        sync_volume()
     run_docker(command = 'pytest --cov-config=.coveragerc --cov=exert tests/',
         in_docker = in_docker)
 
-def dev_rules(in_docker, version, reset):
+def dev_rules(in_docker, version, arch, reset):
     if reset:
         if in_docker:
             print("Cannot reset from within a container. Command cancelled.")
             return
         dev_reset()
         time.sleep(1)
-    sync_volume()
-    run_docker(command = f'python -u -m exert.utilities.parser {version}',
+    if not in_docker:
+        sync_volume()
+    run_docker(command = f'python -u -m exert.utilities.parser {version} {arch}',
         in_docker = in_docker)
 
 # pylint: disable=unused-argument
