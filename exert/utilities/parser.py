@@ -16,7 +16,7 @@ def generate(version, arch):
     print('Parsing files...')
     if not os.path.exists(PARSE_CACHE):
         os.mkdir(PARSE_CACHE)
-    parse(f'{SOURCE_PATH}/include/linux/types.h', arch)
+    parse(f'{SOURCE_PATH}/include/linux/sched/prio.h', arch)
 
 def get_files():
     return glob.glob(f'{SOURCE_PATH}/include/linux/**/*.h', recursive = True)

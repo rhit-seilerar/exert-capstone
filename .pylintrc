@@ -11,6 +11,5 @@ disable=
     too-few-public-methods,
     too-many-arguments,
     attribute-defined-outside-init,
-    too-many-positional-arguments,
     too-many-instance-attributes,
-    too-many-locals,
+    too-many-locals

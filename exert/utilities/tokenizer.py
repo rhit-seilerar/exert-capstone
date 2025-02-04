@@ -150,7 +150,6 @@ class Tokenizer:
         self.can_be_directive = True
         self.tokens = []
 
-        last = None
         while self.has_next():
             if self.consume(' ', '\t'):
                 continue
@@ -165,14 +164,13 @@ class Tokenizer:
                     self.can_be_directive = True
                     self.in_directive = False
                     self.tokens.append(('newline', newline))
-                elif last == ('operator', ';'):
+                else:
                     self.can_be_directive = True
                 continue
 
             token = self.parse_token()
             self.can_be_directive = False
             if token:
-                last = token
                 self.tokens.append(token)
             else:
                 self.bump()
