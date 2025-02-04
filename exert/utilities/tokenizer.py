@@ -81,7 +81,7 @@ class Tokenizer:
             return None
 
         num = 0
-        while (d := self.peek().lower()) in digits:
+        while self.has_next() and (d := self.peek().lower()) in digits:
             v = ord(d) - ord('a') if d.isalpha() else ord(d) - ord('0')
             num = num * radix + v
             self.bump()
@@ -96,9 +96,8 @@ class Tokenizer:
         return ('integer', num, '')
 
     def parse_string(self):
-        # String combination not implemented
         old = self.index
-        modifier = self.consume('u8', 'u', 'U', 'L')
+        modifier = self.consume('u8', 'u', 'U', 'L') or ''
         delim = self.consume('"')
         if not delim and self.in_directive:
             if self.consume('<'):
@@ -149,6 +148,7 @@ class Tokenizer:
         self.in_directive = False
         self.can_be_directive = True
         self.tokens = []
+        print(data)
 
         while self.has_next():
             if self.consume(' ', '\t'):

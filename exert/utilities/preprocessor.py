@@ -16,7 +16,7 @@ class Preprocessor(TokenManager):
             data = self.load_data(load_path)
             print(f'Loading path: {load_path}')
             prefix = f'#line 1 "{load_path}"\n'
-            suffix = f'\n#line 1 "{self.file}"'
+            suffix = f'\n#line 1 "{self.file}"' if self.file else '\n#line 1'
             to_insert = prefix + data + suffix
             self.insert(to_insert)
             return True
@@ -207,11 +207,14 @@ class Preprocessor(TokenManager):
             elif len(tokens) == 1:
                 self.insert(tokens[0])
 
-    def preprocess(self, filename):
+    def preprocess(self, data):
         super().reset()
         self.conditions = []
         self.file = ''
-        self.load_file(filename, True)
+        self.insert(data)
+
+        # String combination not implemented
+        # Stringification and concatenation not implemented
 
         while self.has_next() and not self.has_error:
             if self.consume_directive('#'):

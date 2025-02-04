@@ -40,7 +40,7 @@ def parse(filename, arch):
             f'{SOURCE_PATH}/arch/{arch}/include/uapi/'
         ]
     )
-    preprocessor.preprocess(filename)
+    preprocessor.preprocess(f'#include "{filename}"')
     print(str(preprocessor))
     # parser = Parser(
     #     Preprocessor(
