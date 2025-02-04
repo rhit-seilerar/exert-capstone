@@ -10,4 +10,7 @@ disable=
     no-name-in-module,
     too-few-public-methods,
     too-many-arguments,
-    attribute-defined-outside-init
+    attribute-defined-outside-init,
+    too-many-positional-arguments,
+    too-many-instance-attributes,
+    too-many-locals,
