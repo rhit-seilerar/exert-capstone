@@ -1,5 +1,6 @@
 """The core file for the plugin component of the EXERT system"""
 
+import sys
 import IPython
 from pandare import PyPlugin, Panda
 from exert.utilities.command import run_command
@@ -83,3 +84,54 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None):
         panda.end_analysis()
 
     panda.run()
+
+def get_task_address(kernel, arch, version):
+    version_supported = False
+
+    version = version.split('-')[0]
+    version_nums = version.split('.')
+    version_nums[0] = int(version_nums[0], 10)
+    version_nums[1] = int(version_nums[1], 10)
+    version_nums[2] = int(version_nums[2], 10)
+
+    if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
+        version_greater_than_min = version_nums[0] > 2 or \
+            (version_nums[0] == 2 and version_nums[1] > 6) or \
+                (version_nums[0] == 2 and version_nums[1] == 6 and version_nums[2] >= 13)
+        if version_greater_than_min:
+            version_less_than_max = version_nums[0] < 5 or \
+                (version_nums[0] == 5 and version_nums[1] < 14) or \
+                    (version_nums[0] == 5 and version_nums[1] == 14 and version_nums[2] <= 21)
+            if version_less_than_max:
+                version_supported = True
+                global task_address
+                run(arch, task_address_arm_callback, False, kernel)
+                print("Task Address: " + hex(task_address))
+    if not version_supported:
+        print("Version not supported")
+
+def read_mem(panda, cpu, addr, size):
+    return panda.virtual_memory_read(cpu, addr, size)
+
+def read_word(mem, offset):
+    return int.from_bytes(mem[offset:offset+4], byteorder='little', signed=False)
+
+def task_address_arm_callback(panda, cpu):
+    sp = panda.arch.get_reg(cpu, 'SP')
+
+    thread_info_addr = sp & ~(8192 - 1)
+    thread_info = read_mem(panda, cpu, thread_info_addr, 80)
+
+    task_addr = read_word(thread_info, 12)
+    task = read_mem(panda, cpu, task_addr, 400)
+
+    task_stack = read_word(task, 4)
+    assert task_stack == thread_info_addr
+
+    global task_address
+    task_address = task_addr
+
+    return task_addr
+
+if __name__ == '__main__':
+    get_task_address(sys.argv[1], sys.argv[2], sys.argv[3])
