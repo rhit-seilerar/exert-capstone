@@ -173,7 +173,7 @@ def osi(parsed):
 
     print('OSI not implemented.')
 
-def run_docker(container = PANDA_CONTAINER, name = 'pandare', command = '',
+def run_docker(container = PANDA_CONTAINER, *, name = 'pandare', command = '',
     interactive = False, in_docker = False, extra_args = ''):
     try:
         validate_initialized()

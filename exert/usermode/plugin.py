@@ -5,6 +5,8 @@ import IPython
 from pandare import PyPlugin, Panda
 from exert.utilities.command import run_command
 
+TASK_ADDRESS = None
+
 class Exert(PyPlugin):
     """The Exert plugin"""
     # pylint: disable=attribute-defined-outside-init
@@ -104,9 +106,8 @@ def get_task_address(kernel, arch, version):
                     (version_nums[0] == 5 and version_nums[1] == 14 and version_nums[2] <= 21)
             if version_less_than_max:
                 version_supported = True
-                global task_address
                 run(arch, task_address_arm_callback, False, kernel)
-                print("Task Address: " + hex(task_address))
+                print("Task Address: " + hex(TASK_ADDRESS))
     if not version_supported:
         print("Version not supported")
 
@@ -128,8 +129,8 @@ def task_address_arm_callback(panda, cpu):
     task_stack = read_word(task, 4)
     assert task_stack == thread_info_addr
 
-    global task_address
-    task_address = task_addr
+    global TASK_ADDRESS
+    TASK_ADDRESS = task_addr
 
     return task_addr
 
