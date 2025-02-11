@@ -70,18 +70,10 @@ def test_nongeneric_kernel_mips():
     do_test(callback_test_nongeneric_kernel, 'mips',
             generic=False, kernel='./kernels/vmlinux-mips')
 
-KERNEL_SUPPORTED_PREFIX = """
-from exert.usermode import plugin
-plugin.get_task_address('./kernels/vmlinuz-arm', 'armv5l', '3.2.0-4-versatile')
-"""
-
 def test_plugin_kernel_supported():
-    subprocess.run(['python'], input = KERNEL_SUPPORTED_PREFIX, check = True, text = True)
-
-KERNEL_UNSUPPORTED_PREFIX = """
-from exert.usermode import plugin
-plugin.get_task_address('./kernels/vmlinuz-arm', 'armv5l', '6.12.9')
-"""
+    subprocess.run(['python', '-u', '-m', 'exert.usermode.plugin', './kernels/vmlinuz-arm',
+                    'armv5l', '3.2.0-4-versatile'], check = True)
 
 def test_plugin_kernel_unsupported():
-    subprocess.run(['python'], input = KERNEL_UNSUPPORTED_PREFIX, check = True, text = True)
+    subprocess.run(['python', '-u', '-m', 'exert.usermode.plugin', './kernels/vmlinuz-arm',
+                    'armv5l', '6.12.9'], check = True)
