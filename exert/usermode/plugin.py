@@ -23,6 +23,9 @@ class Exert(PyPlugin):
         #     x = run_command('./file_reader.c demo_osi.osi')
         #     print(f'{x}')
         #     return x
+        @panda.cb_guest_hypercall
+        def fd_reader():
+            print('Not an octopus.\n')
 
         # TODO: Find a way to cover these
         @panda.ppp('syscalls2', 'on_sys_execve_enter')
@@ -52,7 +55,6 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None):
         panda = Panda(generic = arch)
     else:
         run_command(f'./make_initrd.sh {arch} file_reader')
-        run_command('./file_reader ./demo_osi.osi')
         if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
             args = f'--nographic \
                 -kernel {kernel} \

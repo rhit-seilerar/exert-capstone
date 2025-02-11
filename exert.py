@@ -253,7 +253,8 @@ def validate_iso(image):
 
 def get_task_address(kernel_path, kernel_arch, kernel_version, in_docker):
     command = f'python -u -m exert.usermode.plugin {kernel_path} {kernel_arch} {kernel_version}'
-
+    # make_usermode(kernel_arch, kernel_version)
+    #file needs to initiate a hypercall, but before that, plugin needs to intercept a hypercall
     if in_docker:
         run_command(command, True)
         return

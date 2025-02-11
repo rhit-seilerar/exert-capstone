@@ -106,8 +106,6 @@ def test_get_task_from_current():
 def callback_test_nongeneric_kernel(panda, cpu):
     pass
 
-def test_fd_finder(env):
-    pass
     # assert context.read(0x4, 4) is None
     # assert context.read(0x0, 1) == b'\x05'
 
