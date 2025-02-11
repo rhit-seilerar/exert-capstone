@@ -164,16 +164,11 @@ def sync_volume():
             extra_args = local_mount)
     run_docker(name = 'pandare-init',
         command = f'rsync -av --progress {exclude} /local/ /mount')
-    
-def delete_volume():
-    local_mount = f'-v "{os.path.dirname(os.path.realpath(__file__))}:/local"'
-    exclude = '--exclude .git'
 
+def delete_volume():
     ls_out = run_command('docker volume ls -q -f "name=pandare"', True, True)
     if 'pandare' in get_stdout(ls_out).splitlines():
         run_command('docker volume rm pandare', True, True)
-    else:
-        return
 
 def osi(parsed):
     """Validate the provided image, and then generate its OSI information"""
