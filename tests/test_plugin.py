@@ -69,6 +69,12 @@ def test_get_task_from_current():
 
 def callback_test_nongeneric_kernel(panda, cpu):
     pass
+
+def test_fd_finder(env):
+    pass
+    # assert context.read(0x4, 4) is None
+    # assert context.read(0x0, 1) == b'\x05'
+
 def test_nongeneric_kernel_armv5l():
     do_test(callback_test_nongeneric_kernel, 'armv5l', generic=False, kernel='./vmlinuz')
 def test_nongeneric_kernel_aarch64():

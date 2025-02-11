@@ -88,6 +88,7 @@ def dev_test(in_docker, reset):
         dev_reset()
         time.sleep(1)
     sync_volume()
+    make_usermode(arch = 'arm', libc = 'musleabi')
     run_docker(command = 'pytest --cov-config=.coveragerc --cov=exert tests/',
         in_docker = in_docker)
 

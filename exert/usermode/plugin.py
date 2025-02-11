@@ -15,6 +15,13 @@ class Exert(PyPlugin):
     def __init__(self, panda):
         self.called_back = False
 
+        #What we use to control the filereader.c program?
+        #write tests for hypercall, see if it returns correct fd or just True for now.
+        # def fd_finder(env):
+        #     x = run_command('./file_reader.c demo_osi.osi')
+        #     print(f'{x}')
+        #     return x
+
         # TODO: Find a way to cover these
         @panda.ppp('syscalls2', 'on_sys_execve_enter')
         # pragma: no cover
@@ -42,7 +49,8 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None):
     if generic:
         panda = Panda(generic = arch)
     else:
-        run_command(f'./make_initrd.sh {arch}')
+        run_command(f'./make_initrd.sh {arch} file_reader')
+        run_command('./file_reader ./demo_osi.osi')
         if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
             args = f'--nographic \
                 -kernel {kernel} \
