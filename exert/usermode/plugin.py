@@ -1,7 +1,9 @@
 """The core file for the plugin component of the EXERT system"""
 
+import sys
 import IPython
 from pandare import PyPlugin, Panda
+from exert.usermode import task_struct_stack
 from exert.utilities.command import run_command
 
 class Exert(PyPlugin):
@@ -69,7 +71,7 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None):
                 -append "console=ttyAMA0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
             panda = Panda(
                 arch='aarch64', mem='256M', extra_args=args,
-                expect_prompt='~ # ', os_version='linux-32-generic')
+                expect_prompt='~ # ', os_version='linux-64-generic')
         else:
             args = f'--nographic \
                 -kernel {kernel} \
@@ -91,3 +93,30 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None):
         panda.end_analysis()
 
     panda.run()
+
+def get_task_address(kernel, arch, version):
+    version_supported = False
+
+    version = version.split('-')[0]
+    version_nums = version.split('.')
+    version_nums[0] = int(version_nums[0], 10)
+    version_nums[1] = int(version_nums[1], 10)
+    version_nums[2] = int(version_nums[2], 10)
+
+    if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
+        version_greater_than_min = version_nums[0] > 2 or \
+            (version_nums[0] == 2 and version_nums[1] > 6) or \
+                (version_nums[0] == 2 and version_nums[1] == 6 and version_nums[2] >= 13)
+        if version_greater_than_min:
+            version_less_than_max = version_nums[0] < 5 or \
+                (version_nums[0] == 5 and version_nums[1] < 14) or \
+                    (version_nums[0] == 5 and version_nums[1] == 14 and version_nums[2] <= 21)
+            if version_less_than_max:
+                version_supported = True
+                run(arch, task_struct_stack.task_address_arm_callback, False, kernel)
+                print("Task Address: " + hex(task_struct_stack.TASK_ADDRESS))
+    if not version_supported:
+        print("Version not supported")
+
+if __name__ == '__main__':
+    get_task_address(sys.argv[1], sys.argv[2], sys.argv[3])

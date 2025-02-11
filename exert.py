@@ -30,6 +30,17 @@ def main():
         help = 'The kernel image to generate OSI information for.')
     osi_parser.set_defaults(func = osi)
 
+    task_addr_parser = subparsers.add_parser('task_address',
+        help='Get the task address for a given kernel')
+    task_addr_parser.add_argument('kernel_path')
+    task_addr_parser.add_argument('kernel_arch')
+    task_addr_parser.add_argument('kernel_version')
+    task_addr_parser.set_defaults(func = lambda parsed:
+        get_task_address(parsed.kernel_path,
+                         parsed.kernel_arch,
+                         parsed.kernel_version,
+                         parsed.docker))
+
     dev_parser = subparsers.add_parser('dev', help = 'Development tools')
     dev_subparsers = dev_parser.add_subparsers()
 
@@ -58,10 +69,12 @@ def main():
         help='Generate a ruleset from a specified linux version')
     dev_rules_parser.add_argument('version', type=str,
         help='The version to generate the ruleset for. Format like 4.4.100.')
+    dev_rules_parser.add_argument('arch', type=str,
+        help='The architecture to generate the ruleset for. Use names like x86, arm64, etc.')
     dev_rules_parser.add_argument('-r', '--reset', action='store_true',
         help='Reset the container first')
     dev_rules_parser.set_defaults(func = lambda parsed:
-            dev_rules(parsed.docker, parsed.version, parsed.reset))
+            dev_rules(parsed.docker, parsed.version, parsed.arch, parsed.reset))
 
     parsed = parser.parse_args()
     parsed.func(parsed)
@@ -77,7 +90,8 @@ def dev_attach(in_docker, reset):
     if reset:
         dev_reset()
         time.sleep(1)
-    sync_volume()
+    if not in_docker:
+        sync_volume()
     run_docker(interactive = True, in_docker = in_docker)
 
 def dev_test(in_docker, reset):
@@ -87,20 +101,21 @@ def dev_test(in_docker, reset):
             return
         dev_reset()
         time.sleep(1)
-    sync_volume()
-    make_usermode(arch = 'arm', libc = 'musleabi')
+    if not in_docker:
+        sync_volume()
     run_docker(command = 'pytest --cov-config=.coveragerc --cov=exert tests/',
         in_docker = in_docker)
 
-def dev_rules(in_docker, version, reset):
+def dev_rules(in_docker, version, arch, reset):
     if reset:
         if in_docker:
             print("Cannot reset from within a container. Command cancelled.")
             return
         dev_reset()
         time.sleep(1)
-    sync_volume()
-    run_docker(command = f'python -m exert.utilities.generator {version}',
+    if not in_docker:
+        sync_volume()
+    run_docker(command = f'python -u -m exert.utilities.parser {version} {arch}',
         in_docker = in_docker)
 
 # pylint: disable=unused-argument
@@ -158,7 +173,7 @@ def osi(parsed):
 
     print('OSI not implemented.')
 
-def run_docker(container = PANDA_CONTAINER, name = 'pandare', command = '',
+def run_docker(container = PANDA_CONTAINER, *, name = 'pandare', command = '',
     interactive = False, in_docker = False, extra_args = ''):
     try:
         validate_initialized()
@@ -180,9 +195,9 @@ def run_docker(container = PANDA_CONTAINER, name = 'pandare', command = '',
             if not container_is_running(name):
                 run_command(f'docker run -d {args}')
                 if name == 'pandare':
-                    run_command(f'docker exec {name} bash -c '
+                    run_command(f'docker exec -t {name} bash -c '
                         '"cd /mount; chmod +x ./setup.sh; ./setup.sh"')
-            run_command(f'docker exec {name} bash -c "cd /mount; {command}"', False, True)
+            run_command(f'docker exec -t {name} bash -c "cd /mount; {command}"', False, True)
             if interactive:
                 run_command(f'docker exec -it {name} bash"')
     except CalledProcessError:
@@ -235,5 +250,14 @@ def validate_iso(image):
     except UnicodeDecodeError:
         print(f'The file {image} is not a valid kernel image.')
         sys.exit(1)
+
+def get_task_address(kernel_path, kernel_arch, kernel_version, in_docker):
+    command = f'python -u -m exert.usermode.plugin {kernel_path} {kernel_arch} {kernel_version}'
+
+    if in_docker:
+        run_command(command, True)
+        return
+
+    run_docker(command = command, in_docker = in_docker)
 
 main()
