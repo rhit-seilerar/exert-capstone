@@ -1,13 +1,333 @@
 import os
-from exert.utilities.tokenmanager import TokenManager
+from exert.utilities.tokenmanager import tok_seq, tok_seq_list, TokenManager
+
+class DefMap:
+    """
+    DefMaps represent a possible state of definitions within a macro scope.
+    They store a reference to the outer scope's defmap, as well as a set of
+    mappings between symbols to their definitions.
+    """
+
+    UNDEF = 'undef'
+    """
+    The unique symbol marking definitions as explicitly undefined. While it
+    could technically be any non-None, non-list value, having an explicit
+    value is useful for debugging.
+    """
+
+    def __init__(self, parent, skipping = False, initial = None):
+        """
+        Constructs a new defmap. The parent is the previous layer's defmap,
+        or None if this is the root. Optionally, initial state can be specified.
+        """
+        assert parent is None or isinstance(parent, DefMap)
+        assert initial is None or isinstance(initial, dict)
+        self.skipping = skipping
+        self.parent = parent
+        self.defs = initial or {}
+
+    def copy(self):
+        return DefMap(self.parent, self.skipping, self.defs.copy())
+
+    def get(self, sym):
+        """
+        Retrieve this DefMap's value for a given symbol, or look it up from the
+        parent if it's not found.
+        """
+        if sym in self.defs:
+            return self.defs[sym]
+        if self.parent is not None:
+            return self.parent.get(sym)
+        return None
+
+    def get_options(self, sym):
+        defn = self.get(sym)
+        if defn is None or defn == DefMap.UNDEF:
+            return []
+        if len(defn) > 0 and defn[0] == DefMap.UNDEF:
+            return defn[1:]
+        return defn
+
+    def is_unknown(self, sym):
+        """
+        Definitions are unknown if they're None, since all definitions default to
+        unknown. Definitions are also unknown if they contain UNDEF as their first
+        option, since we don't know if they're defined or not.
+        """
+        defn = self.get(sym)
+        return defn is None or (isinstance(defn, list) and len(defn) and defn[0] == DefMap.UNDEF)
+
+    def is_undefined(self, sym):
+        """
+        Definitions are undefined if their value equals UNDEF. They
+        are only considered undefined after an explicit #undef, before any
+        following #define.
+        """
+        return self.get(sym) == DefMap.UNDEF
+
+    def is_defined(self, sym):
+        """
+        Definitions are defined if their value is a list, since definitions
+        consist of lists of valid possibilities. However, they're only defined
+        if the list doesn't contain UNDEF, since that would mean the defined-ness
+        is unknown.
+        """
+        defn = self.get(sym)
+        return isinstance(defn, list) and (len(defn) == 0 or defn[0] != DefMap.UNDEF)
+
+    def undefine(self, sym):
+        if not self.skipping:
+            self.defs[sym] = DefMap.UNDEF
+
+    def define(self, sym, tokens):
+        if not self.skipping:
+            if isinstance(self.defs.get(sym), list):
+                self.defs[sym].append(tokens)
+            else:
+                self.defs[sym] = [tokens]
+
+    def invert(self):
+        """
+        Invert all specified definitions in this map. Specifically:
+        - None -> None
+        - [...] -> UNDEF
+        - UNDEF -> []
+        - [UNDEF,...] -> [UNDEF]
+        """
+        result = self.copy()
+        if not self.skipping:
+            for sym in self.defs:
+                defn = self.get(sym)
+                if defn is None:
+                    pass
+                elif defn == DefMap.UNDEF:
+                    result.defs[sym] = []
+                elif len(defn) and defn[0] == DefMap.UNDEF:
+                    result.defs[sym] = [DefMap.UNDEF]
+                else:
+                    result.defs[sym] = DefMap.UNDEF
+        return result
+
+    def overwrite(self, state):
+        """
+        For each key specified in state, overwrite the current definition with
+        its value. As a special case, empty definitions ([]) don't overwrite if
+        the existing value is defined. This allows #ifdef to work properly.
+        """
+        assert isinstance(state, dict)
+        if not self.skipping:
+            for sym in state:
+                if not self.is_defined(sym) or state[sym] != []:
+                    self.defs[sym] = state[sym]
+
+    def merge(self, state):
+        """
+        For each key specified in state, merge with the current state. Specifically:
+        TODO merging with None means other options may still be possible
+        None + ??? -> ???
+        ??? + None -> ???
+        UNDEF + UNDEF -> UNDEF
+        UNDEF + [UNDEF,B] -> [UNDEF,B]
+        UNDEF + [B] -> [UNDEF,B]
+        [UNDEF,A] + UNDEF -> [UNDEF,A]
+        [UNDEF,A] + [UNDEF,B] -> [UNDEF,A,B]
+        [UNDEF,A] + [B] -> [UNDEF,A,B]
+        [A] + UNDEF -> [UNDEF,A]
+        [A] + [UNDEF,B] -> [UNDEF,A,B]
+        [A] + [B] -> [A, B]
+        """
+        assert isinstance(state, dict)
+        if self.skipping:
+            return
+        for sym in state:
+            defn1 = self.get(sym)
+            defn2 = state.get(sym)
+            if defn1 is None:
+                self.defs[sym] = defn2
+            elif defn2 is None:
+                pass
+            elif defn1 == DefMap.UNDEF:
+                if defn2 == DefMap.UNDEF:
+                    self.defs[sym] = defn2
+                elif len(defn2) and defn2[0] == DefMap.UNDEF:
+                    self.defs[sym] = defn2
+                else:
+                    self.defs[sym] = [DefMap.UNDEF] + defn2
+            elif len(defn1) and defn1[0] == DefMap.UNDEF:
+                if defn2 == DefMap.UNDEF:
+                    pass
+                elif len(defn2) and defn2[0] == DefMap.UNDEF:
+                    self.defs[sym] = defn1[1:] + defn2[1:]
+                else:
+                    self.defs[sym] = defn1[1:] + defn2
+            else:
+                if defn2 == DefMap.UNDEF:
+                    self.defs[sym] = [DefMap.UNDEF] + defn1
+                elif len(defn2) and defn2[0] == DefMap.UNDEF:
+                    self.defs[sym] = [DefMap.UNDEF] + defn1 + defn2[1:]
+                else:
+                    self.defs[sym] = defn1 + defn2
+
+class DefLayer:
+    """
+    A definition layer represents the possible definition states among an entire
+    macro scope set: #if/#ifdef/#ifndef, [#elif...], [#else], #endif. It also
+    stores a reference to the parent scope's defmap, which is passed to sub-maps.
+    
+    As each defmap is added, the conditions map is applied as initial state. This
+    is because, for example, #ifndef ABC would guarantee that ABC is  undefined
+    in all child maps. To handle #elif and #else, the condition's inverse is
+    accumulated into the conditions map for further defmaps.
+    
+    The layer also stores a 'closed' flag, which determines whether #else was
+    encountered. If so, one of the child maps must have been encountered, so
+    we can safely replace parent state with accumulated child state. Otherwise,
+    we have to include parent state as possible options alongside the merged
+    child state.
+    """
+
+    def __init__(self, skipping):
+        """
+        Construct a new layer given a parent defmap, or None if this is the root.
+        """
+        self.conditions = DefMap(None, skipping = skipping)
+        self.accumulator = DefMap(None, skipping = skipping)
+        self.any_kept = False
+        self.current = None
+        self.closed = False
+
+    def reset_current(self):
+        self.current = None
+
+    def apply(self):
+        """
+        Apply the current defmap to the accumulated state and reset it.
+        """
+        if self.current is not None:
+            self.accumulator.merge(self.current.defs)
+            self.reset_current()
+
+    def add_map(self, conditions, closing = False):
+        """
+        Add a new defmap with the given conditions map and accumulate into the
+        overall conditions. If 'closing' is True, mark the layer as closed.
+        """
+        assert conditions is None or isinstance(conditions, DefMap)
+        self.apply()
+        self.current = conditions
+        self.current.merge(self.conditions.defs)
+        self.conditions.merge(conditions.invert().defs)
+        self.closed |= closing
+        self.any_kept |= not conditions.skipping
+
+class DefState:
+    """
+    The DefState tracks all possible definition values over the course of the
+    preprocessor. As each directive is encountered, an internal hierarchy of
+    definition maps is updated, each storing possible values and defined-ness
+    of symbols.
+    """
+
+    def __init__(self, initial = None):
+        self.keys = set()
+        self.layers = [DefLayer(False)]
+        self.layers[0].add_map(DefMap(None, False, initial), closing = True)
+
+    def flat_defines(self):
+        result = {}
+        for key in self.keys:
+            defn = self.layers[-1].current.get(key) or []
+            if len(defn) == 0 or defn[0] != DefMap.UNDEF:
+                result[key] = defn
+        return result
+
+    def flat_unknowns(self):
+        result = set()
+        for key in self.keys:
+            if self.layers[-1].current.is_unknown(key):
+                result.add(key)
+        return result
+
+    def on_define(self, sym, tokens):
+        if not self.layers[-1].current.skipping:
+            self.keys.add(sym)
+        self.layers[-1].current.define(sym, tokens)
+
+    def on_undef(self, sym):
+        if not self.layers[-1].current.skipping:
+            self.keys.add(sym)
+        self.layers[-1].current.undefine(sym)
+
+    def test_conditions(self, conditions):
+        for sym in conditions.defs:
+            cond = conditions.get(sym)
+            defn = self.layers[-1].current.get(sym)
+            if cond is None or defn is None:
+                continue
+
+            is_unknown = self.layers[-1].current.is_unknown(sym)
+            is_undefined = self.layers[-1].current.is_undefined(sym)
+            if cond == DefMap.UNDEF:
+                if is_unknown or is_undefined:
+                    continue
+
+            if cond == []:
+                continue
+
+            cond_opts = set(tok_seq(t) for t in conditions.get_options(sym))
+            defn_opts = set(tok_seq(t) for t in self.layers[-1].current.get_options(sym))
+            if len(cond_opts & defn_opts) > 0:
+                continue
+
+            return False
+        return True
+
+    def on_if(self, conditions):
+        parent = self.layers[-1].current if len(self.layers) > 0 else None
+        defmap = DefMap(parent, initial = conditions)
+        defmap.skipping = not self.test_conditions(defmap)
+        self.layers.append(DefLayer(self.layers[-1].current.skipping))
+        self.layers[-1].add_map(defmap)
+        return not defmap.skipping
+
+    def on_ifdef(self, sym):
+        return self.on_if({ sym: [] })
+
+    def on_ifndef(self, sym):
+        return self.on_if({ sym: DefMap.UNDEF })
+
+    def on_elif(self, conditions):
+        defmap = DefMap(self.layers[-2].current, initial = conditions)
+        defmap.skipping = not self.test_conditions(defmap)
+        self.layers[-1].add_map(defmap)
+        return not defmap.skipping
+
+    def on_else(self):
+        defmap = DefMap(self.layers[-2].current)
+        defmap.skipping = not self.test_conditions(defmap)
+        self.layers[-1].add_map(defmap, True)
+        return not defmap.skipping
+
+    def on_endif(self):
+        self.layers[-1].apply()
+        layer = self.layers.pop()
+        if layer.closed:
+            self.layers[-1].current.overwrite(layer.accumulator.defs)
+        else:
+            self.layers[-1].current.merge(layer.accumulator.defs)
+
+    def get_replacements(self, sym):
+        if self.layers[-1].current.is_undefined(sym):
+            return None
+        return self.layers[-1].current.defs.get_options(sym)
 
 class Preprocessor(TokenManager):
     def __init__(self, tokenizer, includes):
         super().__init__()
         self.tokenizer = tokenizer
         self.includes = includes
-        self.definitions = dict()
         self.unresolved = list()
+        self.defs = DefState()
 
     def load_file(self, path, is_relative):
         includes = self.includes.copy()
@@ -78,16 +398,16 @@ class Preprocessor(TokenManager):
             return self.err('#define must be followed by an identifier')
         if (tokens := self.skip_to_newline(1)) is None:
             return False
-        self.definitions[name] = (arr := self.definitions.get(name, list()))
-        arr.append(tokens)
+        self.defs.on_define(name, tokens)
         return True
 
     def handle_undef(self):
-        if not self.parse_ident_or_keyword():
+        if not (name := self.parse_ident_or_keyword()):
             return self.err('#undef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         self.remove(4)
+        self.defs.on_undef(name)
         return True
 
     def handle_ifdef(self):
@@ -96,8 +416,8 @@ class Preprocessor(TokenManager):
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         self.remove(4)
-        self.push_optional(f'defined({name})')
-        self.depth += 1
+        if self.defs.on_ifdef(name):
+            self.push_optional(f'defined({name})')
         return True
 
     def handle_ifndef(self):
@@ -106,38 +426,53 @@ class Preprocessor(TokenManager):
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         self.remove(4)
-        self.push_optional(f'!defined({name})')
-        self.depth += 1
+        if self.defs.on_ifndef(name):
+            self.push_optional(f'!defined({name})')
         return True
 
     def handle_if(self):
         if not (tokens := self.skip_to_newline()):
             return False
-        self.push_optional(' '.join(str(n[1]) for n in tokens))
-        self.depth += 1
+        if self.defs.on_if({}):
+            self.push_optional(' '.join(str(n[1]) for n in tokens))
         return True
 
     def handle_elif(self):
         if not (tokens := self.skip_to_newline()):
             return False
-        condition = self.pop_optional()
-        self.push_optional(f'!({condition}) && ({" ".join(str(n) for n in tokens)})')
+        condition = None
+        if self.defs.layers[-1].any_kept:
+            condition = self.pop_optional()
+        if self.defs.on_elif({}):
+            cond_str = " ".join(str(n) for n in tokens)
+            if condition is not None:
+                self.push_optional(f'!({condition}) && ({cond_str})')
+            else:
+                self.push_optional(f'{cond_str}')
         return True
 
     def handle_else(self):
+        #TODO get cond str from defmap conditions
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         self.remove(3)
-        condition = self.pop_optional()
-        self.push_optional(f'!({condition})')
+        condition = None
+        if self.defs.layers[-1].any_kept:
+            condition = self.pop_optional()
+        if self.defs.on_else():
+            if condition is not None:
+                self.push_optional(f'!({condition})')
+            else:
+                self.push_optional('')
         return True
 
     def handle_endif(self):
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         self.remove(3)
-        self.depth -= 1
-        self.pop_optional()
+        if self.defs.layers[-1].any_kept:
+            self.pop_optional()
+        self.defs.on_endif()
         return True
 
     def handle_error(self):
@@ -206,12 +541,12 @@ class Preprocessor(TokenManager):
             if token[0] not in ['identifier', 'keyword']:
                 return None
             substitutions = []
-            definitions = self.definitions.get(token[1])
-            if not definitions:
+            opts = self.defs.get_replacements(token[1])
+            if opts is None:
                 return None
-            for definition in definitions:
+            for opt in opts:
                 tokens = []
-                for token in (definition or []):
+                for token in (opt or []):
                     tokens += subst(token) or [token]
                 if tokens:
                     substitutions.append(tokens)
@@ -255,7 +590,10 @@ class Preprocessor(TokenManager):
         return self
 
     def __str__(self):
-        tokens = self.tok_seq(self.tokens)
-        definitions = '\n'.join(f'{d[0]}: {self.tok_seq_list(d[1])}' \
-            for d in self.definitions.items())
-        return f'\n===== TOKENS =====\n{tokens}\n\n===== DEFINITIONS =====\n{definitions}\n'
+        tokens = tok_seq(self.tokens)
+        definitions = '\n'.join(f'{d[0]}: {tok_seq_list(d[1])}' \
+            for d in self.defs.flat_defines().items())
+        unknowns = '\n'.join(self.defs.flat_unknowns())
+        return f'\n===== TOKENS =====\n{tokens}\n' \
+            f'\n===== DEFINITIONS =====\n{definitions}\n' \
+            f'\n===== UNKNOWNS =====\n{unknowns}\n'

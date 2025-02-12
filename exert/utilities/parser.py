@@ -34,14 +34,7 @@ SOURCE = """
 
 #include <uapi/linux/sched.h>
 
-#include <linux/sched/prio.h>
-
-
-struct sched_param {
-	int sched_priority;
-};
-
-#include <asm/param.h>	/* for HZ */
+#endif
 """
 
 def asm_generic(path):
