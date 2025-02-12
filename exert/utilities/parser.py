@@ -33,15 +33,19 @@ SOURCE = """
 #define _LINUX_SCHED_H
 
 #include <uapi/linux/sched.h>
+#include <uapi/linux/sched.h>
 
-#include <linux/sched/prio.h>
+//#include <linux/sched/prio.h>
 
+//struct sched_param {
+//	int sched_priority;
+//};
 
-struct sched_param {
-	int sched_priority;
-};
+//#include <asm/param.h>	/* for HZ */
 
-#include <asm/param.h>	/* for HZ */
+//#include <linux/capability.h>
+
+#endif
 """
 
 def asm_generic(path):

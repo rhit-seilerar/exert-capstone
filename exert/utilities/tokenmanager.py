@@ -1,3 +1,23 @@
+def tok_str(token):
+    n = token
+    print(token)
+    return '#endif\n' if n == ('optional', None) \
+        else f'#if {n[1]}\n' if n[0] == 'optional' \
+        else '#' if n[0] == 'directive' \
+        else f'<{n[1]}> ' if n[0] == 'string' and n[2] == '<' \
+        else f'{n[2]}"{n[1]}" ' if n[0] == 'string' \
+        else f'{n[1]}\n' if n[0] == 'operator' and n[1] in [';', '{', '}'] \
+        else f'{n[1]} ' if n[0] == 'operator' \
+        else f'{n[1]} ' if n[0] in ['keyword', 'identifier', 'integer', 'string'] \
+        else f'<ANY>{tok_seq_list(n[1])} ' if n[0] == 'any' \
+        else str(n[1])
+
+def tok_seq(tokens):
+    return ''.join(tok_str(n) for n in tokens)
+
+def tok_seq_list(ls):
+    return f'[ {", ".join(tok_seq(t) for t in ls)}]'
+
 class TokenManager:
     def __init__(self):
         self.reset()
@@ -61,43 +81,24 @@ class TokenManager:
             return self.next()[1]
         return ''
 
-    def err(self, message):
-        self.has_error = True
+    def print_current(self):
         low = max(self.index - 5, 0)
         high = min(self.index + 6, self.len+1)
         context = self.tokens[low:high]
-
         ctx_str = ''
         offset = ''
         for i in range(low, high):
             idx = i - low
-            addend = 'EOF' if i == self.len else self.tok_str(context[idx]) \
+            addend = 'EOF' if i == self.len else tok_str(context[idx]) \
                 .replace('\n', '\\n')
             if i == self.index:
                 offset = ' ' * len(ctx_str) + '^' * len(addend)
             ctx_str += addend
-
-        print(message)
         print(ctx_str)
         print(offset)
+
+    def err(self, message):
+        print(message)
+        self.print_current()
         assert False
         return None
-
-    def tok_str(self, token):
-        n = token
-        return '#endif\n' if n == ('optional', None) \
-            else f'#if {n[1]}\n' if n[0] == 'optional' \
-            else '#' if n[0] == 'directive' \
-            else f'<{n[1]}> ' if n[0] == 'string' and n[2] == '<' \
-            else f'{n[2]}"{n[1]}" ' if n[0] == 'string' \
-            else f'{n[1]}\n' if n[0] == 'operator' and n[1] in [';', '{', '}'] \
-            else f'{n[1]} ' if n[0] == 'operator' \
-            else f'{n[1]} ' if n[0] in ['keyword', 'identifier', 'integer', 'string'] \
-            else f'<ANY>{self.tok_seq_list(n[1])} ' if n[0] == 'any' \
-            else str(n[1])
-
-    def tok_seq(self, tokens):
-        return ''.join(self.tok_str(n) for n in tokens)
-
-    def tok_seq_list(self, ls):
-        return f'[ {", ".join(self.tok_seq(t) for t in ls)}]'
