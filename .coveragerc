@@ -4,3 +4,6 @@ show_missing = True
 
 [run]
 omit = ./exert/utilities/generator.py
+parallel = True
+sigterm = True
+concurrency = multiprocessing
