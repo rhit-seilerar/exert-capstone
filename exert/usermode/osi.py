@@ -30,6 +30,7 @@ class Version():
 #task
 class Task():
     def __init__(self,
+                 *,
                  per_cpu_offsets_addr = 18446744071594801600,
                  per_cpu_offset_0_addr = 18446744071594856448,
                  current_task_addr = 54272,
@@ -108,6 +109,7 @@ class Cred():
 #mm
 class MM():
     def __init__(self,
+                 *,
                  size = 460,
                  mmap_offset = 0,
                  pgd_offset = 32,
@@ -135,6 +137,7 @@ class MM():
 #vma
 class VMA():
     def __init__(self,
+                 *,
                  size = 100,
                  vm_mm_offset = 32,
                  vm_start_offset = 0,
@@ -162,6 +165,7 @@ class VMA():
 #fs
 class FS():
     def __init__(self,
+    *,
     f_path_dentry_offset = 12,
     f_path_mnt_offset = 8,
     f_pos_offset = 64,
@@ -196,6 +200,7 @@ class QSTR():
 #path
 class Path():
     def __init__(self,
+                 *,
                  d_name_offset = 20,
                  d_iname_offset = 36,
                  d_parent_offset = 16,
@@ -223,7 +228,7 @@ class Path():
         path.mnt_parent_offset = {self.mnt_parent_offset}
         path.mnt_mountpoint_offset = {self.mnt_mountpoint_offset}\n'''
 
-def main(header_line, osi_name, osi_version, task, cred, mm, vma, fs, qstr, osi_path, demo_path):
+def main(*, header_line, osi_name, osi_version, task, cred, mm, vma, fs, qstr, osi_path, demo_path):
     with open(demo_path, "w", encoding='utf-8') as f:
         f.write(header_line.to_string())
         f.write(osi_name.to_string())

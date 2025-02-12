@@ -13,6 +13,16 @@ def test_file_print():
     qstr = osi.QSTR()
     osi_path = osi.Path()
     demo_path = "demo_osi.osi"
-    osi.main(header_line, osi_name, osi_version, task, cred, mm, vma, fs, qstr, osi_path, demo_path)
+    osi.main(header_line=header_line,
+             osi_name=osi_name,
+             osi_version=osi_version,
+             task=task,
+             cred=cred,
+             mm=mm,
+             vma=vma,
+             fs=fs,
+             qstr=qstr,
+             osi_path=osi_path,
+             demo_path=demo_path)
 
     assert os.path.exists(demo_path)

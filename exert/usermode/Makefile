@@ -1,4 +1,4 @@
-all: setup helloworld
+all: setup file_reader
 
 CC = /opt/cross/${ARCH}-linux-${LIBC}-cross/bin/${ARCH}-linux-${LIBC}-gcc
 

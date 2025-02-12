@@ -3,6 +3,7 @@
 import sys
 import IPython
 from pandare import PyPlugin, Panda
+from exert.usermode import task_struct_stack
 from exert.utilities.command import run_command
 
 class Exert(PyPlugin):
@@ -15,6 +16,16 @@ class Exert(PyPlugin):
 
     def __init__(self, panda):
         self.called_back = False
+
+        #What we use to control the filereader.c program?
+        #write tests for hypercall, see if it returns correct fd or just True for now.
+        # def fd_finder(env):
+        #     x = run_command('./file_reader.c demo_osi.osi')
+        #     print(f'{x}')
+        #     return x
+        @panda.cb_guest_hypercall
+        def fd_reader():
+            print('Not an octopus.\n')
 
         # TODO: Find a way to cover these
         @panda.ppp('syscalls2', 'on_sys_execve_enter')
@@ -43,7 +54,7 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None):
     if generic:
         panda = Panda(generic = arch)
     else:
-        run_command(f'./make_initrd.sh {arch}')
+        run_command(f'./make_initrd.sh {arch} file_reader')
         if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
             args = f'--nographic \
                 -kernel {kernel} \
@@ -104,34 +115,10 @@ def get_task_address(kernel, arch, version):
                     (version_nums[0] == 5 and version_nums[1] == 14 and version_nums[2] <= 21)
             if version_less_than_max:
                 version_supported = True
-                global task_address
-                run(arch, task_address_arm_callback, False, kernel)
-                print("Task Address: " + hex(task_address))
+                run(arch, task_struct_stack.task_address_arm_callback, False, kernel)
+                print("Task Address: " + hex(task_struct_stack.TASK_ADDRESS))
     if not version_supported:
         print("Version not supported")
-
-def read_mem(panda, cpu, addr, size):
-    return panda.virtual_memory_read(cpu, addr, size)
-
-def read_word(mem, offset):
-    return int.from_bytes(mem[offset:offset+4], byteorder='little', signed=False)
-
-def task_address_arm_callback(panda, cpu):
-    sp = panda.arch.get_reg(cpu, 'SP')
-
-    thread_info_addr = sp & ~(8192 - 1)
-    thread_info = read_mem(panda, cpu, thread_info_addr, 80)
-
-    task_addr = read_word(thread_info, 12)
-    task = read_mem(panda, cpu, task_addr, 400)
-
-    task_stack = read_word(task, 4)
-    assert task_stack == thread_info_addr
-
-    global task_address
-    task_address = task_addr
-
-    return task_addr
 
 if __name__ == '__main__':
     get_task_address(sys.argv[1], sys.argv[2], sys.argv[3])

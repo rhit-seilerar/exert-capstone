@@ -82,6 +82,7 @@ def main():
 def dev_reset():
     run_command('docker stop pandare', True, False)
     run_command('docker stop pandare-init', True, False)
+    delete_volume()
 
 def dev_attach(in_docker, reset):
     if in_docker:
@@ -164,6 +165,11 @@ def sync_volume():
     run_docker(name = 'pandare-init',
         command = f'rsync -av --progress {exclude} /local/ /mount')
 
+def delete_volume():
+    ls_out = run_command('docker volume ls -q -f "name=pandare"', True, True)
+    if 'pandare' in get_stdout(ls_out).splitlines():
+        run_command('docker volume rm pandare', True, True)
+
 def osi(parsed):
     """Validate the provided image, and then generate its OSI information"""
     validate_initialized()
@@ -173,7 +179,7 @@ def osi(parsed):
 
     print('OSI not implemented.')
 
-def run_docker(container = PANDA_CONTAINER, name = 'pandare', command = '',
+def run_docker(container = PANDA_CONTAINER, *, name = 'pandare', command = '',
     interactive = False, in_docker = False, extra_args = ''):
     try:
         validate_initialized()
@@ -253,7 +259,8 @@ def validate_iso(image):
 
 def get_task_address(kernel_path, kernel_arch, kernel_version, in_docker):
     command = f'python -u -m exert.usermode.plugin {kernel_path} {kernel_arch} {kernel_version}'
-
+    # make_usermode(kernel_arch, kernel_version)
+    #file needs to initiate a hypercall, but before that, plugin needs to intercept a hypercall
     if in_docker:
         run_command(command, True)
         return

@@ -1,5 +1,5 @@
 # Install some useful programs on the container
-apt-get install -y cpio xz-utils
+apt-get install -y cpio xz-utils make
 
 # Install busybox
 mkdir cache
