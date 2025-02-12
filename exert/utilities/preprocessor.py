@@ -218,7 +218,7 @@ class DefLayer:
         self.current.merge(self.conditions.defs)
         self.conditions.merge(conditions.invert().defs)
         self.closed |= closing
-        self.any_kept |= conditions.skipping
+        self.any_kept |= not conditions.skipping
 
 class DefState:
     """
@@ -249,11 +249,13 @@ class DefState:
         return result
 
     def on_define(self, sym, tokens):
-        self.keys.add(sym)
+        if not self.layers[-1].current.skipping:
+            self.keys.add(sym)
         self.layers[-1].current.define(sym, tokens)
 
     def on_undef(self, sym):
-        self.keys.add(sym)
+        if not self.layers[-1].current.skipping:
+            self.keys.add(sym)
         self.layers[-1].current.undefine(sym)
 
     def test_conditions(self, conditions):
@@ -281,7 +283,6 @@ class DefState:
         return True
 
     def on_if(self, conditions):
-        print('Pushing', len(self.layers), '->', len(self.layers) + 1)
         parent = self.layers[-1].current if len(self.layers) > 0 else None
         defmap = DefMap(parent, initial = conditions)
         defmap.skipping = not self.test_conditions(defmap)
@@ -308,7 +309,6 @@ class DefState:
         return not defmap.skipping
 
     def on_endif(self):
-        print('Popping', len(self.layers), '->', len(self.layers)-1)
         self.layers[-1].apply()
         layer = self.layers.pop()
         if layer.closed:

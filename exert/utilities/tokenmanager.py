@@ -1,6 +1,5 @@
 def tok_str(token):
     n = token
-    print(token)
     return '#endif\n' if n == ('optional', None) \
         else f'#if {n[1]}\n' if n[0] == 'optional' \
         else '#' if n[0] == 'directive' \
