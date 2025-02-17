@@ -1,25 +1,36 @@
 import os
 import types
 from exert.utilities.tokenmanager import tok_seq_list, tok_seq, TokenManager
-from exert.parser.definitions import DefState
+from exert.parser.definitions import DefState, DefOption
 from exert.utilities.debug import dprint
 
+def read_file(path):
+    try:
+        with open(path, 'r', encoding = 'utf-8') as file:
+            return file.read()
+    except IOError:
+        return None
+
 class Preprocessor(TokenManager):
-    def __init__(self, tokenizer, includes):
+    def __init__(self, tokenizer, includes, filereader = read_file):
         super().__init__()
         self.tokenizer = tokenizer
         self.includes = includes
+        self.filereader = filereader
+        self.invalid_paths = set()
+        self.tokenized_cache = {}
         self.unresolved = []
         self.defs = DefState()
 
     def load_file(self, path, is_relative):
         if self.defs.is_skipping():
-            dprint(1, '  ' * self.defs.depth() + f'::Skipping {path}')
+            dprint(2, '  ' * self.defs.depth() + f'::Skipping {path}')
             return
 
         includes = self.includes.copy()
         if is_relative:
             includes.insert(0, os.path.dirname(self.file))
+
         for include in includes:
             load_path = ''
             if isinstance(include, types.FunctionType):
@@ -31,24 +42,29 @@ class Preprocessor(TokenManager):
                 continue
 
             data = ''
-            dprint(4, f'::Testing {load_path}')
-            try:
-                with open(load_path, 'r', encoding = 'utf-8') as file:
-                    data = file.read()
-            except IOError:
-                continue
+            if load_path in self.tokenized_cache:
+                data = self.tokenized_cache.get(load_path)
+                dprint(2, '  ' * self.defs.depth() + f'::Reusing {load_path}')
+            else:
+                dprint(4, f'::Testing {load_path}')
+                data = self.filereader(load_path)
+                if data is None:
+                    continue
 
-            if not self.defs.is_skipping():
-                dprint(1, '  ' * self.defs.depth() + f'::Included {load_path}')
+                if not self.defs.is_skipping():
+                    dprint(1, '  ' * self.defs.depth() + f'::Included {load_path}')
 
-            prefix = f'#line 1 "{load_path}"\n'
-            suffix = f'\n#line 1 "{self.file}"' if self.file else '\n#line 1'
-            to_insert = prefix + data + suffix
-            self.insert(to_insert)
+                prefix = f'#line 1 "{load_path}"\n'
+                suffix = f'\n#line 1 "{self.file}"' if self.file else '\n#line 1'
+                data = prefix + data + suffix
+                self.tokenized_cache[load_path] = data
+
+            self.insert(data)
             return True
         self.unresolved.append(path)
         # self.err('Failed to include', path)
-        dprint(1, '  ' * self.defs.depth() + '::Failed to include', path)
+        dprint(2, '  ' * self.defs.depth() + '::Failed to include', path)
+        self.invalid_paths.add(path)
         return True
 
     def push_optional(self, name):
@@ -294,7 +310,7 @@ class Preprocessor(TokenManager):
             self.index += size
 
     def remove(self, count, index = None):
-        index = index if index else self.index
+        index = self.index if index is None else index
         assert index <= self.index
         del self.tokens[index-count:index]
         self.len -= count
@@ -307,11 +323,11 @@ class Preprocessor(TokenManager):
                 return None
             if token[1] in expansion_stack:
                 return None
-            substitutions = []
+            substitutions = set()
             opts = self.defs.get_replacements(token)
-            if opts == []:
+            if opts == set():
                 return []
-            if opts == [token[1]]:
+            if opts == {DefOption([token])}:
                 return None
             expansion_stack.append(token[1])
             for opt in opts:
@@ -319,12 +335,12 @@ class Preprocessor(TokenManager):
                 for token in (opt or []):
                     tokens += subst(token) or [token]
                 if tokens:
-                    substitutions.append(tokens)
+                    substitutions.add(DefOption(tokens))
             expansion_stack.pop()
             if len(substitutions) > 1:
                 return [('any', substitutions)]
             elif len(substitutions) == 1:
-                return substitutions[0]
+                return list(substitutions)[0]
             return []
 
         tok = self.next()
@@ -332,8 +348,6 @@ class Preprocessor(TokenManager):
             print(self.defs.layers[-1].current['MAX_REG_OFFSET'])
         result = subst(tok)
         if result is not None:
-            if tok[1] == 'MAX_REG_OFFSET':
-                print(f"::Substituting {tok[0]} '{tok[1]}': {result}")
             dprint(3, f"::Substituting {tok[0]} '{tok[1]}': {tok_seq(result)}")
             self.remove(1)
             self.insert(result, True)
@@ -347,20 +361,31 @@ class Preprocessor(TokenManager):
         # String combination not implemented
         # Stringification and concatenation not implemented
 
+        remove_from = None
+
         while self.has_next() and not self.has_error:
             if self.consume_directive('#'):
                 self.parse_directive()
                 continue
 
             if self.defs.is_skipping():
+                if remove_from is None:
+                    remove_from = self.index
                 self.next()
                 continue
+
+            if remove_from is not None:
+                self.remove(self.index - remove_from, self.index)
+                remove_from = None
 
             if self.peek_type() in ['identifier', 'keyword']:
                 self.substitute()
                 continue
 
             self.bump()
+
+        if remove_from is not None:
+            self.remove((self.index - 1) - remove_from, self.index - 1)
 
         return self
 
@@ -371,4 +396,5 @@ class Preprocessor(TokenManager):
         unknowns = '\n'.join(self.defs.flat_unknowns())
         return f'\n===== TOKENS =====\n{tokens}\n' \
             f'\n===== DEFINITIONS =====\n{definitions}\n' \
-            f'\n===== UNKNOWNS =====\n{unknowns}\n'
+            f'\n===== UNKNOWNS =====\n{unknowns}\n' \
+            f'\n===== INVALID PATHS =====\n{self.invalid_paths}\n'

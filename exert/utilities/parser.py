@@ -62,7 +62,7 @@ def parse(filename, arch):
         ]
     )
     preprocessor.preprocess(SOURCE)
-    # print(str(preprocessor))
+    print(str(preprocessor))
     # parser = Parser(
     #     Preprocessor(
     #         Tokenizer(),

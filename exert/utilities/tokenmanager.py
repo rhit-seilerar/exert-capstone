@@ -90,9 +90,9 @@ class TokenManager:
             return self.next()[1]
         return ''
 
-    def print_current(self):
-        low = max(self.index - 5, 0)
-        high = min(self.index + 6, self.len+1)
+    def print_current(self, width = 5):
+        low = max(self.index - width, 0)
+        high = min(self.index + width + 1, self.len + 1)
         context = self.tokens[low:high]
         ctx_str = ''
         offset = ''
