@@ -48,8 +48,10 @@ def main():
         help='Attach a shell to the panda container')
     dev_attach_parser.add_argument('-r', '--reset', action='store_true',
         help='Reset the container first')
+    dev_attach_parser.add_argument('-c', '--container', default='PANDA',
+        help='Specify which Docker container to attach into')
     dev_attach_parser.set_defaults(func = lambda parsed:
-            dev_attach(parsed.docker, parsed.reset))
+            dev_attach(parsed.docker, parsed.reset, parsed.container))
 
     dev_test_parser = dev_subparsers.add_parser('test',
         help='Run the unit tests for the EXERT system')
@@ -84,7 +86,7 @@ def dev_reset():
     run_command('docker stop pandare-init', True, False)
     delete_volume()
 
-def dev_attach(in_docker, reset):
+def dev_attach(in_docker, reset, container):
     if in_docker:
         print("Cannot execute attach from within a container.")
         return
@@ -93,7 +95,15 @@ def dev_attach(in_docker, reset):
         time.sleep(1)
     if not in_docker:
         sync_volume()
-    run_docker(interactive = True, in_docker = in_docker)
+
+    if container == 'PANDA':
+        run_docker(interactive = True, in_docker = in_docker)
+    elif container == 'XMAKE':
+        run_docker(interactive = True, in_docker = in_docker, 
+            name = 'XMAKE', container = XMAKE_CONTAINER)
+    else:
+        print('Container not recognized, defaulting')
+        run_docker(interactive = True, in_docker = in_docker)
 
 def dev_test(in_docker, reset):
     if reset:
