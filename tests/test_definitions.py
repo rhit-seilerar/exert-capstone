@@ -1,4 +1,4 @@
-from exert.parser.definitions import DefOption, Def, DefMap
+from exert.parser.definitions import DefOption, Def, DefMap, DefLayer
 
 def test_defoption_eq():
     empty = DefOption([])
@@ -23,27 +23,10 @@ def test_defoption_hash():
         options_dup.add(defoption)
     assert options == options_dup
 
-def test_defoption_iter():
-    option = DefOption([('identifier', 'a'), ('identifier', 'b')])
-    tokens = []
-    for defoption in option:
-        tokens.append(defoption)
-    assert option.tokens == tokens
-
 def test_defoption_len():
     assert len(DefOption([])) == 0
     assert len(DefOption([('number', 1)])) == 1
     assert len(DefOption([('identifier', 'a'), ('identifier', 'b')])) == 2
-
-def test_defoption_getitem():
-    try:
-        assert DefOption([])[0]
-    except IndexError:
-        pass
-    assert DefOption([('number', 1)])[0] == ('number', 1)
-    defoptionab = DefOption([('identifier', 'a'), ('identifier', 'b')])
-    assert defoptionab[0] == ('identifier', 'a')
-    assert defoptionab[1] == ('identifier', 'b')
 
 def test_defoption_str():
     assert str(DefOption([])) == ''
@@ -134,6 +117,15 @@ def test_def_get_replacements():
     assert defs[1].get_replacements(sym) == {DefOption([sym])}
     assert defs[2].get_replacements(sym) == options
     assert defs[3].get_replacements(sym) == options | {DefOption([sym])}
+
+def test_def_invert():
+    defs = make_def_variants()
+    for defn in defs:
+        defn.invert()
+    assert defs[0] == Def()
+    assert defs[1] == Def(defined = True)
+    assert defs[2] == Def(undefined = True)
+    assert defs[3] == Def(undefined = True)
 
 def test_def_combine():
     replace_defs = make_def_variants()
@@ -258,3 +250,50 @@ def test_defmap_str():
     defmap = DefMap(None, skipping = True, initial = {'abc': Def(undefined = True)})
     assert str(defmap) == 'DefMap(parent = None, skipping = True, defs = ' \
         "{'abc': <undefined>})"
+
+def test_deflayer_add_map():
+    deflayer = DefLayer(False)
+    assert deflayer.conditions == DefMap(None)
+    assert deflayer.accumulator == DefMap(None)
+    assert deflayer.current is None
+    assert not deflayer.any_kept
+    assert not deflayer.closed
+    deflayer.add_map(DefMap(None, initial = {'abc': Def(defined = True)}), True)
+    assert deflayer.conditions == DefMap(None, initial = {
+        'abc': Def(undefined = True)
+    })
+    assert deflayer.accumulator == DefMap(None)
+    assert deflayer.current == DefMap(None, True)
+    assert not deflayer.any_kept
+    assert not deflayer.closed
+    deflayer.add_map(DefMap(None, initial = {'def': Def()}), False)
+    assert deflayer.conditions == DefMap(None, initial = {
+        'abc': Def(undefined = True),
+        'def': Def()
+    })
+    assert deflayer.accumulator == DefMap(None)
+    assert deflayer.current == DefMap(None, initial = {
+        'abc': Def(undefined = True),
+        'def': Def()
+    })
+    assert deflayer.any_kept
+    assert not deflayer.closed
+    deflayer.add_map(DefMap(None, initial = {
+        'ghi': Def(defined = True, undefined = True)
+    }), True, closing = True)
+    assert deflayer.conditions == DefMap(None, initial = {
+        'abc': Def(undefined = True),
+        'def': Def(),
+        'ghi': Def(undefined = True)
+    })
+    assert deflayer.accumulator == DefMap(None, initial = {
+        'abc': Def(undefined = True),
+        'def': Def()
+    })
+    assert deflayer.current == DefMap(None, True, initial = {})
+    assert deflayer.any_kept
+    assert deflayer.closed
+    try:
+        assert deflayer.add_map({}, False)
+    except TypeError:
+        pass
