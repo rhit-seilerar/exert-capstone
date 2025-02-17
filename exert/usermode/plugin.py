@@ -49,12 +49,18 @@ class Exert(PyPlugin):
 
         panda.disable_callback('single_step')
 
-def run(arch = 'i386', callback = None, generic = True, kernel = None):
+def run(arch = 'i386', callback = None, generic = True, kernel = None, usermode = None, command = None):
     panda = None
     if generic:
         panda = Panda(generic = arch)
     else:
-        run_command(f'./make_initrd.sh {arch}')
+        if usermode:
+            if command:
+                run_command(f'./make_initrd.sh {arch} {usermode} "{command}"')
+            else:
+                run_command(f'./make_initrd.sh {arch} {usermode}')
+        else:
+            run_command(f'./make_initrd.sh {arch}')
         if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
             args = f'--nographic \
                 -kernel {kernel} \
@@ -83,9 +89,9 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None):
                 arch=arch, mem='256M', extra_args=args,
                 expect_prompt='/.*#', os_version='linux-32-generic')
 
-    panda.pyplugins.load(Exert, args={
-        'callback': callback
-    })
+    # panda.pyplugins.load(Exert, args={
+    #     'callback': callback
+    # })
 
     @panda.queue_blocking
     def drive():
