@@ -17,7 +17,7 @@ def tok_str(token, newlines = False):
     return string.replace('\n', ' ')
 
 def tok_seq(tokens, newlines = False):
-    return ''.join(tok_str(n, newlines) for n in tokens) \
+    return ''.join(tok_str(n, newlines) for n in tokens).strip() \
         if isinstance(tokens, list) else tokens
 
 def tok_seq_list(ls, newlines = False):

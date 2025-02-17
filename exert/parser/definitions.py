@@ -1,4 +1,4 @@
-from exert.utilities.tokenmanager import tok_seq
+from exert.utilities.tokenmanager import tok_seq, tok_seq_list
 
 class DefOption:
     def __init__(self, tokens):
@@ -22,72 +22,75 @@ class DefOption:
     def __getitem__(self, key):
         return self.tokens[key]
 
-# DefOption.UNDEF = DefOption([('optional', '<undef>')])
-# DefOption.OTHER = DefOption([('optional', '<other>')])
-# 
-# class Def:
-#     """
-#     This class stores potential values for a single definition. It consists of four states:
-#     [ !defined, !undefined  {}      ]: The default value, representing definitions that
-#       haven't been #defined or #undefined yet
-#     [ !defined,  undefined  {}      ]: This has been explicitly #undefined
-#     [  defined, !undefined, options ]: This has been explicitly #defined
-#     [  defined,  undefined, options ]: This was defined in one sub-scope and undefined in another
-#     """
-# 
-#     def __init__(self, *options, defined = False, undefined = False):
-#         self.undefined = undefined
-#         self.defined = defined
-#         self.options = set()
-#         for option in options:
-#             self.add(option)
-# 
-#     def is_initial(self):
-#         return not self.undefined and not self.defined
-# 
-#     def is_undefined(self):
-#         return self.undefined and not self.defined
-# 
-#     def is_defined(self):
-#         return not self.undefined and self.defined
-# 
-#     def is_uncertain(self):
-#         return self.undefined and self.defined
-# 
-#     def undefine(self, keep = True):
-#         self.undefined = True
-#         if not keep:
-#             self.defined = False
-#             self.options.clear()
-# 
-#     def define(self, option, keep = True):
-#         assert isinstance(option, DefOption)
-#         self.options.add(option)
-#         if self.is_undefined() or not keep:
-#             self.undefined = False
-#         self.defined = True
-# 
-#     def get_replacements(self, sym):
-#         """
-#         [ initial,   {}      ]: [[sym]]
-#         [ undefined, {}      ]: [[sym]]
-#         [ defined,   options ]: [options]
-#         [ uncertain, options ]: [[sym], options]
-#         """
-#         replacements = []
-#         if self.undefined or not self.defined:
-#             replacements.append([sym])
-#         if self.defined:
-#             replacements += self.options
-#         return replacements
-# 
-#     def __str__(self):
-#         if self.is_initial():
-#             return '<initial>'
-#         if self.is_undefined():
-#             return '<undefined>'
-#         return tok_seq_list(self.get_replacements(('identifier', '<undefined>')))
-# 
+    def __str__(self):
+        return self.key
+
+class Def:
+    """
+    This class stores potential values for a single definition. It consists of four states:
+    [ !defined, !undefined  {}      ]: The default value, representing definitions that
+      haven't been #defined or #undefined yet
+    [ !defined,  undefined  {}      ]: This has been explicitly #undefined
+    [  defined, !undefined, options ]: This has been explicitly #defined
+    [  defined,  undefined, options ]: This was defined in one sub-scope and undefined in another
+    """
+
+    def __init__(self, *options, defined = False, undefined = False):
+        self.undefined = undefined
+        self.defined = defined
+        if not defined:
+            assert len(options) == 0
+        self.options = set()
+        for option in options:
+            self.define(option, keep = True)
+
+    def is_initial(self):
+        return not self.undefined and not self.defined
+
+    def is_undefined(self):
+        return self.undefined and not self.defined
+
+    def is_defined(self):
+        return not self.undefined and self.defined
+
+    def is_uncertain(self):
+        return self.undefined and self.defined
+
+    def undefine(self, keep = True):
+        self.undefined = True
+        if not keep:
+            self.defined = False
+            self.options.clear()
+
+    def define(self, option, keep = True):
+        assert isinstance(option, DefOption)
+        self.options.add(option)
+        if self.is_undefined() or not keep:
+            self.undefined = False
+        self.defined = True
+
+    def get_replacements(self, sym):
+        """
+        [ initial,   {}      ]: [[sym]]
+        [ undefined, {}      ]: [[sym]]
+        [ defined,   options ]: [options]
+        [ uncertain, options ]: [[sym], options]
+        """
+        replacements = set()
+        if self.undefined or not self.defined:
+            replacements.add(DefOption([sym]))
+        if self.defined:
+            replacements |= self.options
+        return replacements
+
+    def __str__(self):
+        if self.is_initial():
+            return '<initial>'
+        if self.is_undefined():
+            return '<undefined>'
+        replacements = self.get_replacements(('identifier', '<undefined>'))
+        return f'{{ {", ".join(str(r) for r in replacements).strip()} }}'
+
 # class DefMap:
 #     """
 #     DefMaps represent a possible state of definitions within a macro scope.
