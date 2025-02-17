@@ -89,9 +89,9 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None, usermode 
                 arch=arch, mem='256M', extra_args=args,
                 expect_prompt='/.*#', os_version='linux-32-generic')
 
-    # panda.pyplugins.load(Exert, args={
-    #     'callback': callback
-    # })
+    panda.pyplugins.load(Exert, args={
+        'callback': callback
+    })
 
     @panda.queue_blocking
     def drive():
