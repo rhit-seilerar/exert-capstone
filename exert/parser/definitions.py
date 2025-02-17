@@ -5,9 +5,9 @@ def def_dict_str(defs):
     strs = [f'{key}: {str(defs[key])}' for key in defs]
     return f'{{ {", ".join(strs)} }}'
 
-class DefOption(list):
+class DefOption:
     def __init__(self, tokens):
-        super().__init__(tokens)
+        self.tokens = tokens
         self.key = tok_seq(tokens)
         self.len = len(tokens)
         self.hash = hash(self.key)

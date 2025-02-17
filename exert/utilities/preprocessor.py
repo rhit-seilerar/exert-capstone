@@ -1,6 +1,6 @@
 import os
 import types
-from exert.utilities.tokenmanager import tok_seq_list, tok_seq, TokenManager
+from exert.utilities.tokenmanager import tok_seq, TokenManager
 from exert.parser.definitions import DefState, DefOption
 from exert.utilities.debug import dprint
 
@@ -332,7 +332,7 @@ class Preprocessor(TokenManager):
             expansion_stack.append(token[1])
             for opt in opts:
                 tokens = []
-                for token in (opt or []):
+                for token in opt.tokens:
                     tokens += subst(token) or [token]
                 if tokens:
                     substitutions.add(DefOption(tokens))
@@ -340,7 +340,7 @@ class Preprocessor(TokenManager):
             if len(substitutions) > 1:
                 return [('any', substitutions)]
             elif len(substitutions) == 1:
-                return list(substitutions)[0]
+                return list(substitutions)[0].tokens
             return []
 
         tok = self.next()
@@ -390,9 +390,8 @@ class Preprocessor(TokenManager):
         return self
 
     def __str__(self):
-        tokens = tok_seq(self.tokens)
-        definitions = '\n'.join(f'{d[0]}: {tok_seq_list(d[1], True)}' \
-            for d in self.defs.flat_defines().items())
+        tokens = tok_seq(self.tokens, newlines = True)
+        definitions = '\n'.join(f'{d[0]}: {str(d[1])}' for d in self.defs.flat_defines().items())
         unknowns = '\n'.join(self.defs.flat_unknowns())
         return f'\n===== TOKENS =====\n{tokens}\n' \
             f'\n===== DEFINITIONS =====\n{definitions}\n' \
