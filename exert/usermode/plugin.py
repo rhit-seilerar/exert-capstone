@@ -49,12 +49,18 @@ class Exert(PyPlugin):
 
         panda.disable_callback('single_step')
 
-def run(arch = 'i386', callback = None, generic = True, kernel = None):
+def run(arch = 'i386', callback = None, generic = True, kernel = None, usermode = None, command = None):
     panda = None
     if generic:
         panda = Panda(generic = arch)
     else:
-        run_command(f'./make_initrd.sh {arch}')
+        if usermode:
+            if command:
+                run_command(f'./make_initrd.sh {arch} {usermode} "{command}"')
+            else:
+                run_command(f'./make_initrd.sh {arch} {usermode}')
+        else:
+            run_command(f'./make_initrd.sh {arch}')
         if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
             args = f'--nographic \
                 -kernel {kernel} \
