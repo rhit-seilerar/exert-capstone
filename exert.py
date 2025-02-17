@@ -99,7 +99,8 @@ def dev_attach(in_docker, reset, container):
     if container == 'PANDA':
         run_docker(interactive = True, in_docker = in_docker)
     elif container == 'XMAKE':
-        run_docker(interactive = True, in_docker = in_docker, container = XMAKE_CONTAINER)
+        run_docker(interactive = True, in_docker = in_docker, 
+            name = 'XMAKE', container = XMAKE_CONTAINER)
     else:
         print('Container not recognized, defaulting')
         run_docker(interactive = True, in_docker = in_docker)
