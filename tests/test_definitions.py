@@ -1,4 +1,4 @@
-from exert.parser.definitions import DefOption, Def, DefMap, DefLayer
+from exert.parser.definitions import DefOption, Def, DefMap, DefLayer, DefState
 
 def test_defoption_eq():
     empty = DefOption([])
@@ -162,6 +162,32 @@ def test_def_len():
     assert len(defs[2]) == 2
     assert len(defs[3]) == 2
 
+def test_def_matches():
+    defs = make_def_variants()
+    others = make_def_variants()
+    assert defs[0].matches(others[0])
+    assert defs[1].matches(others[0])
+    assert defs[2].matches(others[0])
+    assert defs[3].matches(others[0])
+    assert defs[0].matches(others[1])
+    assert defs[1].matches(others[1])
+    assert not defs[2].matches(others[1])
+    assert defs[3].matches(others[1])
+    assert defs[0].matches(others[2])
+    assert not defs[1].matches(others[2])
+    assert defs[2].matches(others[2])
+    assert defs[3].matches(others[2])
+    assert defs[0].matches(others[3])
+    assert not defs[1].matches(others[3])
+    assert defs[2].matches(others[3])
+    assert defs[3].matches(others[3])
+    assert defs[2].matches(Def(defined = True))
+    try:
+        defs[0].matches('123')
+        assert False
+    except TypeError:
+        pass
+
 def test_def_eq():
     defs1 = make_def_variants()
     defs2 = make_def_variants()
@@ -246,6 +272,25 @@ def test_defmap_combine():
     except TypeError:
         pass
 
+def test_defmap_matches():
+    defmap = DefMap(None, skipping = True, initial = {
+        'abc': Def(undefined = True),
+        'def': Def(undefined = True, defined = True)
+    })
+    assert defmap.matches(DefMap(None, initial = {
+        'abc': Def(),
+        'def': Def(undefined = True, defined = True)
+    }))
+    assert not defmap.matches(DefMap(None, initial = {
+        'abc': Def(DefOption([]), defined = True),
+        'def': Def(undefined = True, defined = True)
+    }))
+    try:
+        defmap.matches({'abc': Def(defined = True)})
+        assert False
+    except TypeError:
+        pass
+
 def test_defmap_str():
     defmap = DefMap(None, skipping = True, initial = {'abc': Def(undefined = True)})
     assert str(defmap) == 'DefMap(parent = None, skipping = True, defs = ' \
@@ -297,3 +342,51 @@ def test_deflayer_add_map():
         assert deflayer.add_map({}, False)
     except TypeError:
         pass
+
+def test_defstate():
+    defstate = DefState()
+    defstate.on_if({})
+    defstate.on_undef('DEFN1')
+    defstate.on_elif({})
+    defstate.on_ifndef('if')
+    defstate.on_ifdef('abc')
+    defstate.on_define('DEFN1', [('integer', 1)])
+    assert defstate.get_replacements(('identifier', 'DEFN1')) \
+        == {DefOption([('integer', 1)])}
+    assert defstate.get_replacements(('identifier', 'DEFN0')) \
+        == {DefOption([('identifier', 'DEFN0')])}
+    defstate.on_elifndef('def')
+    defstate.on_define('DEFN2', [('integer', 1)])
+    defstate.on_endif()
+    defstate.on_endif()
+    defstate.on_undef('DEFN2')
+    defstate.on_elifdef('ghi')
+    defstate.on_undef('DEFN3')
+    defstate.on_elifndef('jkl')
+    defstate.on_undef('DEFN4')
+    defstate.on_else()
+    defstate.on_undef('DEFN5')
+    defstate.on_endif()
+
+    defstate.on_if({})
+    defstate.on_define('TEST_DEFN', [('integer', 1)])
+    defstate.on_elif({})
+    defstate.on_undef('TEST_DEFN')
+    defstate.on_endif()
+
+    defstate.on_ifndef('TEST_DEFN2')
+    defstate.on_define('TEST_DEFN2', [('integer', 2)])
+    defstate.on_else()
+    defstate.on_undef('TEST_DEFN2')
+    defstate.on_define('TEST_DEFN2', [('integer', 3)])
+    defstate.on_endif()
+
+    assert defstate.flat_unknowns() == {'TEST_DEFN'}
+
+    assert defstate.flat_defines() == {
+        'TEST_DEFN2': Def(
+            DefOption([('integer', 2)]),
+            DefOption([('integer', 3)]),
+            defined = True
+        )
+    }

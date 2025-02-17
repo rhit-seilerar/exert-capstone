@@ -1,4 +1,5 @@
 from exert.utilities.tokenmanager import tok_seq
+from exert.utilities.debug import dprint
 
 class DefOption(list):
     def __init__(self, tokens):
@@ -116,6 +117,21 @@ class Def:
             self.options |= other.options
         return self
 
+    def matches(self, other):
+        print(self, other)
+        if not isinstance(other, Def):
+            raise TypeError(other)
+        if other.is_initial() or self.is_initial():
+            return True
+        if other.is_undefined():
+            if self.is_undefined() or self.is_uncertain():
+                return True
+        if other.defined and len(other) == 0:
+            return True
+        if len(other.options & self.options) > 0:
+            return True
+        return False
+
     def __len__(self):
         return len(self.options)
 
@@ -192,6 +208,14 @@ class DefMap:
                 self[key] = self[key].copy().combine(other[key], replace = replace)
         return self
 
+    def matches(self, conditions):
+        if not isinstance(conditions, DefMap):
+            raise TypeError(conditions)
+        for key in conditions.defs:
+            if not self[key].matches(conditions[key]):
+                return False
+        return True
+
     def __eq__(self, other):
         return isinstance(other, DefMap) \
             and self.parent == other.parent \
@@ -249,123 +273,95 @@ class DefLayer:
         self.conditions.combine(conditions.copy().invert().defs, replace = False)
         self.closed |= closing
 
-# class DefState:
-#     """
-#     The DefState tracks all possible definition values over the course of the
-#     preprocessor. As each directive is encountered, an internal hierarchy of
-#     definition maps is updated, each storing possible values and defined-ness
-#     of symbols.
-#     """
-# 
-#     def __init__(self, initial = None):
-#         self.keys = set()
-#         self.layers = [DefLayer(False)]
-#         self.layers[0].add_map(DefMap(None, False, initial), False, closing = True)
-# 
-#     def depth(self):
-#         return len(self.layers) - 1
-# 
-#     def is_skipping(self):
-#         return self.layers[-1].current.skipping
-# 
-#     def flat_defines(self):
-#         result = {}
-#         for key in self.keys:
-#             defn = self.layers[-1].current.get(key) or {}
-#             if len(defn) == 0 or defn[0] != DefMap.UNDEF:
-#                 result[key] = defn
-#         return result
-# 
-#     def flat_unknowns(self):
-#         result = set()
-#         for key in self.keys:
-#             if self.layers[-1].current.is_unknown(key):
-#                 result.add(key)
-#         return result
-# 
-#     def on_define(self, sym, tokens):
-#         if not self.is_skipping():
-#             dprint(3, '  ' * self.depth() + f'#define {sym} {tok_seq(tokens)}')
-#             self.keys.add(sym)
-#             self.layers[-1].current.define(sym, tokens)
-# 
-#     def on_undef(self, sym):
-#         if not self.is_skipping():
-#             dprint(3, '  ' * self.depth() + f'#undef {sym}')
-#             self.keys.add(sym)
-#             self.layers[-1].current.undefine(sym)
-# 
-#     def test_conditions(self, conditions):
-#         for sym in conditions.defs:
-#             cond = conditions.get(sym)
-#             defn = self.layers[-1].current.get(sym)
-#             dprint(4, f'::Testing {sym}:', tok_seq_list(cond), '<=>', tok_seq_list(defn))
-#             if cond is None or defn is None:
-#                 continue
-# 
-#             is_unknown = self.layers[-1].current.is_unknown(sym)
-#             is_undefined = self.layers[-1].current.is_undefined(sym)
-#             if cond == DefMap.UNDEF:
-#                 if is_unknown or is_undefined:
-#                     continue
-# 
-#             if cond == set():
-#                 continue
-# 
-#             cond_opts = set(tok_seq(t) for t in conditions.get(sym).opts)
-#             defn_opts = set(tok_seq(t) for t in self.layers[-1].current.get(sym).opts)
-#             if len(cond_opts & defn_opts) > 0:
-#                 continue
-# 
-#             return False
-#         return True
-# 
-#     def on_if(self, conditions):
-#         dprint(2, '  ' * self.depth() + f'#if {conditions}')
-#         parent = self.layers[-1].current if len(self.layers) > 0 else None
-#         defmap = DefMap(parent, initial = conditions)
-#         skipping = not self.test_conditions(defmap)
-#         self.layers.append(DefLayer(self.is_skipping()))
-#         self.layers[-1].add_map(defmap, skipping)
-#         return not skipping
-# 
-#     def on_ifdef(self, sym):
-#         return self.on_if({ sym: {} })
-# 
-#     def on_ifndef(self, sym):
-#         return self.on_if({ sym: DefMap.UNDEF })
-# 
-#     def on_elif(self, conditions):
-#         dprint(2, '  ' * self.depth() + f'#elif {conditions}')
-#         defmap = DefMap(self.layers[-2].current, initial = conditions)
-#         skipping = not self.test_conditions(defmap)
-#         self.layers[-1].add_map(defmap, skipping)
-#         return not skipping
-# 
-#     def on_elifdef(self, sym):
-#         return self.on_elif({ sym: {} })
-# 
-#     def on_elifndef(self, sym):
-#         return self.on_if({ sym: DefMap.UNDEF })
-# 
-#     def on_else(self):
-#         dprint(2, '  ' * self.depth() + '#else')
-#         defmap = DefMap(self.layers[-2].current)
-#         defmap.skipping = not self.test_conditions(defmap)
-#         self.layers[-1].add_map(defmap, True)
-#         return not defmap.skipping
-# 
-#     def on_endif(self):
-#         dprint(2, '  ' * self.depth() + '#endif')
-#         self.layers[-1].apply()
-#         layer = self.layers.pop()
-#         if layer.closed:
-#             self.layers[-1].current.overwrite(layer.accumulator.defs)
-#         else:
-#             self.layers[-1].current.merge(layer.accumulator.defs)
-# 
-#     def get_replacements(self, sym):
-#         replacements = self.layers[-1].current.get_options(sym)
-#         if not self.layers[-1].current.is_defined(sym):
-#             replacements.append(sym)
-#         return replacements
+class DefState:
+    """
+    The DefState tracks all possible definition values over the course of the
+    preprocessor. As each directive is encountered, an internal hierarchy of
+    definition maps is updated, each storing possible values and defined-ness
+    of symbols.
+    """
+
+    def __init__(self, initial = None):
+        self.keys = set()
+        self.layers = [DefLayer(False)]
+        self.layers[0].add_map(DefMap(None, False, initial), False, closing = True)
+
+    def depth(self):
+        return len(self.layers) - 1
+
+    def is_skipping(self):
+        return self.layers[-1].current.skipping
+
+    def flat_defines(self):
+        result = {}
+        for key in self.keys:
+            defn = self.layers[-1].current[key]
+            if defn.is_defined():
+                result[key] = defn
+        return result
+
+    def flat_unknowns(self):
+        result = set()
+        for key in self.keys:
+            if self.layers[-1].current[key].is_uncertain():
+                result.add(key)
+        return result
+
+    def on_define(self, sym, tokens):
+        if not self.is_skipping():
+            dprint(3, '  ' * self.depth() + f'#define {sym} {tok_seq(tokens)}')
+            self.keys.add(sym)
+            self.layers[-1].current.define(sym, DefOption(tokens))
+
+    def on_undef(self, sym):
+        if not self.is_skipping():
+            dprint(3, '  ' * self.depth() + f'#undef {sym}')
+            self.keys.add(sym)
+            self.layers[-1].current.undefine(sym)
+
+    def on_if(self, conditions):
+        dprint(2, '  ' * self.depth() + f'#if {conditions}')
+        parent = self.layers[-1].current if len(self.layers) > 0 else None
+        defmap = DefMap(parent, initial = conditions)
+        skipping = not self.layers[-1].current.matches(defmap)
+        self.layers.append(DefLayer(self.is_skipping()))
+        self.layers[-1].add_map(defmap, skipping)
+        return not skipping
+
+    def on_ifdef(self, sym):
+        return self.on_if({ sym: Def(defined = True) })
+
+    def on_ifndef(self, sym):
+        return self.on_if({ sym: Def(undefined = True) })
+
+    def on_elif(self, conditions):
+        dprint(2, '  ' * self.depth() + f'#elif {conditions}')
+        defmap = DefMap(self.layers[-2].current, initial = conditions)
+        skipping = not self.layers[-1].current.matches(defmap)
+        self.layers[-1].add_map(defmap, skipping)
+        return not skipping
+
+    def on_elifdef(self, sym):
+        return self.on_elif({ sym: Def(defined = True) })
+
+    def on_elifndef(self, sym):
+        return self.on_if({ sym: Def(undefined = True) })
+
+    def on_else(self):
+        dprint(2, '  ' * self.depth() + '#else')
+        defmap = DefMap(self.layers[-2].current)
+        skipping = not self.layers[-1].current.matches(defmap)
+        self.layers[-1].add_map(defmap, skipping, closing = True)
+        return not skipping
+
+    def on_endif(self):
+        dprint(2, '  ' * self.depth() + '#endif')
+        self.layers[-1].apply()
+        layer = self.layers.pop()
+        self.layers[-1].current.combine(layer.accumulator.defs, replace = layer.closed)
+
+    def get_replacements(self, sym_tok):
+        replacements = self.layers[-1].current[sym_tok[1]].options
+        if not self.layers[-1].current[sym_tok[1]].is_defined():
+            replacements.add(DefOption([sym_tok]))
+        return replacements
