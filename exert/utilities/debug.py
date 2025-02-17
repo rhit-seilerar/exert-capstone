@@ -1,5 +1,5 @@
-DEBUG_ENABLED = True
+DEBUG_LEVEL = 3
 
-def dprint(*args):
-    if DEBUG_ENABLED:
+def dprint(level, *args):
+    if level <= DEBUG_LEVEL:
         print(*args)

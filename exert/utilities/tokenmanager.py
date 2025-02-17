@@ -1,6 +1,8 @@
-def tok_str(token):
+from exert.utilities.debug import dprint
+
+def tok_str(token, newlines = False):
     n = token
-    return '#endif\n' if n == ('optional', None) \
+    string = '#endif\n' if n == ('optional', None) \
         else f'#if {n[1]}\n' if n[0] == 'optional' \
         else '#' if n[0] == 'directive' \
         else f'<{n[1]}> ' if n[0] == 'string' and n[2] == '<' \
@@ -10,12 +12,18 @@ def tok_str(token):
         else f'{n[1]} ' if n[0] in ['keyword', 'identifier', 'integer', 'string'] \
         else f'<ANY>{tok_seq_list(n[1])} ' if n[0] == 'any' \
         else str(n[1])
+    if newlines:
+        return string
+    return string.replace('\n', ' ')
 
-def tok_seq(tokens):
-    return ''.join(tok_str(n) for n in tokens) if isinstance(tokens, list) else tokens
+def tok_seq(tokens, newlines = False):
+    return ''.join(tok_str(n, newlines) for n in tokens) \
+        if isinstance(tokens, list) else tokens
 
-def tok_seq_list(ls):
-    return f'[ {", ".join(tok_seq(t) for t in ls)}]' if isinstance(ls, list) else ls
+def tok_seq_list(ls, newlines = False):
+    if isinstance(ls, set) or isinstance(ls, list):
+        return f'[ {", ".join(tok_seq(t, newlines).strip() for t in ls)} ]'
+    return ls
 
 class TokenManager:
     def __init__(self):
@@ -31,10 +39,12 @@ class TokenManager:
         return self.index < self.len
 
     def bump(self):
+        dprint(6, '--Bumping')
         self.index += 1
 
     def peek(self, offset = 0):
         if self.index + offset < self.len:
+            dprint(6, '--Peek:', self.tokens[self.index+offset])
             return self.tokens[self.index+offset]
         return None
 

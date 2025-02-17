@@ -99,7 +99,7 @@ class Tokenizer:
         old = self.index
         modifier = self.consume('u8', 'u', 'U', 'L') or ''
         delim = self.consume('"')
-        if not delim and self.in_directive:
+        if not delim and self.in_directive and self.tokens[-1] == ('identifier', 'include'):
             if self.consume('<'):
                 modifier = '<'
                 delim = '>'

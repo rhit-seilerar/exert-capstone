@@ -9,6 +9,7 @@ exert/usermode/build
 *.cpio
 *.gz
 *.elf
+*.log
 linux
 cache/rootfs/bin/sh
 cache/rootfs/dev/fd
