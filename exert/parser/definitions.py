@@ -1,6 +1,10 @@
 from exert.utilities.tokenmanager import tok_seq
 from exert.utilities.debug import dprint
 
+def def_dict_str(defs):
+    strs = [f'{key}: {str(defs[key])}' for key in defs]
+    return f'{{ {", ".join(strs)} }}'
+
 class DefOption(list):
     def __init__(self, tokens):
         super().__init__(tokens)
@@ -118,7 +122,6 @@ class Def:
         return self
 
     def matches(self, other):
-        print(self, other)
         if not isinstance(other, Def):
             raise TypeError(other)
         if other.is_initial() or self.is_initial():
@@ -307,7 +310,7 @@ class DefState:
                 result.add(key)
         return result
 
-    def on_define(self, sym, tokens):
+    def on_define(self, sym, params, tokens):
         if not self.is_skipping():
             dprint(3, '  ' * self.depth() + f'#define {sym} {tok_seq(tokens)}')
             self.keys.add(sym)
@@ -320,7 +323,7 @@ class DefState:
             self.layers[-1].current.undefine(sym)
 
     def on_if(self, conditions):
-        dprint(2, '  ' * self.depth() + f'#if {conditions}')
+        dprint(2, '  ' * self.depth() + f'#if {def_dict_str(conditions)}')
         parent = self.layers[-1].current if len(self.layers) > 0 else None
         defmap = DefMap(parent, initial = conditions)
         skipping = not self.layers[-1].current.matches(defmap)
@@ -335,7 +338,7 @@ class DefState:
         return self.on_if({ sym: Def(undefined = True) })
 
     def on_elif(self, conditions):
-        dprint(2, '  ' * self.depth() + f'#elif {conditions}')
+        dprint(2, '  ' * self.depth() + f'#elif {def_dict_str(conditions)}')
         defmap = DefMap(self.layers[-2].current, initial = conditions)
         skipping = not self.layers[-1].current.matches(defmap)
         self.layers[-1].add_map(defmap, skipping)

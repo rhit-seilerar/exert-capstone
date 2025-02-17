@@ -350,13 +350,14 @@ def test_defstate():
     defstate.on_elif({})
     defstate.on_ifndef('if')
     defstate.on_ifdef('abc')
-    defstate.on_define('DEFN1', [('integer', 1)])
+    defstate.on_define('DEFN1', ['x', '__VA_ARGS__'], \
+        [('identifier', 'x'), ('identifier', '__VA_ARGS__')])
     assert defstate.get_replacements(('identifier', 'DEFN1')) \
-        == {DefOption([('integer', 1)])}
+        == {DefOption([('identifier', 'x'), ('identifier', '__VA_ARGS__')])}
     assert defstate.get_replacements(('identifier', 'DEFN0')) \
         == {DefOption([('identifier', 'DEFN0')])}
     defstate.on_elifndef('def')
-    defstate.on_define('DEFN2', [('integer', 1)])
+    defstate.on_define('DEFN2', [], [('integer', 1)])
     defstate.on_endif()
     defstate.on_endif()
     defstate.on_undef('DEFN2')
@@ -369,16 +370,16 @@ def test_defstate():
     defstate.on_endif()
 
     defstate.on_if({})
-    defstate.on_define('TEST_DEFN', [('integer', 1)])
+    defstate.on_define('TEST_DEFN', [], [('integer', 1)])
     defstate.on_elif({})
     defstate.on_undef('TEST_DEFN')
     defstate.on_endif()
 
     defstate.on_ifndef('TEST_DEFN2')
-    defstate.on_define('TEST_DEFN2', [('integer', 2)])
+    defstate.on_define('TEST_DEFN2', [], [('integer', 2)])
     defstate.on_else()
     defstate.on_undef('TEST_DEFN2')
-    defstate.on_define('TEST_DEFN2', [('integer', 3)])
+    defstate.on_define('TEST_DEFN2', [], [('integer', 3)])
     defstate.on_endif()
 
     assert defstate.flat_unknowns() == {'TEST_DEFN'}

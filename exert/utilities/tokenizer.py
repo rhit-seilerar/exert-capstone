@@ -55,6 +55,8 @@ class Tokenizer:
             value = self.data[start:self.index]
             if value in self.keywords:
                 return ('keyword', value)
+            if len(self.tokens) > 0 and self.tokens[-1] == ('directive', '#') and value == 'define' and self.peek() == '(':
+                self.next_parenthesis_is_directive = True
             return ('identifier', value)
         return None
 
@@ -128,9 +130,15 @@ class Tokenizer:
             return ('operator', op2)
         if (op1 := self.peek(1)) in '-=[]\\;,./~!#%^&*()+{}|:<>?':
             self.bump()
+
+            if op1 == '(' and self.next_parenthesis_is_directive:
+                self.next_parenthesis_is_directive = False
+                return ('directive', '(')
+
             if self.can_be_directive and op1 == '#':
                 self.in_directive = True
                 return ('directive', '#')
+
             return ('operator', op1)
         return None
 
@@ -150,6 +158,7 @@ class Tokenizer:
         self.index = 0
         self.in_directive = False
         self.can_be_directive = True
+        self.next_parenthesis_is_directive = False
         self.tokens = []
 
         while self.has_next():

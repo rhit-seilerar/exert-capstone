@@ -94,9 +94,31 @@ class Preprocessor(TokenManager):
     def handle_define(self):
         if not (name := self.parse_ident_or_keyword()):
             return self.err('#define must be followed by an identifier')
+        params = []
+        index = self.index
+        if self.consume_directive('('):
+            while True:
+                if (ident := self.parse_identifier()):
+                    params.append(ident)
+                    if self.consume_operator(')'):
+                        break
+                    if not self.consume_operator(','):
+                        return self.err(f"Expected the macro argument to be followed " \
+                            f"with ',' or ')', but got {self.peek() or 'EOF'}")
+                elif self.consume_operator('...'):
+                    params.append('__VA_ARGS__')
+                    if not self.consume_operator(')'):
+                        return self.err('__VA_ARGS__ must be the last argument in a function macro')
+                    break
+                elif self.consume_operator(')'):
+                    break
+                else:
+                    return self.err("Expected a parameter or '...', but got " \
+                        f"{self.peek() or 'EOF'}")
+        self.index = index
         if (tokens := self.skip_to_newline(1)) is None:
             return False
-        self.defs.on_define(name, tokens)
+        self.defs.on_define(name, params, tokens)
         return True
 
     def handle_undef(self):
@@ -206,6 +228,7 @@ class Preprocessor(TokenManager):
         return True
 
     def handle_error(self):
+        #TODO error should cancel the current block
         if not self.defs.is_skipping():
             dprint(2, '  ' * self.defs.depth() + '#error')
         return self.skip_to_newline()
@@ -285,7 +308,7 @@ class Preprocessor(TokenManager):
             if token[1] in expansion_stack:
                 return None
             substitutions = []
-            opts = self.defs.get_replacements(token[1])
+            opts = self.defs.get_replacements(token)
             if opts == []:
                 return []
             if opts == [token[1]]:
@@ -306,7 +329,7 @@ class Preprocessor(TokenManager):
 
         tok = self.next()
         if tok[1] == 'MAX_REG_OFFSET':
-            print(self.defs.layers[-1].current.get('MAX_REG_OFFSET'))
+            print(self.defs.layers[-1].current['MAX_REG_OFFSET'])
         result = subst(tok)
         if result is not None:
             if tok[1] == 'MAX_REG_OFFSET':
