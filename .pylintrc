@@ -1,5 +1,7 @@
 [MAIN]
 
+ignore=cache
+
 disable=
     unused-argument,
     fixme,

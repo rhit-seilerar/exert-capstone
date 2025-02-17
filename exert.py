@@ -96,9 +96,9 @@ def dev_attach(in_docker, reset, container):
     if not in_docker:
         sync_volume()
 
-    if (container == 'PANDA'):
+    if container == 'PANDA':
         run_docker(interactive = True, in_docker = in_docker)
-    elif (container == 'XMAKE'):
+    elif container == 'XMAKE':
         run_docker(interactive = True, in_docker = in_docker, container = XMAKE_CONTAINER)
     else:
         print('Container not recognized, defaulting')
