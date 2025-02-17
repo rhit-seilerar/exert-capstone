@@ -1,4 +1,4 @@
-from exert.utilities.tokenmanager import tok_seq, tok_seq_list
+from exert.utilities.tokenmanager import tok_seq
 
 class DefOption:
     def __init__(self, tokens):
@@ -38,11 +38,14 @@ class Def:
     def __init__(self, *options, defined = False, undefined = False):
         self.undefined = undefined
         self.defined = defined
-        if not defined:
-            assert len(options) == 0
+        if not defined and len(options) > 0:
+            raise ValueError(options)
         self.options = set()
         for option in options:
             self.define(option, keep = True)
+
+    def copy(self):
+        return Def(*self.options, defined = self.defined, undefined = self.undefined)
 
     def is_initial(self):
         return not self.undefined and not self.defined
@@ -63,7 +66,8 @@ class Def:
             self.options.clear()
 
     def define(self, option, keep = True):
-        assert isinstance(option, DefOption)
+        if not isinstance(option, DefOption):
+            raise TypeError(option)
         self.options.add(option)
         if self.is_undefined() or not keep:
             self.undefined = False
@@ -83,6 +87,28 @@ class Def:
             replacements |= self.options
         return replacements
 
+    def combine(self, other, replace):
+        if not isinstance(other, Def):
+            raise TypeError(other)
+        if replace:
+            self.defined = other.defined
+            self.undefined = other.undefined
+            if not other.defined or len(other) > 0:
+                self.options = other.options.copy()
+        else:
+            self.defined |= other.defined
+            self.undefined |= other.undefined
+            self.options |= other.options
+
+    def __len__(self):
+        return len(self.options)
+
+    def __eq__(self, other):
+        return isinstance(other, Def) \
+            and self.defined == other.defined \
+            and self.undefined == other.undefined \
+            and self.options == other.options
+
     def __str__(self):
         if self.is_initial():
             return '<initial>'
@@ -91,143 +117,57 @@ class Def:
         replacements = self.get_replacements(('identifier', '<undefined>'))
         return f'{{ {", ".join(str(r) for r in replacements).strip()} }}'
 
-# class DefMap:
-#     """
-#     DefMaps represent a possible state of definitions within a macro scope.
-#     They store a reference to the outer scope's defmap, as well as a set of
-#     mappings between symbols to their definitions.
-#     """
-# 
-#     def __init__(self, parent, skipping = False, initial = None):
-#         assert parent is None or isinstance(parent, DefMap)
-#         assert initial is None or isinstance(initial, dict)
-#         self.skipping = skipping
-#         self.parent = parent
-#         self.defs = initial or {}
-# 
-#     def copy(self):
-#         return DefMap(self.parent, self.skipping, self.defs.copy())
-# 
-#     def getlocal(self, key):
-#         if key not in self.defs:
-#             self.defs[key] = Def()
-#         return self.defs[key]
-# 
-#     def __getitem__(self, key):
-#         if key in self.defs:
-#             return self.defs[key]
-#         if self.parent is not None:
-#             return self.parent[key]
-#         return Def()
-# 
-#     def __setitem__(self, key, item):
-#         assert isinstance(item, Def)
-#         self.defs[key] = item
-# 
-#     def undefine(self, key):
-#         if not self.skipping:
-#             self.getlocal(key).undefine(keep = False)
-# 
-#     def define(self, key, option):
-#         if not self.skipping:
-#             self.getlocal(key).define(option, keep = True)
-#             if defn == Def.DEFAULT or defn == Def.UNDEF:
-#                 self.defs[sym] = Def(option)
-#             else:
-#                 self.defs[sym].add(option)
-#             dprint(4, f'::::Defining {sym}: {str(defn)} <- {str(self.defs[sym])}')
-# 
-#     def invert(self):
-#         """
-#         Invert all specified definitions in this map. Specifically:
-#         - None -> None
-#         - UNDEF -> []
-#         - [UNDEF,...] -> [UNDEF]
-#         - [...] -> UNDEF
-#         """
-#         result = self.copy()
-#         dprint(4, f'::::Inverting (Skipping: {self.skipping})')
-#         if not self.skipping:
-#             for sym in self.defs:
-#                 defn = self.defs.get(sym)
-#                 if self.get(sym) == Def.DEFAULT:
-#                     pass
-#                 elif defn.is_undefined():
-#                     result.defs[sym] = Def()
-#                 elif defn.is_defined():
-#                     result.defs[sym] = Def.UNDEF
-#                 else:
-#                     result.defs[sym] = Def(undefined = True)
-#                 dprint(4, f'::::::Inverting {sym}: {tok_seq_list(defn)} -> ' \
-#                     f'{tok_seq_list(result.defs[sym])}')
-#         return result
-# 
-#     def overwrite(self, state):
-#         """
-#         For each key specified in state, overwrite the current definition with
-#         its value. As a special case, empty definitions ([]) don't overwrite if
-#         the existing value is defined. This allows #ifdef to work properly.
-#         """
-#         assert isinstance(state, dict)
-#         dprint(4, f'::::Overwriting (Skipping: {self.skipping})')
-#         if not self.skipping:
-#             for sym in state:
-#                 if not self.is_defined(sym) or state[sym] != {}:
-#                     dprint(4, f'::::::Overwriting {sym}: {tok_seq_list(self.defs[sym])} <- ' \
-#                         f'{tok_seq_list(state[sym])}')
-#                     self.defs[sym] = state[sym]
-# 
-#     def merge(self, state):
-#         """
-#         For each key specified in state, merge with the current state. Specifically:
-#         TODO merging with None means other options may still be possible
-#         None + ??? -> ???
-#         ??? + None -> ???
-#         UNDEF + UNDEF -> UNDEF
-#         UNDEF + [UNDEF,B] -> [UNDEF,B]
-#         UNDEF + [B] -> [UNDEF,B]
-#         [UNDEF,A] + UNDEF -> [UNDEF,A]
-#         [UNDEF,A] + [UNDEF,B] -> [UNDEF,A,B]
-#         [UNDEF,A] + [B] -> [UNDEF,A,B]
-#         [A] + UNDEF -> [UNDEF,A]
-#         [A] + [UNDEF,B] -> [UNDEF,A,B]
-#         [A] + [B] -> [A, B]
-#         """
-#         assert isinstance(state, dict)
-#         dprint(4, f'::::Merging (Skipping: {self.skipping})')
-#         if self.skipping:
-#             return
-#         for sym in state:
-#             defn1 = self.get(sym)
-#             defn2 = state.get(sym)
-#             if defn1 is None:
-#                 self.defs[sym] = defn2
-#             elif defn2 is None:
-#                 pass
-#             elif defn1 == DefMap.UNDEF:
-#                 if defn2 == DefMap.UNDEF:
-#                     self.defs[sym] = defn2
-#                 elif len(defn2) and defn2[0] == DefMap.UNDEF:
-#                     self.defs[sym] = defn2
-#                 else:
-#                     self.defs[sym] = [DefMap.UNDEF] + defn2
-#             elif len(defn1) and defn1[0] == DefMap.UNDEF:
-#                 if defn2 == DefMap.UNDEF:
-#                     pass
-#                 elif len(defn2) and defn2[0] == DefMap.UNDEF:
-#                     self.defs[sym] = defn1[1:] + defn2[1:]
-#                 else:
-#                     self.defs[sym] = defn1[1:] + defn2
-#             else:
-#                 if defn2 == DefMap.UNDEF:
-#                     self.defs[sym] = [DefMap.UNDEF] + defn1
-#                 elif len(defn2) and defn2[0] == DefMap.UNDEF:
-#                     self.defs[sym] = [DefMap.UNDEF] + defn1 + defn2[1:]
-#                 else:
-#                     self.defs[sym] = defn1 + defn2
-#             dprint(4, f'::::::Merging {sym}: {tok_seq_list(self.defs.get(sym))} <- ' \
-#                 f'{tok_seq_list(defn1)} + {tok_seq_list(defn2)}')
-# 
+class DefMap:
+    """
+    DefMaps represent a possible state of definitions within a macro scope.
+    They store a reference to the outer scope's defmap, as well as a set of
+    mappings between symbols to their definitions.
+    """
+
+    def __init__(self, parent, skipping = False, initial = None):
+        assert parent is None or isinstance(parent, DefMap)
+        assert initial is None or isinstance(initial, dict)
+        self.skipping = skipping
+        self.parent = parent
+        self.defs = initial or {}
+
+    def getlocal(self, key):
+        if key not in self.defs:
+            self.defs[key] = Def()
+        return self.defs[key]
+
+    def __getitem__(self, key):
+        if key in self.defs:
+            return self.defs[key]
+        if self.parent is not None:
+            return self.parent[key]
+        return Def()
+
+    def __setitem__(self, key, item):
+        if not isinstance(item, Def):
+            raise TypeError(item)
+        self.defs[key] = item
+
+    def undefine(self, key):
+        if not self.skipping:
+            self.getlocal(key).undefine(keep = False)
+
+    def define(self, key, option):
+        if not self.skipping:
+            self.getlocal(key).define(option, keep = True)
+
+    def combine(self, other, replace):
+        if not isinstance(other, dict):
+            raise TypeError(other)
+        if not self.skipping:
+            for key in other:
+                self[key].combine(other[key], replace = replace)
+
+    def __str__(self):
+        defs_strs = [f"'{key}': {str(self.defs[key])}" for key in self.defs]
+        return f'DefMap(parent = {self.parent}, skipping = {self.skipping}, ' \
+            f'defs = {{{", ".join(defs_strs)}}})'
+
 # class DefLayer:
 #     """
 #     A definition layer represents the possible definition states among an entire
