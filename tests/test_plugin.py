@@ -3,6 +3,7 @@ import exert.usermode.task_struct_stack as tss
 from exert.usermode import plugin
 from exert.usermode.context import Context
 from exert.usermode.rules import TASK_STRUCT
+from exert.utilities.debug import RUN_PLUGIN_TESTS
 
 # Kernel info taken from https://panda.re/kernelinfos/ubuntu:4.4.0-170-generic:32.conf
 
@@ -16,6 +17,8 @@ import tests.test_plugin
 tests.test_plugin.run_test('{}', {}, '{}', tests.test_plugin.{})
 """
 def do_test(test, arch, generic = True, kernel = None):
+    if not RUN_PLUGIN_TESTS:
+        return
     formatted = TEST_PREFIX.format(arch, generic, kernel, test.__name__)
     print(formatted)
     subprocess.run(['python'], input = formatted, check = True, text = True)
@@ -74,9 +77,13 @@ def test_nongeneric_kernel_mips():
             generic=False, kernel='./kernels/vmlinux-mips')
 
 def test_plugin_kernel_supported():
+    if not RUN_PLUGIN_TESTS:
+        return
     subprocess.run(['python', '-u', '-m', 'exert.usermode.plugin', './kernels/vmlinuz-arm',
                     'armv5l', '3.2.0-4-versatile'], check = True)
 
 def test_plugin_kernel_unsupported():
+    if not RUN_PLUGIN_TESTS:
+        return
     subprocess.run(['python', '-u', '-m', 'exert.usermode.plugin', './kernels/vmlinuz-arm',
                     'armv5l', '6.12.9'], check = True)

@@ -1,28 +1,27 @@
-# class DefOption:
-#     def __init__(self, tokens):
-#         self.tokens = tokens
-#         self.key = tok_seq(tokens)
-#         self.len = len(self.tokens)
-#         self.hash = hash(self.key)
-# 
-#     def __eq__(self, other):
-#         return isinstance(other, DefOption) and other.key == self.key
-# 
-#     def __hash__(self):
-#         return self.hash
-# 
-#     def __contains__(self, element):
-#         return element in self.tokens
-# 
-#     def __iter__(self):
-#         return iter(self.tokens)
-# 
-#     def __len__(self):
-#         return self.len
-# 
-#     def __getitem__(self, key):
-#         return self.tokens[key]
-# 
+from exert.utilities.tokenmanager import tok_seq
+
+class DefOption:
+    def __init__(self, tokens):
+        self.tokens = tokens
+        self.key = tok_seq(tokens)
+        self.len = len(self.tokens)
+        self.hash = hash(self.key)
+
+    def __eq__(self, other):
+        return isinstance(other, DefOption) and other.key == self.key
+
+    def __hash__(self):
+        return self.hash
+
+    def __iter__(self):
+        return iter(self.tokens)
+
+    def __len__(self):
+        return self.len
+
+    def __getitem__(self, key):
+        return self.tokens[key]
+
 # DefOption.UNDEF = DefOption([('optional', '<undef>')])
 # DefOption.OTHER = DefOption([('optional', '<other>')])
 # 

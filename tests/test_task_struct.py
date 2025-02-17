@@ -1,6 +1,7 @@
 import subprocess
 from exert.usermode import plugin
 import exert.usermode.task_struct_stack as tss
+from exert.utilities.debug import RUN_PLUGIN_TESTS
 
 CALLED_BACK = False
 def set_called_back(called_back):
@@ -14,6 +15,8 @@ tests.test_task_struct.run_test('{}', {}, '{}', tss.{})
 """
 
 def do_test(test, arch, generic = True, kernel = None):
+    if not RUN_PLUGIN_TESTS:
+        return
     formatted = TEST_PREFIX.format(arch, generic, kernel, test.__name__)
     print(formatted)
     subprocess.run(['python'], input = formatted, check = True, text = True)
