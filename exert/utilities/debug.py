@@ -1,4 +1,4 @@
-DEBUG_ENABLED = False
+DEBUG_ENABLED = True
 
 def dprint(*args):
     if DEBUG_ENABLED:

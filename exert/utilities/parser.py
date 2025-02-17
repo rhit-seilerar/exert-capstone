@@ -29,13 +29,19 @@ def switch_to_version(version):
     run_command(f'git checkout v{version}', True, True, './cache/linux')
 
 SOURCE = """
-#ifndef _LINUX_SCHED_H
-#define _LINUX_SCHED_H
+//#ifndef _LINUX_SCHED_H
+//#define _LINUX_SCHED_H
 
-#include <uapi/linux/sched.h>
-#include <uapi/linux/sched.h>
+//#include <uapi/linux/sched.h>
 
-#endif
+#include <linux/sched/prio.h>
+
+
+//struct sched_param {
+//	int sched_priority;
+//};
+
+//#endif
 """
 
 def asm_generic(path):

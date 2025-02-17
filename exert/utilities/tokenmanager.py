@@ -12,10 +12,10 @@ def tok_str(token):
         else str(n[1])
 
 def tok_seq(tokens):
-    return ''.join(tok_str(n) for n in tokens)
+    return ''.join(tok_str(n) for n in tokens) if isinstance(tokens, list) else tokens
 
 def tok_seq_list(ls):
-    return f'[ {", ".join(tok_seq(t) for t in ls)}]'
+    return f'[ {", ".join(tok_seq(t) for t in ls)}]' if isinstance(ls, list) else ls
 
 class TokenManager:
     def __init__(self):
@@ -96,8 +96,8 @@ class TokenManager:
         print(ctx_str)
         print(offset)
 
-    def err(self, message):
-        print(message)
+    def err(self, *message):
+        print(*message)
         self.print_current()
         assert False
         return None
