@@ -29,12 +29,16 @@ class TokenManager:
         self.tokens = []
         self.index = 0
         self.len = 0
+        self.tokens_consumed = 0
+        self.tokens_added = 0
+        self.progress_counter = 0
 
     def has_next(self):
         return self.index < self.len
 
     def bump(self):
         dprint(6, '--Bumping')
+        self.tokens_consumed += 1
         self.index += 1
 
     def peek(self, offset = 0):
@@ -100,6 +104,13 @@ class TokenManager:
             ctx_str += addend
         print(ctx_str)
         print(offset)
+
+    def print_progress(self):
+        self.progress_counter += 1
+        if self.progress_counter % 2000 == 0:
+            print(f'Preprocessed {self.tokens_consumed} of {self.tokens_added} tokens '
+                f'({self.tokens_consumed / self.tokens_added * 100:.2f})%')
+            self.progress_counter = 0
 
     def err(self, *message):
         print(*message)

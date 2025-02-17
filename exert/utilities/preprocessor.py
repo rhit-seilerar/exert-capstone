@@ -24,7 +24,7 @@ class Preprocessor(TokenManager):
 
     def load_file(self, path, is_relative):
         if self.defs.is_skipping():
-            dprint(2, '  ' * self.defs.depth() + f'::Skipping {path}')
+            dprint(1, '  ' * self.defs.depth() + f'::Skipping {path}')
             return
 
         includes = self.includes.copy()
@@ -44,7 +44,7 @@ class Preprocessor(TokenManager):
             data = ''
             if load_path in self.tokenized_cache:
                 data = self.tokenized_cache.get(load_path)
-                dprint(2, '  ' * self.defs.depth() + f'::Reusing {load_path}')
+                dprint(1, '  ' * self.defs.depth() + f'::Reusing {load_path}')
             else:
                 dprint(4, f'::Testing {load_path}')
                 data = self.filereader(load_path)
@@ -63,7 +63,7 @@ class Preprocessor(TokenManager):
             return True
         self.unresolved.append(path)
         # self.err('Failed to include', path)
-        dprint(2, '  ' * self.defs.depth() + '::Failed to include', path)
+        dprint(1, '  ' * self.defs.depth() + '::Failed to include', path)
         self.invalid_paths.add(path)
         return True
 
@@ -131,6 +131,7 @@ class Preprocessor(TokenManager):
                 else:
                     return self.err("Expected a parameter or '...', but got " \
                         f"{self.peek() or 'EOF'}")
+        self.tokens_consumed -= self.index - index
         self.index = index
         if (tokens := self.skip_to_newline(1)) is None:
             return False
@@ -306,7 +307,9 @@ class Preprocessor(TokenManager):
         size = len(tokens)
         self.tokens = prefix + tokens + suffix
         self.len += size
+        self.tokens_added += size
         if before:
+            self.tokens_consumed += size
             self.index += size
 
     def remove(self, count, index = None):
@@ -344,8 +347,6 @@ class Preprocessor(TokenManager):
             return []
 
         tok = self.next()
-        if tok[1] == 'MAX_REG_OFFSET':
-            print(self.defs.layers[-1].current['MAX_REG_OFFSET'])
         result = subst(tok)
         if result is not None:
             dprint(3, f"::Substituting {tok[0]} '{tok[1]}': {tok_seq(result)}")
@@ -364,6 +365,8 @@ class Preprocessor(TokenManager):
         remove_from = None
 
         while self.has_next() and not self.has_error:
+            self.print_progress()
+
             if self.consume_directive('#'):
                 self.parse_directive()
                 continue

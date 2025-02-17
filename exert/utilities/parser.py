@@ -29,24 +29,7 @@ def switch_to_version(version):
     run_command(f'git checkout v{version}', True, True, './cache/linux')
 
 SOURCE = """
-#ifndef _LINUX_KERNEL_H
-#define _LINUX_KERNEL_H
-
-
-#include <stdarg.h>
-#include <linux/linkage.h>
-#include <linux/stddef.h>
-#include <linux/types.h>
-#include <linux/compiler.h>
-#include <linux/bitops.h>
-#include <linux/log2.h>
-#include <linux/typecheck.h>
-#include <linux/printk.h>
-#include <linux/dynamic_debug.h>
-#include <asm/byteorder.h>
-#include <uapi/linux/kernel.h>
-
-#endif
+#include <linux/sched.h>
 """
 
 def parse(filename, arch):
