@@ -33,6 +33,7 @@ SOURCE = """
 #define _LINUX_SCHED_H
 
 #include <uapi/linux/sched.h>
+#include <uapi/linux/sched.h>
 
 #endif
 """

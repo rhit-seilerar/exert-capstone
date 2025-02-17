@@ -1,5 +1,6 @@
 import os
 from exert.utilities.tokenmanager import tok_seq, tok_seq_list, TokenManager
+from exert.utilities.debug import dprint
 
 class DefMap:
     """
@@ -77,14 +78,19 @@ class DefMap:
 
     def undefine(self, sym):
         if not self.skipping:
+            dprint(f"    Undefining {sym}: {self.defs.get(sym)} <- {DefMap.UNDEF}")
             self.defs[sym] = DefMap.UNDEF
 
     def define(self, sym, tokens):
         if not self.skipping:
-            if isinstance(self.defs.get(sym), list):
+            defn = self.defs.get(sym)
+            if isinstance(defn, list):
                 self.defs[sym].append(tokens)
+            elif tokens == []:
+                self.defs[sym] = []
             else:
                 self.defs[sym] = [tokens]
+            dprint(f"    Defining {sym}: {defn} <- {self.defs[sym]}")
 
     def invert(self):
         """
@@ -95,10 +101,11 @@ class DefMap:
         - [UNDEF,...] -> [UNDEF]
         """
         result = self.copy()
+        dprint(f"    Inverting (Skipping: {self.skipping})")
         if not self.skipping:
             for sym in self.defs:
-                defn = self.get(sym)
-                if defn is None:
+                defn = self.defs.get(sym)
+                if self.get(sym) is None:
                     pass
                 elif defn == DefMap.UNDEF:
                     result.defs[sym] = []
@@ -106,6 +113,7 @@ class DefMap:
                     result.defs[sym] = [DefMap.UNDEF]
                 else:
                     result.defs[sym] = DefMap.UNDEF
+                dprint(f"      Inverting {sym}: {defn} -> {result.defs[sym]}")
         return result
 
     def overwrite(self, state):
@@ -115,9 +123,11 @@ class DefMap:
         the existing value is defined. This allows #ifdef to work properly.
         """
         assert isinstance(state, dict)
+        dprint(f"    Overwriting (Skipping: {self.skipping})")
         if not self.skipping:
             for sym in state:
                 if not self.is_defined(sym) or state[sym] != []:
+                    dprint(f"      Overwriting {sym}: {self.defs[sym]} <- {state[sym]}")
                     self.defs[sym] = state[sym]
 
     def merge(self, state):
@@ -137,6 +147,7 @@ class DefMap:
         [A] + [B] -> [A, B]
         """
         assert isinstance(state, dict)
+        dprint(f"    Merging (Skipping: {self.skipping})")
         if self.skipping:
             return
         for sym in state:
@@ -167,6 +178,7 @@ class DefMap:
                     self.defs[sym] = [DefMap.UNDEF] + defn1 + defn2[1:]
                 else:
                     self.defs[sym] = defn1 + defn2
+            dprint(f"      Merging {sym}: {self.defs[sym]} <- {defn1} + {defn2}")
 
 class DefLayer:
     """
@@ -204,21 +216,28 @@ class DefLayer:
         Apply the current defmap to the accumulated state and reset it.
         """
         if self.current is not None:
+            dprint("  Merging into accumulator")
             self.accumulator.merge(self.current.defs)
             self.reset_current()
 
-    def add_map(self, conditions, closing = False):
+    def add_map(self, conditions, skipping, closing = False):
         """
         Add a new defmap with the given conditions map and accumulate into the
         overall conditions. If 'closing' is True, mark the layer as closed.
         """
         assert conditions is None or isinstance(conditions, DefMap)
         self.apply()
-        self.current = conditions
-        self.current.merge(self.conditions.defs)
+        dprint(f" Adding (Skipping: {skipping})")
+        if skipping:
+            self.current = DefMap(None, True)
+        else:
+            dprint("  Merging previous conditions")
+            self.current = conditions.copy()
+            self.current.merge(self.conditions.defs)
+            dprint("  Merging new conditions")
+            self.any_kept = True
         self.conditions.merge(conditions.invert().defs)
         self.closed |= closing
-        self.any_kept |= not conditions.skipping
 
 class DefState:
     """
@@ -231,7 +250,7 @@ class DefState:
     def __init__(self, initial = None):
         self.keys = set()
         self.layers = [DefLayer(False)]
-        self.layers[0].add_map(DefMap(None, False, initial), closing = True)
+        self.layers[0].add_map(DefMap(None, False, initial), False, closing = True)
 
     def flat_defines(self):
         result = {}
@@ -250,13 +269,15 @@ class DefState:
 
     def on_define(self, sym, tokens):
         if not self.layers[-1].current.skipping:
+            dprint(f"#define {sym} {tokens}")
             self.keys.add(sym)
-        self.layers[-1].current.define(sym, tokens)
+            self.layers[-1].current.define(sym, tokens)
 
     def on_undef(self, sym):
         if not self.layers[-1].current.skipping:
+            dprint(f"#undef {sym}")
             self.keys.add(sym)
-        self.layers[-1].current.undefine(sym)
+            self.layers[-1].current.undefine(sym)
 
     def test_conditions(self, conditions):
         for sym in conditions.defs:
@@ -285,22 +306,24 @@ class DefState:
     def on_if(self, conditions):
         parent = self.layers[-1].current if len(self.layers) > 0 else None
         defmap = DefMap(parent, initial = conditions)
-        defmap.skipping = not self.test_conditions(defmap)
+        skipping = not self.test_conditions(defmap)
         self.layers.append(DefLayer(self.layers[-1].current.skipping))
-        self.layers[-1].add_map(defmap)
-        return not defmap.skipping
+        self.layers[-1].add_map(defmap, skipping)
+        return not skipping
 
     def on_ifdef(self, sym):
+        dprint("#ifdef", sym)
         return self.on_if({ sym: [] })
 
     def on_ifndef(self, sym):
+        dprint("#ifndef", sym)
         return self.on_if({ sym: DefMap.UNDEF })
 
     def on_elif(self, conditions):
         defmap = DefMap(self.layers[-2].current, initial = conditions)
-        defmap.skipping = not self.test_conditions(defmap)
-        self.layers[-1].add_map(defmap)
-        return not defmap.skipping
+        skipping = not self.test_conditions(defmap)
+        self.layers[-1].add_map(defmap, skipping)
+        return not skipping
 
     def on_else(self):
         defmap = DefMap(self.layers[-2].current)
@@ -309,6 +332,7 @@ class DefState:
         return not defmap.skipping
 
     def on_endif(self):
+        dprint("#endif")
         self.layers[-1].apply()
         layer = self.layers.pop()
         if layer.closed:
@@ -330,6 +354,9 @@ class Preprocessor(TokenManager):
         self.defs = DefState()
 
     def load_file(self, path, is_relative):
+        if self.defs.layers[-1].current.skipping:
+            return
+
         includes = self.includes.copy()
         if is_relative:
             includes.insert(0, os.path.dirname(self.file))
