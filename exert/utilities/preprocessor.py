@@ -2,6 +2,7 @@ import os
 import types
 from exert.utilities.tokenmanager import tok_seq, TokenManager
 from exert.parser.definitions import DefState, DefOption
+from exert.parser.serializer import write_tokens, read_tokens
 from exert.utilities.debug import dprint
 
 def read_file(path):
@@ -21,10 +22,11 @@ class Preprocessor(TokenManager):
         self.tokenized_cache = {}
         self.unresolved = []
         self.defs = DefState()
+        self.output_tokens = []
 
     def load_file(self, path, is_relative):
         if self.defs.is_skipping():
-            dprint(1, '  ' * self.defs.depth() + f'::Skipping {path}')
+            dprint(1.5, '  ' * self.defs.depth() + f'::Skipping {path}')
             return
 
         includes = self.includes.copy()
@@ -44,7 +46,7 @@ class Preprocessor(TokenManager):
             data = ''
             if load_path in self.tokenized_cache:
                 data = self.tokenized_cache.get(load_path)
-                dprint(1, '  ' * self.defs.depth() + f'::Reusing {load_path}')
+                dprint(1.5, '  ' * self.defs.depth() + f'::Reusing {load_path}')
             else:
                 dprint(4, f'::Testing {load_path}')
                 data = self.filereader(load_path)
@@ -62,17 +64,16 @@ class Preprocessor(TokenManager):
             self.insert(data)
             return True
         self.unresolved.append(path)
-        # self.err('Failed to include', path)
-        dprint(1, '  ' * self.defs.depth() + '::Failed to include', path)
+        dprint(1.5, '  ' * self.defs.depth() + '::Failed to include', path)
         self.invalid_paths.add(path)
         return True
 
     def push_optional(self, name):
         self.conditions.append(name)
-        self.insert(('optional', name), True)
+        self.emit_tokens([('optional', name)])
 
     def pop_optional(self):
-        self.insert(('optional', None), True)
+        self.emit_tokens([('optional', '')])
         return self.conditions.pop()
 
     def skip_to_newline(self, offset = 0):
@@ -81,7 +82,6 @@ class Preprocessor(TokenManager):
             tokens.append(self.next())
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        self.remove(len(tokens) + 3 + offset)
         return tokens
 
     def handle_line(self):
@@ -92,7 +92,6 @@ class Preprocessor(TokenManager):
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         dprint(3, '  ' * self.defs.depth() + "#line", line[1], f'"{file[1]}"' if file else '')
-        self.remove(5 if file else 4)
         return True
 
     def handle_include(self):
@@ -104,7 +103,6 @@ class Preprocessor(TokenManager):
             return self.err('Directives must end with a linebreak')
         dprint(2, '  ' * self.defs.depth() + '#include',
             f'<{file[1]}>' if file[2] == '<' else f'"{file[1]}"')
-        self.remove(4)
         return self.load_file(file[1], file[2] != '<')
 
     def handle_define(self):
@@ -143,7 +141,6 @@ class Preprocessor(TokenManager):
             return self.err('#undef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        self.remove(4)
         self.defs.on_undef(name)
         return True
 
@@ -152,7 +149,6 @@ class Preprocessor(TokenManager):
             return self.err('#ifdef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        self.remove(4)
         if self.defs.on_ifdef(name):
             self.push_optional(f'defined({name})')
         return True
@@ -162,7 +158,6 @@ class Preprocessor(TokenManager):
             return self.err('#ifndef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        self.remove(4)
         if self.defs.on_ifndef(name):
             self.push_optional(f'!defined({name})')
         return True
@@ -172,7 +167,6 @@ class Preprocessor(TokenManager):
             return self.err('#elifdef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        self.remove(4)
         condition = None
         if self.defs.layers[-1].any_kept:
             condition = self.pop_optional()
@@ -196,7 +190,6 @@ class Preprocessor(TokenManager):
                 self.push_optional(f'!({condition}) && !defined({name})')
             else:
                 self.push_optional(f'!defined({name})')
-        self.remove(4)
         return True
 
     def handle_if(self):
@@ -224,7 +217,6 @@ class Preprocessor(TokenManager):
         #TODO get cond str from defmap conditions
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        self.remove(3)
         condition = None
         if self.defs.layers[-1].any_kept:
             condition = self.pop_optional()
@@ -238,7 +230,6 @@ class Preprocessor(TokenManager):
     def handle_endif(self):
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        self.remove(3)
         if self.defs.layers[-1].any_kept:
             self.pop_optional()
         self.defs.on_endif()
@@ -296,7 +287,7 @@ class Preprocessor(TokenManager):
             return self.err(f'Unknown preprocessor directive #{self.next()[1]}')
         return result
 
-    def insert(self, tokens, before = False):
+    def insert(self, tokens):
         if isinstance(tokens, str):
             tokens = self.tokenizer.tokenize(tokens)
         if isinstance(tokens, tuple):
@@ -308,16 +299,6 @@ class Preprocessor(TokenManager):
         self.tokens = prefix + tokens + suffix
         self.len += size
         self.tokens_added += size
-        if before:
-            self.tokens_consumed += size
-            self.index += size
-
-    def remove(self, count, index = None):
-        index = self.index if index is None else index
-        assert index <= self.index
-        del self.tokens[index-count:index]
-        self.len -= count
-        self.index -= count
 
     def substitute(self):
         expansion_stack = []
@@ -350,10 +331,16 @@ class Preprocessor(TokenManager):
         result = subst(tok)
         if result is not None:
             dprint(3, f"::Substituting {tok[0]} '{tok[1]}': {tok_seq(result)}")
-            self.remove(1)
-            self.insert(result, True)
+            self.emit_tokens(result)
+        else:
+            self.emit_tokens([tok])
 
-    def preprocess(self, data):
+    def emit_tokens(self, tokens):
+        # self.output_tokens += tokens
+        if self.cache_file:
+            write_tokens(self.cache_file, tokens, len(tokens))
+
+    def preprocess(self, data, cache = None):
         super().reset()
         self.conditions = []
         self.file = ''
@@ -362,33 +349,30 @@ class Preprocessor(TokenManager):
         # String combination not implemented
         # Stringification and concatenation not implemented
 
-        remove_from = None
+        self.cache_file = cache and open(cache, mode = 'bw')
+        flush_size = 40000
 
         while self.has_next() and not self.has_error:
             self.print_progress()
+
+            if self.index > flush_size + 20:
+                del self.tokens[:flush_size]
+                self.index -= flush_size
+                self.len -= flush_size
 
             if self.consume_directive('#'):
                 self.parse_directive()
                 continue
 
             if self.defs.is_skipping():
-                if remove_from is None:
-                    remove_from = self.index
                 self.next()
                 continue
-
-            if remove_from is not None:
-                self.remove(self.index - remove_from, self.index)
-                remove_from = None
 
             if self.peek_type() in ['identifier', 'keyword']:
                 self.substitute()
                 continue
 
-            self.bump()
-
-        if remove_from is not None:
-            self.remove((self.index - 1) - remove_from, self.index - 1)
+            self.emit_tokens([self.next()])
 
         return self
 

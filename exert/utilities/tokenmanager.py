@@ -1,5 +1,3 @@
-from exert.utilities.debug import dprint
-
 def tok_str(token, newlines = False):
     n = token
     string = '#endif\n' if n == ('optional', None) \
@@ -37,13 +35,11 @@ class TokenManager:
         return self.index < self.len
 
     def bump(self):
-        dprint(6, '--Bumping')
         self.tokens_consumed += 1
         self.index += 1
 
     def peek(self, offset = 0):
         if self.index + offset < self.len:
-            dprint(6, '--Peek:', self.tokens[self.index+offset])
             return self.tokens[self.index+offset]
         return None
 
@@ -89,7 +85,7 @@ class TokenManager:
             return self.next()[1]
         return ''
 
-    def print_current(self, width = 5):
+    def print_current(self, width = 5, fancy_print = True):
         low = max(self.index - width, 0)
         high = min(self.index + width + 1, self.len + 1)
         context = self.tokens[low:high]
@@ -97,8 +93,13 @@ class TokenManager:
         offset = ''
         for i in range(low, high):
             idx = i - low
-            addend = 'EOF' if i == self.len else tok_str(context[idx]) \
-                .replace('\n', '\\n')
+            addend = 'EOF'
+            if i < self.len:
+                if fancy_print:
+                    addend = tok_str(context[idx], newlines = True)
+                else:
+                    addend = str(context[idx])
+            addend = addend.replace('\n', '\\n')
             if i == self.index:
                 offset = ' ' * len(ctx_str) + '^' * len(addend)
             ctx_str += addend
@@ -109,7 +110,8 @@ class TokenManager:
         self.progress_counter += 1
         if self.progress_counter % 2000 == 0:
             print(f'Preprocessed {self.tokens_consumed} of {self.tokens_added} tokens '
-                f'({self.tokens_consumed / self.tokens_added * 100:.2f})%')
+                f'({self.tokens_consumed / self.tokens_added * 100:.2f}%) '
+                f'with a running buffer ({self.index} / {self.len})')
             self.progress_counter = 0
 
     def err(self, *message):

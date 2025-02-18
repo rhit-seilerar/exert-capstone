@@ -55,7 +55,8 @@ class Tokenizer:
             value = self.data[start:self.index]
             if value in self.keywords:
                 return ('keyword', value)
-            if len(self.tokens) > 0 and self.tokens[-1] == ('directive', '#') and value == 'define' and self.peek() == '(':
+            if len(self.tokens) > 0 and self.tokens[-1] == ('directive', '#') \
+                and value == 'define' and self.peek() == '(':
                 self.next_parenthesis_is_directive = True
             return ('identifier', value)
         return None

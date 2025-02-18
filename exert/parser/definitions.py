@@ -37,14 +37,20 @@ class Def:
     def __init__(self, *options, defined = False, undefined = False):
         self.undefined = undefined
         self.defined = defined
-        if not defined and len(options) > 0:
-            raise ValueError(options)
         self.options = set()
         for option in options:
             self.define(option, keep = True)
+        self.validate()
+
+    def validate(self):
+        if self.is_invalid():
+            raise ValueError(self.options)
 
     def copy(self):
         return Def(*self.options, defined = self.defined, undefined = self.undefined)
+
+    def is_invalid(self):
+        return not self.defined and len(self.options) > 0
 
     def is_initial(self):
         return not self.undefined and not self.defined
@@ -67,9 +73,9 @@ class Def:
     def define(self, option, keep = True):
         if not isinstance(option, DefOption):
             raise TypeError(option)
-        self.options.add(option)
         if self.is_undefined() or not keep:
             self.undefined = False
+        self.options.add(option)
         self.defined = True
 
     def get_replacements(self, sym):
@@ -108,6 +114,9 @@ class Def:
         return self
 
     def combine(self, other, replace):
+        if other.is_invalid():
+            assert False
+            return self
         if not isinstance(other, Def):
             raise TypeError(other)
         if replace:
@@ -145,6 +154,8 @@ class Def:
             and self.options == other.options
 
     def __str__(self):
+        if self.is_invalid():
+            return '<invalid>'
         if self.is_initial():
             return '<initial>'
         if self.is_undefined():
@@ -165,6 +176,7 @@ class DefMap:
         self.skipping = skipping
         self.parent = parent
         self.defs = initial or {}
+        self.validate()
 
     def copy(self):
         new_defs = {}
@@ -188,6 +200,10 @@ class DefMap:
         if not isinstance(item, Def):
             raise TypeError(item)
         self.defs[key] = item
+
+    def validate(self):
+        for key in self.defs:
+            self[key].validate()
 
     def undefine(self, key):
         if not self.skipping:
@@ -268,7 +284,7 @@ class DefLayer:
             raise TypeError(conditions)
         self.apply()
         if skipping:
-            self.current = DefMap(None, True)
+            self.current = DefMap(None, skipping = True)
         else:
             self.current = conditions.copy()
             self.current.combine(self.conditions.defs, replace = False)
@@ -364,7 +380,7 @@ class DefState:
         self.layers[-1].current.combine(layer.accumulator.defs, replace = layer.closed)
 
     def get_replacements(self, sym_tok):
-        replacements = self.layers[-1].current[sym_tok[1]].options
+        replacements = self.layers[-1].current[sym_tok[1]].options.copy()
         if not self.layers[-1].current[sym_tok[1]].is_defined():
             replacements.add(DefOption([sym_tok]))
         return replacements

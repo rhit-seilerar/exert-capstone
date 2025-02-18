@@ -44,7 +44,7 @@ def parse(filename, arch):
                 if path.startswith('asm/') else None
         ]
     )
-    preprocessor.preprocess(SOURCE)
+    preprocessor.preprocess(SOURCE, './cache/linux-preprocessed')
     print(str(preprocessor))
     # parser = Parser(
     #     Preprocessor(
