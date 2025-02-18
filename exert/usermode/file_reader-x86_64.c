@@ -5,7 +5,7 @@
 #include <cpuid.h>
 //open a file
 //give the file descriptor to plugin
-
+//make a new filereader for arm??
 int main(int argc, char** argv){
     if(argc <= 1){
         return -1;
