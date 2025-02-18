@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <cpuid.h>
 //open a file
 //give the file descriptor to plugin
 
@@ -19,6 +20,17 @@ int main(int argc, char** argv){
     }
     else {
         printf("The file is: %d\n", file_thing);
+
+        int input = file_thing;
+        int output;
+
+        __asm ( "mov %1, %%eax; "
+            "cpuid;"
+            "mov %%eax, %0;"
+            :"=r"(output)
+            :"r"(input)
+            :"%eax","%ebx","%ecx","%edx"
+        );
     }
   
     return file_thing;
