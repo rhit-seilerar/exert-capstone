@@ -13,6 +13,7 @@ class Exert(PyPlugin):
         self.pypluginmgr = pypluginmgr
         self.args = args
         self.callback = args['callback'] if 'callback' in args else None
+        self.hypercall_callback = args['hypercall_callback'] if 'hypercall_callback' in args else None
 
     def __init__(self, panda):
         self.called_back = False
@@ -35,6 +36,17 @@ class Exert(PyPlugin):
                 return
             print('Hooking into sys_execve...')
             panda.enable_callback('single_step')
+            panda.enable_callback('hypercall')
+
+        @panda.cb_guest_hypercall
+        # pragma: no cover
+        def hypercall(cpu):
+            panda.disable_callback('hypercall')
+            self.called_back = True
+            if self.hypercall_callback:
+                self.hypercall_callback(panda, cpu)
+            else:
+                IPython.embed()
 
         @panda.cb_start_block_exec
         # pragma: no cover
@@ -48,8 +60,9 @@ class Exert(PyPlugin):
                     IPython.embed()
 
         panda.disable_callback('single_step')
+        panda.disable_callback('hypercall')
 
-def run(arch = 'i386', callback = None, generic = True, kernel = None, usermode = None, command = None):
+def run(arch = 'i386', callback = None, generic = True, kernel = None, usermode = None, command = None, hypercall_callback = None):
     panda = None
     if generic:
         panda = Panda(generic = arch)
@@ -90,7 +103,8 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None, usermode 
                 expect_prompt='/.*#', os_version='linux-32-generic')
 
     panda.pyplugins.load(Exert, args={
-        'callback': callback
+        'callback': callback,
+        'hypercall_callback': hypercall_callback
     })
 
     @panda.queue_blocking
