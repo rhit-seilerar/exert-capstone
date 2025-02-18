@@ -2,8 +2,7 @@ from exert.parser.definitions import DefOption
 
 TOK_TYPES = [
     'string', 'integer', 'identifier', 'keyword',
-    'operator', 'directive', 'optional', 'any',
-    'newline'
+    'operator', 'directive', 'optional', 'any'
 ]
 
 def write_number(file, number, length = 8, signed = False):
@@ -20,48 +19,54 @@ def read_string(file, sizelength = 4):
     length = read_number(file, length = sizelength)
     return file.read(length).decode('utf-8')
 
-def read_tokens(file):
-    tokens = []
-    for _ in range(read_number(file)):
-        token = None
-        tok_type = TOK_TYPES[read_number(file, length = 1)]
-        if tok_type == 'string':
-            token = (
-                tok_type,
-                read_string(file),
-                read_string(file, sizelength = 1)
-            )
-        elif tok_type == 'integer':
-            token = (
-                tok_type,
-                read_number(file, length = 9, signed = True),
-                read_string(file, sizelength = 1)
-            )
-        elif tok_type == 'identifier':
-            token = (tok_type, read_string(file))
-        elif tok_type == 'keyword':
-            token = (tok_type, read_string(file, sizelength = 1))
-        elif tok_type == 'operator':
-            token = (tok_type, read_string(file, sizelength = 1))
-        elif tok_type == 'directive':
-            token = (tok_type, read_string(file, sizelength = 1))
-        elif tok_type == 'optional':
-            token = (tok_type, read_string(file, sizelength = 1))
-        elif tok_type == 'any':
-            options = set()
+def read_token(file):
+    tok_type = TOK_TYPES[read_number(file, length = 1)]
+    if tok_type == 'string':
+        return (
+            tok_type,
+            read_string(file),
+            read_string(file, sizelength = 1)
+        )
+    elif tok_type == 'integer':
+        return (
+            tok_type,
+            read_number(file, length = 9, signed = True),
+            read_string(file, sizelength = 1)
+        )
+    elif tok_type == 'identifier':
+        return (tok_type, read_string(file))
+    elif tok_type == 'keyword':
+        return (tok_type, read_string(file, sizelength = 1))
+    elif tok_type == 'operator':
+        return (tok_type, read_string(file, sizelength = 1))
+    elif tok_type == 'directive':
+        return (tok_type, read_string(file, sizelength = 1))
+    elif tok_type == 'optional':
+        return (tok_type, read_string(file))
+    elif tok_type == 'any':
+        options = set()
+        for _ in range(read_number(file)):
+            option_tokens = []
             for _ in range(read_number(file)):
-                options.add(DefOption(read_tokens(file)))
-            token = (tok_type, options)
-        elif tok_type == 'newline':
-            print('Warning: deserializing a newline')
-            token = (tok_type, read_string(file, sizelength = 1))
-        tokens.append(token)
+                option_tokens.append(read_token(file))
+            options.add(DefOption(option_tokens))
+        return (tok_type, options)
+    else:
+        assert False
+
+def read_tokens(path):
+    tokens = []
+    with open(path, 'rb') as file:
+        file.seek(0, 2)
+        end = file.tell()
+        file.seek(0)
+        while file.tell() < end:
+            tokens.append(read_token(file))
+        file.close()
     return tokens
 
-def write_tokens(file, tokens, count):
-    write_number(file, count)
-    for i in range(count):
-        token = tokens[i]
+def write_tokens(file, tokens):
+    for token in tokens:
         write_number(file, TOK_TYPES.index(token[0]), length = 1)
         if token[0] == 'string':
             write_string(file, token[1])
@@ -82,7 +87,7 @@ def write_tokens(file, tokens, count):
         elif token[0] == 'any':
             write_number(file, len(token[1]))
             for option in token[1]:
-                write_tokens(file, option.tokens, len(option.tokens))
-        elif token[0] == 'newline':
-            print('Warning: serializing a newline')
-            write_string(file, token[1], sizelength = 1)
+                write_number(file, len(option.tokens))
+                write_tokens(file, option.tokens)
+        else:
+            assert False

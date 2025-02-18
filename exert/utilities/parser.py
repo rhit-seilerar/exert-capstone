@@ -29,8 +29,10 @@ def switch_to_version(version):
     run_command(f'git checkout v{version}', True, True, './cache/linux')
 
 SOURCE = """
-#include <linux/sched.h>
+#include <linux/compiler.h>
 """
+
+PREPROCESSOR_CACHE = './cache/linux-preprocessed'
 
 def parse(filename, arch):
     tokenizer = Tokenizer()
@@ -44,7 +46,8 @@ def parse(filename, arch):
                 if path.startswith('asm/') else None
         ]
     )
-    preprocessor.preprocess(SOURCE, './cache/linux-preprocessed')
+    preprocessor.preprocess(SOURCE, PREPROCESSOR_CACHE, reset_cache = True)
+    preprocessor.load(PREPROCESSOR_CACHE)
     print(str(preprocessor))
     # parser = Parser(
     #     Preprocessor(

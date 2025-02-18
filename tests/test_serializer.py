@@ -25,9 +25,9 @@ def test_roundtrip():
     new_tokens = []
 
     with open('./cache/test-tokenmanager-round-trip', mode = 'bw') as file:
-        write_tokens(file, tokens, len(tokens))
+        write_tokens(file, tokens)
+        file.close()
 
-    with open('./cache/test-tokenmanager-round-trip', mode = 'br') as file:
-        new_tokens = read_tokens(file)
+    new_tokens = read_tokens('./cache/test-tokenmanager-round-trip')
 
     assert tokens == new_tokens

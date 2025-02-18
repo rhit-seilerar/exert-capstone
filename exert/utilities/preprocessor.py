@@ -22,7 +22,6 @@ class Preprocessor(TokenManager):
         self.tokenized_cache = {}
         self.unresolved = []
         self.defs = DefState()
-        self.output_tokens = []
 
     def load_file(self, path, is_relative):
         if self.defs.is_skipping():
@@ -336,20 +335,30 @@ class Preprocessor(TokenManager):
             self.emit_tokens([tok])
 
     def emit_tokens(self, tokens):
-        # self.output_tokens += tokens
         if self.cache_file:
-            write_tokens(self.cache_file, tokens, len(tokens))
+            write_tokens(self.cache_file, tokens)
 
-    def preprocess(self, data, cache = None):
+    def preprocess(self, data, cache, reset_cache = False):
         super().reset()
         self.conditions = []
         self.file = ''
         self.insert(data)
 
+        if reset_cache:
+            os.remove(cache)
+
+        try:
+            with open(cache, mode = 'br'):
+                return
+        except IOError:
+            pass
+
+        print('Cache file not found: Generating...')
+
         # String combination not implemented
         # Stringification and concatenation not implemented
 
-        self.cache_file = cache and open(cache, mode = 'bw')
+        self.cache_file = open(cache, mode = 'bw')
         flush_size = 40000
 
         while self.has_next() and not self.has_error:
@@ -376,6 +385,9 @@ class Preprocessor(TokenManager):
 
         return self
 
+    def load(self, cache):
+        self.tokens = read_tokens(cache)
+
     def __str__(self):
         tokens = tok_seq(self.tokens, newlines = True)
         definitions = '\n'.join(f'{d[0]}: {str(d[1])}' for d in self.defs.flat_defines().items())
@@ -383,4 +395,4 @@ class Preprocessor(TokenManager):
         return f'\n===== TOKENS =====\n{tokens}\n' \
             f'\n===== DEFINITIONS =====\n{definitions}\n' \
             f'\n===== UNKNOWNS =====\n{unknowns}\n' \
-            f'\n===== INVALID PATHS =====\n{self.invalid_paths}\n'
+            f'\n===== INVALID PATHS =====\n{self.invalid_paths or ""}\n'

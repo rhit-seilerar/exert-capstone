@@ -114,9 +114,6 @@ class Def:
         return self
 
     def combine(self, other, replace):
-        if other.is_invalid():
-            assert False
-            return self
         if not isinstance(other, Def):
             raise TypeError(other)
         if replace:
