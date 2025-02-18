@@ -29,7 +29,7 @@ def switch_to_version(version):
     run_command(f'git checkout v{version}', True, True, './cache/linux')
 
 SOURCE = """
-#include <linux/compiler.h>
+#include <linux/sched.h>
 """
 
 PREPROCESSOR_CACHE = './cache/linux-preprocessed'

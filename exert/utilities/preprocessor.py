@@ -344,14 +344,10 @@ class Preprocessor(TokenManager):
         self.file = ''
         self.insert(data)
 
-        if reset_cache:
-            os.remove(cache)
-
-        try:
-            with open(cache, mode = 'br'):
+        if os.path.exists(cache):
+            if not reset_cache:
                 return
-        except IOError:
-            pass
+            os.remove(cache)
 
         print('Cache file not found: Generating...')
 
