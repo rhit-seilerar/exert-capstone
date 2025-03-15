@@ -131,7 +131,8 @@ def test_def_combine():
     replace_defs = make_def_variants()
     other_defs = make_def_variants()
     try:
-        assert replace_defs[0].combine('abc', replace = True)
+        replace_defs[0].combine('abc', replace = True)
+        assert False
     except TypeError:
         pass
     for defn in replace_defs:

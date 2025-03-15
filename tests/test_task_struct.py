@@ -43,3 +43,8 @@ def test_task_struct_i386_nongeneric():
 def test_task_struct_x86_64_nongeneric():
     do_test(tss.task_address_x86_64_callback, 'x86_64',
             generic=False, kernel='./kernels/vmlinuz-x86_64-2')
+    
+def test_task_struct_aarch_nongeneric():
+    do_test(tss.task_address_aarch_callback, 'aarch64',
+            generic=False, kernel='./kernels/vmlinuz-aarch64')
+    return

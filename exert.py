@@ -99,7 +99,7 @@ def dev_attach(in_docker, reset, container):
     if container == 'PANDA':
         run_docker(interactive = True, in_docker = in_docker)
     elif container == 'XMAKE':
-        run_docker(interactive = True, in_docker = in_docker, 
+        run_docker(interactive = True, in_docker = in_docker,
             name = 'XMAKE', container = XMAKE_CONTAINER)
     else:
         print('Container not recognized, defaulting')
@@ -173,7 +173,8 @@ def sync_volume():
             command = 'apt-get update && apt-get install -y rsync',
             extra_args = local_mount)
     run_docker(name = 'pandare-init',
-        command = f'rsync -av --progress {exclude} /local/ /mount')
+        command = f'rm -rf /mount/exert/ && rm -rf /mount/tests && '
+            f'rsync -av --progress {exclude} /local/ /mount')
 
 def delete_volume():
     ls_out = run_command('docker volume ls -q -f "name=pandare"', True, True)
