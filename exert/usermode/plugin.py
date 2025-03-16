@@ -13,7 +13,8 @@ class Exert(PyPlugin):
         self.pypluginmgr = pypluginmgr
         self.args = args
         self.callback = args['callback'] if 'callback' in args else None
-        self.hypercall_callback = args['hypercall_callback'] if 'hypercall_callback' in args else None
+        self.hypercall_callback = args['hypercall_callback'] \
+            if 'hypercall_callback' in args else None
 
     def __init__(self, panda):
         self.called_back = False
@@ -49,9 +50,6 @@ class Exert(PyPlugin):
         panda.disable_callback('single_step')
         panda.disable_callback('hypercall')
 
-def create_panda(arch, mem, extra_args, prompt, os_version):
-    return Panda(arch, mem, extra_args, prompt, os_version)
-
 def run(arch = 'i386', callback = None, generic = True, kernel = None,
     usermode = None, command = None, hypercall_callback = None):
     panda = None
@@ -86,9 +84,9 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None,
             -initrd ./cache/customfs.cpio \
             {extra_args_part}\
             -append "console={my_console} earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
-        panda = create_panda(
+        panda = Panda(
             arch=arch_type, mem=mem_use, extra_args=args,
-            prompt=my_prompt, os_version=my_os_version)
+            expect_prompt=my_prompt, os_version=my_os_version)
 
     panda.pyplugins.load(Exert, args={
         'callback': callback,
