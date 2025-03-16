@@ -182,6 +182,7 @@ def sync_volume():
             extra_args = local_mount)
     run_docker(name = 'pandare-init',
         command = f'rm -rf /mount/exert/ && rm -rf /mount/tests && '
+            f'rm -rf /mount/kernels/ && '
             f'rsync -av --progress {exclude} /local/ /mount')
     
 def reverse_sync():
