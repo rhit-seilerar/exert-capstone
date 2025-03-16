@@ -17,3 +17,9 @@ def compareVersion(entry, target): #check if input version is >= target
 
 def compareVersionMax(entry, target):
     return compareVersion(target, entry)
+
+va = Version(1,2,5)
+vb = Version(1,3,2)
+print(va)
+print(compareVersion(va,vb)) # should print False
+print(compareVersionMax(va,vb)) # should print True
