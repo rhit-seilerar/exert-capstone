@@ -1,3 +1,9 @@
+"""
+TODO There are still a number of optimizations that can be done for better results:
+ - #defines with a replacement with no #undef preceding them guarantee only no definition from cli
+ - Guarantees from #if/#elif can be used in the rules system
+"""
+
 import os
 import types
 from exert.utilities.tokenmanager import tok_seq, TokenManager
@@ -67,12 +73,12 @@ class Preprocessor(TokenManager):
         self.invalid_paths.add(path)
         return True
 
-    def push_optional(self, name):
+    def push_optional(self, dirtype, name):
         self.conditions.append(name)
-        self.emit_tokens([('optional', name)])
+        self.emit_tokens([('optional', dirtype, name)])
 
-    def pop_optional(self):
-        self.emit_tokens([('optional', '')])
+    def pop_optional(self, dirtype):
+        self.emit_tokens([('optional', dirtype, '')])
         return self.conditions.pop()
 
     def skip_to_newline(self, offset = 0):
@@ -166,10 +172,10 @@ class Preprocessor(TokenManager):
             return self.err('#elifdef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        condition = None
-        if self.defs.layers[-1].any_kept:
-            condition = self.pop_optional()
         if self.defs.on_elifdef(name):
+            condition = None
+            if self.defs.layers[-1].any_kept:
+                condition = self.pop_optional()
             if condition is not None:
                 self.push_optional(f'!({condition}) && defined({name})')
             else:

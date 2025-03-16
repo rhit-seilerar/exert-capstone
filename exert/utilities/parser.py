@@ -32,7 +32,7 @@ SOURCE = """
 #include <linux/sched.h>
 """
 
-PREPROCESSOR_CACHE = './cache/linux-preprocessed'
+PREPROCESSOR_CACHE = './cache/linux-preprocessor'
 
 def parse(filename, arch):
     tokenizer = Tokenizer()
@@ -46,7 +46,7 @@ def parse(filename, arch):
                 if path.startswith('asm/') else None
         ]
     )
-    preprocessor.preprocess(SOURCE, PREPROCESSOR_CACHE, reset_cache = True)
+    preprocessor.preprocess(SOURCE, PREPROCESSOR_CACHE)
     preprocessor.load(PREPROCESSOR_CACHE)
     print(str(preprocessor))
     # parser = Parser(

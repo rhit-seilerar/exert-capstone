@@ -64,37 +64,34 @@ class Tokenizer:
     def parse_integer(self):
         start = self.index
 
-        sign = -1 if self.consume('+', '-') == '-' else 1
-
         digits = '0123456789'
         radix = 10
         if self.consume('0b', '0B'):
             digits = '01'
             radix = 2
         elif self.consume('0x', '0X'):
-            digits = '0123456789abcdefABCDEF'
+            digits = '0123456789abcdef'
             radix = 16
         elif self.peek() == '0' and self.peek(1, 1).isdigit():
             self.bump()
             digits = '01234567'
             radix = 8
 
-        if not self.peek().isdigit():
+        if not self.peek().lower() in digits:
             self.index = start
             return None
 
         num = 0
         while self.has_next() and (d := self.peek().lower()) in digits:
-            v = ord(d) - ord('a') if d.isalpha() else ord(d) - ord('0')
+            v = ord(d) - ord('a') + 10 if d.isalpha() else ord(d) - ord('0')
             num = num * radix + v
             self.bump()
-        num = num * sign
 
         if self.peek().isalnum():
             if not (suffix := self.consume('u', 'U', 'l', 'L', 'll', 'LL')):
                 self.index = start
                 return None
-            return ('integer', num, suffix)
+            return ('integer', num, suffix.lower())
 
         return ('integer', num, '')
 
