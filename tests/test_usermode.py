@@ -37,9 +37,17 @@ def run_test(arch, generic, kernel, test):
                command = './user_prog /init', hypercall_callback = hypervisor_callback)
     assert CALLED_BACK
 
+def file_reader_callback_i386(panda, cpu):
+    assert panda.arch.get_reg(cpu, 'EAX') == 3
+    return
+
 def file_reader_callback_x86_64(panda, cpu):
     assert panda.arch.get_reg(cpu, 'RAX') == 3
     return
+
+def test_i386_file_reader():
+    do_test(file_reader_callback_i386, 'i386',
+            generic=False, kernel='./kernels/vmlinuz-i386-4.4.100')
 
 def test_x86_file_reader():
     do_test(file_reader_callback_x86_64, 'x86_64',

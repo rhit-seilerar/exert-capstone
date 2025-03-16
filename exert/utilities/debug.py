@@ -1,4 +1,4 @@
-RUN_PLUGIN_TESTS = False
+RUN_PLUGIN_TESTS = True
 DEBUG_LEVEL = 1
 
 def dprint(level, *args): # pragma: no cover
