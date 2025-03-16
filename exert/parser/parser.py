@@ -1,9 +1,9 @@
 import os
 import sys
 import glob
-from exert.utilities.tokenizer import Tokenizer
-from exert.utilities.tokenmanager import TokenManager
-from exert.utilities.preprocessor import Preprocessor
+from exert.parser.tokenizer import Tokenizer
+from exert.parser.tokenmanager import TokenManager
+from exert.parser.preprocessor import Preprocessor
 from exert.usermode import rules
 from exert.utilities.command import run_command
 
