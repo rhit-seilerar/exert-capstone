@@ -183,7 +183,7 @@ def sync_volume():
     run_docker(name = 'pandare-init',
         command = f'rm -rf /mount/exert/ && rm -rf /mount/tests && '
             f'rm -rf /mount/kernels/ && '
-            f'rsync -av --progress {exclude} /local/ /mount')
+            f'rsync -auv --progress {exclude} /local/ /mount')
     
 def reverse_sync():
     local_mount = f'-v "{os.path.dirname(os.path.realpath(__file__))}:/local"'
@@ -200,7 +200,7 @@ def reverse_sync():
             command = 'apt-get update && apt-get install -y rsync',
             extra_args = local_mount)
     run_docker(name = 'pandare-init',
-        command = f'rsync -av --progress {exclude} /mount/ /local')
+        command = f'rsync -auv --progress {exclude} /mount/ /local')
 
 def delete_volume():
     ls_out = run_command('docker volume ls -q -f "name=pandare"', True, True)
