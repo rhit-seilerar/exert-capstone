@@ -1,15 +1,12 @@
+from tests import utils
 from exert.parser import expressions
-from exert.utilities.tokenizer import Tokenizer
+from exert.parser.tokenizer import Tokenizer
 
 TOKENIZER = Tokenizer()
 
 def expect_error(expr, bitsize, exception = AssertionError):
-    try:
-        tokens = TOKENIZER.tokenize(expr)
-        expressions.parse_expression(tokens, bitsize)
-        assert False
-    except exception:
-        pass
+    utils.expect_error(lambda: \
+        expressions.parse_expression(TOKENIZER.tokenize(expr), bitsize), exception)
 
 def roundtrip(expr, bitsize, expected = None):
     if expected is None:
@@ -19,11 +16,7 @@ def roundtrip(expr, bitsize, expected = None):
     assert str(parsed) == expected
 
 def test_base():
-    try:
-        expressions.Expression().evaluate(32)
-        assert False
-    except AssertionError:
-        pass
+    utils.expect_error(lambda: expressions.Expression().evaluate(32))
     assert str(expressions.Expression()) == ''
 
 def test_parse():

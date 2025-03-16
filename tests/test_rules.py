@@ -34,6 +34,11 @@ def test_bool():
     assert not results(Bool(), buf, 0x2)
     assert not results(Bool(), buf, 0x3)
 
+def test_any():
+    #TODO
+    rule = rules.Any(Int(), Bool())
+    rule.test(DummyContext(), 0x0, True)
+
 def test_int():
     buf = b'\x00\x00\x00\x80\xFF\xFF\xFF\xFF'
     assert not results(Int(4, True, min_value = -1), buf, 0x0)

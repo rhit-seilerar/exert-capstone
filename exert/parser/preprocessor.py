@@ -6,7 +6,7 @@ TODO There are still a number of optimizations that can be done for better resul
 
 import os
 import types
-from exert.utilities.tokenmanager import tok_seq, TokenManager
+from exert.parser.tokenmanager import tok_seq, TokenManager
 from exert.parser.definitions import DefState, DefOption
 from exert.parser.serializer import write_tokens, read_tokens
 from exert.utilities.debug import dprint

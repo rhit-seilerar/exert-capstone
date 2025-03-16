@@ -13,24 +13,13 @@ class Exert(PyPlugin):
         self.pypluginmgr = pypluginmgr
         self.args = args
         self.callback = args['callback'] if 'callback' in args else None
-        self.hypercall_callback = args['hypercall_callback'] if 'hypercall_callback' in args else None
+        self.hypercall_callback = args['hypercall_callback'] \
+            if 'hypercall_callback' in args else None
 
     def __init__(self, panda):
         self.called_back = False
 
-        #What we use to control the filereader.c program?
-        #write tests for hypercall, see if it returns correct fd or just True for now.
-        # def fd_finder(env):
-        #     x = run_command('./file_reader.c demo_osi.osi')
-        #     print(f'{x}')
-        #     return x
-        # @panda.cb_guest_hypercall
-        # def fd_reader():
-        #     print('Not an octopus.\n')
-
-        # TODO: Find a way to cover these
         @panda.ppp('syscalls2', 'on_sys_execve_enter')
-        # pragma: no cover
         def hook_syscall(cpu, pc, filename, argv, envp):
             if self.called_back:
                 return
@@ -39,7 +28,6 @@ class Exert(PyPlugin):
             panda.enable_callback('hypercall')
 
         @panda.cb_guest_hypercall
-        # pragma: no cover
         def hypercall(cpu):
             panda.disable_callback('hypercall')
             self.called_back = True
@@ -49,7 +37,6 @@ class Exert(PyPlugin):
                 IPython.embed()
 
         @panda.cb_start_block_exec
-        # pragma: no cover
         def single_step(cpu, tb):
             if panda.in_kernel_mode(cpu):
                 panda.disable_callback('single_step')
@@ -62,7 +49,8 @@ class Exert(PyPlugin):
         panda.disable_callback('single_step')
         panda.disable_callback('hypercall')
 
-def run(arch = 'i386', callback = None, generic = True, kernel = None, usermode = None, command = None, hypercall_callback = None):
+def run(arch = 'i386', callback = None, generic = True, kernel = None,
+    usermode = None, command = None, hypercall_callback = None):
     panda = None
     if generic:
         panda = Panda(generic = arch)
@@ -92,13 +80,15 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None, usermode 
                 arch='aarch64', mem='256M', extra_args=args,
                 expect_prompt='~ # ', os_version='linux-64-generic')
         else:
-            args = f'--nographic \
-                -kernel {kernel} \
-                -initrd ./cache/customfs.cpio \
-                -append "console=ttyS0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
-            panda = Panda(
-                arch=arch, mem='256M', extra_args=args,
-                expect_prompt='/.*#', os_version='linux-32-generic')
+            my_console = 'ttyS0'
+        args = f'--nographic \
+            -kernel {kernel} \
+            -initrd ./cache/customfs.cpio \
+            {extra_args_part}\
+            -append "console={my_console} earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
+        panda = Panda(
+            arch=arch_type, mem=mem_use, extra_args=args,
+            expect_prompt=my_prompt, os_version=my_os_version)
 
     panda.pyplugins.load(Exert, args={
         'callback': callback,

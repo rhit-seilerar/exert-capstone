@@ -1,4 +1,4 @@
-from exert.utilities.tokenmanager import tok_seq
+from exert.parser.tokenmanager import tok_seq
 from exert.utilities.debug import dprint
 
 def def_dict_str(defs):
@@ -40,7 +40,6 @@ class Def:
         self.options = set()
         for option in options:
             self.define(option, keep = True)
-        self.validate()
 
     def validate(self):
         if self.is_invalid():

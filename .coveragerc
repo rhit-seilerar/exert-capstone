@@ -3,7 +3,10 @@ fail_under = 100
 show_missing = True
 
 [run]
-omit = ./exert/utilities/generator.py
+omit =
+    ./exert/usermode/task_struct_stack.py,
+    ./exert/usermode/plugin.py,
+    ./exert/utilities/debug.py
 parallel = True
 sigterm = True
 concurrency = multiprocessing

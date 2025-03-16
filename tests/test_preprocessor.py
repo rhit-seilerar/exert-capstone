@@ -1,5 +1,5 @@
-from exert.utilities.tokenizer import Tokenizer
-from exert.utilities.preprocessor import Preprocessor, read_file
+from exert.parser.tokenizer import Tokenizer
+from exert.parser.preprocessor import Preprocessor, read_file
 
 FILES = {
     'base.h': """
