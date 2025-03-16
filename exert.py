@@ -62,10 +62,8 @@ def main():
 
     compile_parser = dev_subparsers.add_parser('compile',
         help='Compile the usermode program')
-    compile_parser.add_argument('arch', type=str)
-    compile_parser.add_argument('libc', type=str)
     compile_parser.set_defaults(func = lambda args:
-        make_usermode(args.arch, args.libc))
+        make_usermode())
 
     dev_rules_parser = dev_subparsers.add_parser('rules',
         help='Generate a ruleset from a specified linux version')
@@ -105,6 +103,8 @@ def dev_attach(in_docker, reset, container):
         print('Container not recognized, defaulting')
         run_docker(interactive = True, in_docker = in_docker)
 
+    reverse_sync()
+
 def dev_test(in_docker, reset):
     if reset:
         if in_docker:
@@ -116,6 +116,9 @@ def dev_test(in_docker, reset):
         sync_volume()
     run_docker(command = 'pytest --cov-config=.coveragerc --cov=exert tests/',
         in_docker = in_docker)
+    
+    if not in_docker:
+        reverse_sync()
 
 def dev_rules(in_docker, version, arch, reset):
     if reset:
@@ -128,6 +131,9 @@ def dev_rules(in_docker, version, arch, reset):
         sync_volume()
     run_docker(command = f'python -u -m exert.utilities.parser {version} {arch}',
         in_docker = in_docker)
+    
+    if not in_docker:
+        reverse_sync()
 
 # pylint: disable=unused-argument
 def init(parsed):
@@ -175,6 +181,23 @@ def sync_volume():
     run_docker(name = 'pandare-init',
         command = f'rm -rf /mount/exert/ && rm -rf /mount/tests && '
             f'rsync -av --progress {exclude} /local/ /mount')
+    
+def reverse_sync():
+    local_mount = f'-v "{os.path.dirname(os.path.realpath(__file__))}:/local"'
+    exclude = '--exclude .git'
+
+    ls_out = run_command('docker volume ls -q -f "name=pandare"', True, True)
+    if 'pandare' not in get_stdout(ls_out).splitlines():
+        run_command('docker volume create pandare', True, True)
+    else:
+        exclude += ' --exclude cache'
+
+    if not container_is_running('pandare-init'):
+        run_docker(name = 'pandare-init',
+            command = 'apt-get update && apt-get install -y rsync',
+            extra_args = local_mount)
+    run_docker(name = 'pandare-init',
+        command = f'rsync -av --progress {exclude} /mount/ /local')
 
 def delete_volume():
     ls_out = run_command('docker volume ls -q -f "name=pandare"', True, True)
@@ -233,10 +256,10 @@ def validate_initialized():
     # TODO: Test if initialized
     pass
 
-def make_usermode(arch, libc):
+def make_usermode():
     # TODO: Compile usermode for specific version
     run_docker(XMAKE_CONTAINER, name = None,
-        command=f'make -C /mount/exert/usermode ARCH={arch} LIBC={libc}')
+        command=f'make -C /mount/exert/usermode')
 
 def validate_iso(image):
     try:

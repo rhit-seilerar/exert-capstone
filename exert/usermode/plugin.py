@@ -18,16 +18,6 @@ class Exert(PyPlugin):
     def __init__(self, panda):
         self.called_back = False
 
-        #What we use to control the filereader.c program?
-        #write tests for hypercall, see if it returns correct fd or just True for now.
-        # def fd_finder(env):
-        #     x = run_command('./file_reader.c demo_osi.osi')
-        #     print(f'{x}')
-        #     return x
-        # @panda.cb_guest_hypercall
-        # def fd_reader():
-        #     print('Not an octopus.\n')
-
         # TODO: Find a way to cover these
         @panda.ppp('syscalls2', 'on_sys_execve_enter')
         # pragma: no cover
@@ -62,8 +52,17 @@ class Exert(PyPlugin):
         panda.disable_callback('single_step')
         panda.disable_callback('hypercall')
 
+def create_panda(arch, mem, extra_args, prompt, os_version):
+    return Panda(arch, mem, extra_args, prompt, os_version)
+
 def run(arch = 'i386', callback = None, generic = True, kernel = None, usermode = None, command = None, hypercall_callback = None):
     panda = None
+    arch_type = arch
+    mem_use = '256M'
+    my_prompt = '/.*#'
+    my_os_version = 'linux-32-generic'
+    extra_args_part = ''
+    my_console = 'ttyAMA0'
     if generic:
         panda = Panda(generic = arch)
     else:
@@ -75,32 +74,23 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None, usermode 
         else:
             run_command(f'./make_initrd.sh {arch}')
         if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
-            args = f'--nographic \
-                -kernel {kernel} \
-                -initrd ./cache/customfs.cpio \
-                -machine versatilepb \
-                -append "console=ttyAMA0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
-            panda = Panda(
-                arch='arm', mem='256M', extra_args=args,
-                expect_prompt='/.*#', os_version='linux-32-generic')
+            extra_args_part = '-machine versatilepb'
+            arch_type = 'arm'
         elif arch in ['aarch64']:
-            args = f'--nographic \
-                -kernel {kernel} \
-                -initrd ./cache/customfs.cpio \
-                -machine virt \
-                -cpu cortex-a53 \
-                -append "console=ttyAMA0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
-            panda = Panda(
-                arch='aarch64', mem='256M', extra_args=args,
-                expect_prompt='~ # ', os_version='linux-64-generic')
+            extra_args_part = '-machine virt \
+                -cpu cortex-a53'
+            my_prompt = '~ #'
+            my_os_version = 'linux-64-generic'
         else:
-            args = f'--nographic \
-                -kernel {kernel} \
-                -initrd ./cache/customfs.cpio \
-                -append "console=ttyS0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
-            panda = Panda(
-                arch=arch, mem='256M', extra_args=args,
-                expect_prompt='/.*#', os_version='linux-32-generic')
+            my_console = 'ttyS0'
+        args = f'--nographic \
+            -kernel {kernel} \
+            -initrd ./cache/customfs.cpio \
+            {extra_args_part}\
+            -append "console={my_console} earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
+        panda = create_panda(
+            arch=arch_type, mem=mem_use, extra_args=args,
+            prompt=my_prompt, os_version=my_os_version)
 
     panda.pyplugins.load(Exert, args={
         'callback': callback,

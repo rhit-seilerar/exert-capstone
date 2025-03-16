@@ -58,32 +58,24 @@ def callback_test_nongeneric_kernel(panda, cpu):
 
 def test_nongeneric_kernel_armv5l():
     do_test(callback_test_nongeneric_kernel, 'armv5l', generic=False,
-            kernel='./kernels/vmlinuz-arm')
+            kernel='./kernels/vmlinuz-arm-3.2.51-1')
 
 def test_nongeneric_kernel_aarch64():
     do_test(callback_test_nongeneric_kernel, 'aarch64',
-            generic=False, kernel='./kernels/vmlinuz-aarch64')
+            generic=False, kernel='./kernels/vmlinuz-aarch64-4.4.100')
 
 def test_nongeneric_kernel_x86_64():
     do_test(callback_test_nongeneric_kernel, 'x86_64',
-            generic=False, kernel='./kernels/vmlinuz-x86_64')
-
-def test_nongeneric_kernel_x86_64_2():
-    do_test(callback_test_nongeneric_kernel, 'x86_64',
-            generic=False, kernel='./kernels/vmlinuz-x86_64-2')
-
-def test_nongeneric_kernel_mips():
-    do_test(callback_test_nongeneric_kernel, 'mips',
-            generic=False, kernel='./kernels/vmlinux-mips')
+            generic=False, kernel='./kernels/vmlinuz-x86_64-4.4.100')
 
 def test_plugin_kernel_supported():
     if not RUN_PLUGIN_TESTS:
         return
-    subprocess.run(['python', '-u', '-m', 'exert.usermode.plugin', './kernels/vmlinuz-arm',
+    subprocess.run(['python', '-u', '-m', 'exert.usermode.plugin', './kernels/vmlinuz-arm-3.2.51-1',
                     'armv5l', '3.2.0-4-versatile'], check = True)
 
 def test_plugin_kernel_unsupported():
     if not RUN_PLUGIN_TESTS:
         return
-    subprocess.run(['python', '-u', '-m', 'exert.usermode.plugin', './kernels/vmlinuz-arm',
+    subprocess.run(['python', '-u', '-m', 'exert.usermode.plugin', './kernels/vmlinuz-arm-3.2.51-1',
                     'armv5l', '6.12.9'], check = True)

@@ -26,6 +26,25 @@ def task_address_arm_callback(panda, cpu):
 
     return task_addr
 
+# aarch is also known as arm64
+def task_address_aarch_callback(panda, cpu):
+    sp = panda.arch.get_reg(cpu, 'SP')
+
+    thread_info_addr = sp & ~(16384 - 1)
+    thread_info = read_mem(panda, cpu, thread_info_addr, 24)
+
+    task_addr = read_long(thread_info, 16)
+    task = read_mem(panda, cpu, task_addr, 400)
+
+    task_stack = read_long(task, 8)
+    assert task_stack == thread_info_addr
+
+    global TASK_ADDRESS
+    TASK_ADDRESS = task_addr
+
+    return task_addr
+
+
 def task_address_i386_callback(panda, cpu):
     assert panda.in_kernel(cpu)
     sp = panda.current_sp(cpu)
