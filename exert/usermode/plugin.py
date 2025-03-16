@@ -19,9 +19,8 @@ class Exert(PyPlugin):
     def __init__(self, panda):
         self.called_back = False
 
-        # TODO: Find a way to cover these
         @panda.ppp('syscalls2', 'on_sys_execve_enter')
-        def hook_syscall(cpu, pc, filename, argv, envp): # pragma: no cover
+        def hook_syscall(cpu, pc, filename, argv, envp):
             if self.called_back:
                 return
             print('Hooking into sys_execve...')
@@ -30,7 +29,7 @@ class Exert(PyPlugin):
 
         @panda.cb_guest_hypercall
         def hypercall(cpu):
-            panda.disable_callback('hypercall') # pragma: no cover
+            panda.disable_callback('hypercall')
             self.called_back = True
             if self.hypercall_callback:
                 self.hypercall_callback(panda, cpu)
@@ -38,7 +37,7 @@ class Exert(PyPlugin):
                 IPython.embed()
 
         @panda.cb_start_block_exec
-        def single_step(cpu, tb): # pragma: no cover
+        def single_step(cpu, tb):
             if panda.in_kernel_mode(cpu):
                 panda.disable_callback('single_step')
                 self.called_back = True

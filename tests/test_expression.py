@@ -1,6 +1,6 @@
 from tests import utils
 from exert.parser import expressions
-from exert.utilities.tokenizer import Tokenizer
+from exert.parser.tokenizer import Tokenizer
 
 TOKENIZER = Tokenizer()
 

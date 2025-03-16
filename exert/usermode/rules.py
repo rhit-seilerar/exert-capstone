@@ -53,7 +53,7 @@ class Any(Rule):
 
     def _test(self, context, address):
         #TODO
-        pass
+        return {address}
 
 class Int(Rule):
     def __init__(self, size = 4, signed = True, min_value = None, max_value = None):
