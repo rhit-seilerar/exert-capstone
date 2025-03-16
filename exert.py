@@ -114,6 +114,8 @@ def dev_test(in_docker, reset):
         time.sleep(1)
     if not in_docker:
         sync_volume()
+
+    make_usermode()
     run_docker(command = 'pytest --cov-config=.coveragerc --cov=exert tests/',
         in_docker = in_docker)
     
