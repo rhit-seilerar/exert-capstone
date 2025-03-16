@@ -12,6 +12,8 @@ disable=
     no-name-in-module,
     too-few-public-methods,
     too-many-arguments,
+    too-many-positional-arguments,
+    too-many-return-statements,
     attribute-defined-outside-init,
     too-many-instance-attributes,
     too-many-locals

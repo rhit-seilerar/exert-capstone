@@ -20,39 +20,40 @@ def read_string(file, sizelength = 4):
     return file.read(length).decode('utf-8')
 
 def read_token(file):
-    tok_type = TOK_TYPES[read_number(file, length = 1)]
-    if tok_type == 'string':
-        return (
-            tok_type,
-            read_string(file),
-            read_string(file, sizelength = 1)
-        )
-    elif tok_type == 'integer':
-        return (
-            tok_type,
-            read_number(file, length = 9, signed = True),
-            read_string(file, sizelength = 1)
-        )
-    elif tok_type == 'identifier':
-        return (tok_type, read_string(file))
-    elif tok_type == 'keyword':
-        return (tok_type, read_string(file, sizelength = 1))
-    elif tok_type == 'operator':
-        return (tok_type, read_string(file, sizelength = 1))
-    elif tok_type == 'directive':
-        return (tok_type, read_string(file, sizelength = 1))
-    elif tok_type == 'optional':
-        return (tok_type, read_string(file))
-    elif tok_type == 'any':
-        options = set()
-        for _ in range(read_number(file)):
-            option_tokens = []
+    tok_id = read_number(file, length = 1)
+    if tok_id < len(TOK_TYPES):
+        tok_type = TOK_TYPES[tok_id]
+        if tok_type == 'string':
+            return (
+                tok_type,
+                read_string(file),
+                read_string(file, sizelength = 1)
+            )
+        if tok_type == 'integer':
+            return (
+                tok_type,
+                read_number(file, length = 9, signed = True),
+                read_string(file, sizelength = 1)
+            )
+        if tok_type == 'identifier':
+            return (tok_type, read_string(file))
+        if tok_type == 'keyword':
+            return (tok_type, read_string(file, sizelength = 1))
+        if tok_type == 'operator':
+            return (tok_type, read_string(file, sizelength = 1))
+        if tok_type == 'directive':
+            return (tok_type, read_string(file, sizelength = 1))
+        if tok_type == 'optional':
+            return (tok_type, read_string(file))
+        if tok_type == 'any':
+            options = set()
             for _ in range(read_number(file)):
-                option_tokens.append(read_token(file))
-            options.add(DefOption(option_tokens))
-        return (tok_type, options)
-    else:
-        assert False
+                option_tokens = []
+                for _ in range(read_number(file)):
+                    option_tokens.append(read_token(file))
+                options.add(DefOption(option_tokens))
+            return (tok_type, options)
+    assert False
 
 def read_tokens(path):
     tokens = []
@@ -89,5 +90,3 @@ def write_tokens(file, tokens):
             for option in token[1]:
                 write_number(file, len(option.tokens))
                 write_tokens(file, option.tokens)
-        else:
-            assert False

@@ -1,3 +1,4 @@
+from tests import utils
 from exert.parser.serializer import write_tokens, read_tokens
 from exert.parser.definitions import DefOption
 
@@ -26,8 +27,13 @@ def test_roundtrip():
 
     with open('./cache/test-tokenmanager-round-trip', mode = 'bw') as file:
         write_tokens(file, tokens)
-        file.close()
 
     new_tokens = read_tokens('./cache/test-tokenmanager-round-trip')
 
     assert tokens == new_tokens
+
+def test_invalid():
+    with open('./cache/test-tokenmanager-round-trip', mode = 'bw') as file:
+        utils.expect_error(lambda: write_tokens(file, [('abc')]), ValueError)
+        file.write(b'\x08')
+    utils.expect_error(lambda: read_tokens('./cache/test-tokenmanager-round-trip'))

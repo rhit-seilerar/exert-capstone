@@ -1,3 +1,4 @@
+from tests import utils
 from exert.parser.definitions import DefOption, Def, DefMap, DefLayer, DefState
 
 def test_defoption_eq():
@@ -70,6 +71,11 @@ def test_def_copy():
         assert new_def.options == defn.options
         new_def.options |= {5}
         assert new_def.options != defn.options
+
+def test_def_invalid():
+    defn = Def(DefOption([('integer', 1)]))
+    defn.defined = False
+    utils.expect_error(defn.validate, ValueError)
 
 def test_def_undefine():
     defs1 = make_def_variants()
@@ -204,6 +210,9 @@ def test_def_str():
         and set(str(defs[2])[2:-2].split(', ')) == {'1', '2'}
     assert str(defs[3]).startswith('{ ') and str(defs[3]).endswith(' }') \
         and set(str(defs[3])[2:-2].split(', ')) == {'1', '2', '<undefined>'}
+    invl = Def(DefOption([('integer', 1)]))
+    invl.defined = False
+    assert str(invl) == '<invalid>'
 
 def test_defmap_local():
     abc = Def(defined = True)

@@ -40,7 +40,6 @@ class Def:
         self.options = set()
         for option in options:
             self.define(option, keep = True)
-        self.validate()
 
     def validate(self):
         if self.is_invalid():
