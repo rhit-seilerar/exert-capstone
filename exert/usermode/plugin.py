@@ -5,6 +5,8 @@ import IPython
 from pandare import PyPlugin, Panda
 from exert.usermode import task_struct_stack
 from exert.utilities.command import run_command
+from exert.utilities import version as ver
+
 
 class Exert(PyPlugin):
     """The Exert plugin"""
@@ -18,6 +20,16 @@ class Exert(PyPlugin):
 
     def __init__(self, panda):
         self.called_back = False
+
+        #What we use to control the filereader.c program?
+        #write tests for hypercall, see if it returns correct fd or just True for now.
+        # def fd_finder(env):
+        #     x = run_command('./file_reader.c demo_osi.osi')
+        #     print(f'{x}')
+        #     return x
+        # @panda.cb_guest_hypercall
+        # def fd_reader():
+        #     print('Not an octopus.\n')
 
         @panda.ppp('syscalls2', 'on_sys_execve_enter')
         def hook_syscall(cpu, pc, filename, argv, envp):
@@ -81,14 +93,20 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None,
                 expect_prompt='~ # ', os_version='linux-64-generic')
         else:
             my_console = 'ttyS0'
-        args = f'--nographic \
-            -kernel {kernel} \
-            -initrd ./cache/customfs.cpio \
-            {extra_args_part}\
-            -append "console={my_console} earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
-        panda = Panda(
-            arch=arch_type, mem=mem_use, extra_args=args,
-            expect_prompt=my_prompt, os_version=my_os_version)
+            args = f'--nographic \
+                -kernel {kernel} \
+                -initrd ./cache/customfs.cpio \
+                -append "console={my_console} earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
+            panda = Panda(
+                arch=arch_type, mem=mem_use, extra_args=args,
+                expect_prompt=my_prompt, os_version=my_os_version)
+        #args = f'--nographic \
+        #   -kernel {kernel} \
+        #    -initrd ./cache/customfs.cpio \
+        #    -append "console=ttyS0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
+        #panda = Panda(
+        #    arch=arch, mem='256M', extra_args=args,
+        #    expect_prompt='/.*#', os_version='linux-32-generic')
 
     panda.pyplugins.load(Exert, args={
         'callback': callback,
@@ -110,26 +128,19 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None,
 def get_task_address(kernel, arch, version):
     version_supported = False
 
-    version = version.split('-')[0]
-    version_nums = version.split('.')
-    for i in range(0,2):
-        version_nums[i] = int(version_nums[i], 10)
-    #version_nums[1] = int(version_nums[1], 10)
-    #version_nums[2] = int(version_nums[2], 10)
+    version_entry = ver.version_from_string(version)
 
-    if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):# 2.6.13+, 2.7+, 3.x+
-        version_greater_than_min = version_nums[0] > 2 or \  
-            (version_nums[0] == 2 and version_nums[1] > 6) or \
-                (version_nums[0] == 2 and version_nums[1] == 6 and version_nums[2] >= 13)
+    print("LOCATING TASK ADDRESS")
+    MIN_VERSION = ver.Version(2,6,13)
+    MAX_VERSION = ver.Version(5,14,21)
+    if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
+        version_greater_than_min = ver.compare_version(version_entry, MIN_VERSION)
         if version_greater_than_min:
-            version_less_than_max = version_nums[0] < 5 or \
-                (version_nums[0] == 5 and version_nums[1] < 14) or \
-                    (version_nums[0] == 5 and version_nums[1] == 14 and version_nums[2] <= 21)
+            version_less_than_max = ver.compare_version_max(version_entry, MAX_VERSION)
             if version_less_than_max:
                 version_supported = True
                 run(arch, task_struct_stack.task_address_arm_callback, False, kernel)
                 print("Task Address: " + hex(task_struct_stack.TASK_ADDRESS))
-                print("sneed")
     if not version_supported:
         print("Version not supported")
 

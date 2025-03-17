@@ -2,24 +2,25 @@ from dataclasses import dataclass
 
 @dataclass
 class Version:
-    v0: int
-    v1: int
-    v2: int
+    x: int
+    y: int
+    z: int
 
+def version_from_string(input):
+    number_string = input.split('-')[0]
+    nums = number_string.split('.')
+    v = Version(int(nums[0]), int(nums[1]), int(nums[2]))
+    return v
 
-def compareVersion(entry, target): #check if input version is >= target
-    print(f"Entry = {entry} ")
-    print(f"Target = {target} ")
-
-    if(entry.v0 >= target.v0 and entry.v1 >= target.v1 and entry.v2 >= target.v2):
+def compare_version(entry, target):
+    if(entry.x > target.x):
         return True
+    elif(entry.x == target.x):
+        if(entry.y > target.y):
+            return True
+        elif(entry.y == target.y and entry.z >= target.z):
+            return True
     return False
 
-def compareVersionMax(entry, target):
-    return compareVersion(target, entry)
-
-va = Version(1,2,5)
-vb = Version(1,3,2)
-print(va)
-print(compareVersion(va,vb)) # should print False
-print(compareVersionMax(va,vb)) # should print True
+def compare_version_max(entry, target):
+    return compare_version(target, entry)
