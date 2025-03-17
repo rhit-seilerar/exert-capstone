@@ -118,7 +118,7 @@ def dev_test(in_docker, reset):
     make_usermode()
     run_docker(command = 'pytest --cov-config=.coveragerc --cov=exert tests/',
         in_docker = in_docker)
-    
+
     if not in_docker:
         reverse_sync()
 
@@ -131,9 +131,9 @@ def dev_rules(in_docker, version, arch, reset):
         time.sleep(1)
     if not in_docker:
         sync_volume()
-    run_docker(command = f'python -u -m exert.utilities.parser {version} {arch}',
+    run_docker(command = f'python -u -m exert.parser.parser {version} {arch}',
         in_docker = in_docker)
-    
+
     if not in_docker:
         reverse_sync()
 
@@ -183,8 +183,9 @@ def sync_volume():
     run_docker(name = 'pandare-init',
         command = f'rm -rf /mount/exert/ && rm -rf /mount/tests && '
             f'rm -rf /mount/kernels/ && '
-            f'rsync -auv --progress {exclude} /local/ /mount')
-    
+            f'rsync -auv --progress {exclude} /local/ /mount',
+        capture_output=True)
+
 def reverse_sync():
     local_mount = f'-v "{os.path.dirname(os.path.realpath(__file__))}:/local"'
     exclude = '--exclude .git'
@@ -200,7 +201,8 @@ def reverse_sync():
             command = 'apt-get update && apt-get install -y rsync',
             extra_args = local_mount)
     run_docker(name = 'pandare-init',
-        command = f'rsync -auv --progress {exclude} /mount/ /local')
+        command = f'rsync -auv --progress {exclude} /mount/ /local',
+        capture_output=True)
 
 def delete_volume():
     ls_out = run_command('docker volume ls -q -f "name=pandare"', True, True)
@@ -217,7 +219,7 @@ def osi(parsed):
     print('OSI not implemented.')
 
 def run_docker(container = PANDA_CONTAINER, *, name = 'pandare', command = '',
-    interactive = False, in_docker = False, extra_args = ''):
+    interactive = False, in_docker = False, extra_args = '', capture_output = False):
     try:
         validate_initialized()
         if in_docker:
@@ -233,14 +235,15 @@ def run_docker(container = PANDA_CONTAINER, *, name = 'pandare', command = '',
         args = f'--rm -it {name_arg} {mount} {extra_args} {container}'
 
         if name is None:
-            run_command(f'docker run {args} bash -c "cd /mount; {command}"', False, False)
+            run_command(f'docker run {args} bash -c "cd /mount; {command}"', capture_output, False)
         else:
             if not container_is_running(name):
                 run_command(f'docker run -d {args}')
                 if name == 'pandare':
                     run_command(f'docker exec -t {name} bash -c '
                         '"cd /mount; chmod +x ./setup.sh; ./setup.sh"')
-            run_command(f'docker exec -t {name} bash -c "cd /mount; {command}"', False, True)
+            run_command(f'docker exec -t {name} bash -c "cd /mount; {command}"',
+                capture_output, True)
             if interactive:
                 run_command(f'docker exec -it {name} bash"')
     except CalledProcessError:
@@ -261,8 +264,7 @@ def validate_initialized():
 
 def make_usermode():
     # TODO: Compile usermode for specific version
-    run_docker(XMAKE_CONTAINER, name = None,
-        command=f'make -C /mount/exert/usermode')
+    run_docker(XMAKE_CONTAINER, name = None, command='make -C /mount/exert/usermode')
 
 def validate_iso(image):
     try:

@@ -137,12 +137,12 @@ def get_task_address(kernel, arch, version):
     version_entry = ver.version_from_string(version)
 
     print("LOCATING TASK ADDRESS")
-    MIN_VERSION = ver.Version(2,6,13)
-    MAX_VERSION = ver.Version(5,14,21)
+    min_version = ver.Version(2,6,13)
+    max_version = ver.Version(5,14,21)
     if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
-        version_greater_than_min = ver.compare_version(version_entry, MIN_VERSION)
+        version_greater_than_min = ver.compare_version(version_entry, min_version)
         if version_greater_than_min:
-            version_less_than_max = ver.compare_version_max(version_entry, MAX_VERSION)
+            version_less_than_max = ver.compare_version_max(version_entry, max_version)
             if version_less_than_max:
                 version_supported = True
                 run(arch, task_struct_stack.task_address_arm_callback, False, kernel)

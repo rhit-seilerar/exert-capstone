@@ -12,8 +12,9 @@ def test_roundtrip():
         ('operator', '>>>'),
         ('keyword', 'while'),
         ('directive', '#'),
-        ('optional', ''),
-        ('optional', 'defined(TEST)'),
+        ('optional', 'endif', ''),
+        ('optional', 'else', ''),
+        ('optional', 'if', 'defined(TEST)'),
         ('any', {
             DefOption([('identifier', 'a'), ('identifier', 'b')]),
             DefOption([('any', {

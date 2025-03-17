@@ -7,7 +7,7 @@ TODO There are still a number of optimizations that can be done for better resul
 import os
 import types
 from exert.parser.tokenmanager import tok_seq, TokenManager
-from exert.parser.definitions import DefState, DefOption
+from exert.parser.definitions import DefState, Def, DefOption
 from exert.parser.serializer import write_tokens, read_tokens
 from exert.utilities.debug import dprint
 
@@ -19,7 +19,7 @@ def read_file(path):
         return None
 
 class Preprocessor(TokenManager):
-    def __init__(self, tokenizer, includes, filereader = read_file):
+    def __init__(self, tokenizer, includes, defns, filereader = read_file):
         super().__init__()
         self.tokenizer = tokenizer
         self.includes = includes
@@ -27,12 +27,14 @@ class Preprocessor(TokenManager):
         self.invalid_paths = set()
         self.tokenized_cache = {}
         self.unresolved = []
-        self.defs = DefState()
+        self.defs = DefState({key: \
+            Def(DefOption(tokenizer.tokenize(defns[key])), defined = True) \
+                for key in defns})
 
     def load_file(self, path, is_relative):
         if self.defs.is_skipping():
             dprint(1.5, '  ' * self.defs.depth() + f'::Skipping {path}')
-            return
+            return True
 
         includes = self.includes.copy()
         if is_relative:
@@ -155,7 +157,7 @@ class Preprocessor(TokenManager):
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         if self.defs.on_ifdef(name):
-            self.push_optional(f'defined({name})')
+            self.push_optional('if', f'defined({name})')
         return True
 
     def handle_ifndef(self):
@@ -164,7 +166,7 @@ class Preprocessor(TokenManager):
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         if self.defs.on_ifndef(name):
-            self.push_optional(f'!defined({name})')
+            self.push_optional('if', f'!defined({name})')
         return True
 
     def handle_elifdef(self):
@@ -175,11 +177,11 @@ class Preprocessor(TokenManager):
         if self.defs.on_elifdef(name):
             condition = None
             if self.defs.layers[-1].any_kept:
-                condition = self.pop_optional()
+                condition = self.pop_optional('else')
             if condition is not None:
-                self.push_optional(f'!({condition}) && defined({name})')
+                self.push_optional('if', f'!({condition}) && defined({name})')
             else:
-                self.push_optional(f'defined({name})')
+                self.push_optional('if', f'defined({name})')
         return True
 
     def handle_elifndef(self):
@@ -189,19 +191,19 @@ class Preprocessor(TokenManager):
             return self.err('Directives must end with a linebreak')
         condition = None
         if self.defs.layers[-1].any_kept:
-            condition = self.pop_optional()
+            condition = self.pop_optional('else')
         if self.defs.on_elifndef(name):
             if condition is not None:
-                self.push_optional(f'!({condition}) && !defined({name})')
+                self.push_optional('if', f'!({condition}) && !defined({name})')
             else:
-                self.push_optional(f'!defined({name})')
+                self.push_optional('if', f'!defined({name})')
         return True
 
     def handle_if(self):
         if not (tokens := self.skip_to_newline()):
             return False
         if self.defs.on_if({}):
-            self.push_optional(' '.join(str(n[1]) for n in tokens))
+            self.push_optional('if', ' '.join(str(n[1]) for n in tokens))
         return True
 
     def handle_elif(self):
@@ -209,13 +211,13 @@ class Preprocessor(TokenManager):
             return False
         condition = None
         if self.defs.layers[-1].any_kept:
-            condition = self.pop_optional()
+            condition = self.pop_optional('else')
         if self.defs.on_elif({}):
             cond_str = " ".join(str(n) for n in tokens)
             if condition is not None:
-                self.push_optional(f'!({condition}) && ({cond_str})')
+                self.push_optional('if', f'!({condition}) && ({cond_str})')
             else:
-                self.push_optional(f'{cond_str}')
+                self.push_optional('if', f'{cond_str}')
         return True
 
     def handle_else(self):
@@ -224,19 +226,19 @@ class Preprocessor(TokenManager):
             return self.err('Directives must end with a linebreak')
         condition = None
         if self.defs.layers[-1].any_kept:
-            condition = self.pop_optional()
+            condition = self.pop_optional('else')
         if self.defs.on_else():
             if condition is not None:
-                self.push_optional(f'!({condition})')
+                self.push_optional('if', f'!({condition})')
             else:
-                self.push_optional('')
+                self.push_optional('if', '1')
         return True
 
     def handle_endif(self):
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         if self.defs.layers[-1].any_kept:
-            self.pop_optional()
+            self.pop_optional('endif')
         self.defs.on_endif()
         return True
 

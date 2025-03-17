@@ -45,6 +45,10 @@ def file_reader_callback_x86_64(panda, cpu):
     assert panda.arch.get_reg(cpu, 'RAX') == 3
     return
 
+def file_reader_callback_armv5l(panda, cpu):
+    assert panda.arch.get_reg(cpu, 'R0') == 3
+    return
+
 def test_i386_file_reader():
     do_test(file_reader_callback_i386, 'i386',
             generic=False, kernel='./kernels/vmlinuz-i386-4.4.100')
@@ -52,6 +56,10 @@ def test_i386_file_reader():
 def test_x86_file_reader():
     do_test(file_reader_callback_x86_64, 'x86_64',
             generic=False, kernel='./kernels/vmlinuz-x86_64-4.4.100')
+    
+def test_armv5l_file_reader():
+    do_test(file_reader_callback_armv5l, 'armv5l',
+            generic=False, kernel='./kernels/vmlinuz-arm-3.2.51-1')
 
 
 def _test_compile():
