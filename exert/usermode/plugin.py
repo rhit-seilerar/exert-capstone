@@ -79,31 +79,18 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None,
         console_version = "ttyAMA0"
         expect_prompt_entry = '/.*#'
         os_version_entry = 'linux-32-generic'
-       
-
+        
         if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
             hardware_args = '-machine versatilepb'
             arch_type = 'arm'
-            #print(args)
-            #args = f'--nographic \
-            #    -kernel {kernel} \
-            #    -initrd ./cache/customfs.cpio \
-            #    -machine versatilepb \
-            #    -append "console=ttyAMA0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
-            #print(f"NEW ARGS: {args}")
-            #panda = Panda(
-            #    arch='arm', mem='256M', extra_args=args,
-            #    expect_prompt='/.*#', os_version='linux-32-generic')
         elif arch in ['aarch64']:
             hardware_args = "-machine virt -cpu cortex-a53"
             expect_prompt_entry = '~ # '
             arch_type = 'aarch64'
             os_version_entry = 'linux-64-generic'
-            #panda = Panda(
-            #    arch='aarch64', mem='256M', extra_args=hardware_args,
-            #    expect_prompt=, os_version='linux-64-generic')
         else:
             console_version = 'ttyS0'
+
         args = f'--nographic \
             -kernel {kernel} \
             -initrd ./cache/customfs.cpio \
