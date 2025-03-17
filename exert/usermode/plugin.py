@@ -72,41 +72,47 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None,
         if not command:
             command = ""
         run_command(f'./make_initrd.sh {arch} {usermode} "{command}"')
+
+        arch_type = arch
+        mem_use = "256M"
+        hardware_args = ''
+        console_version = "ttyAMA0"
+        expect_prompt_entry = '/.*#'
+        os_version_entry = 'linux-32-generic'
+       
+
         if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
-            args = f'--nographic \
-                -kernel {kernel} \
-                -initrd ./cache/customfs.cpio \
-                -machine versatilepb \
-                -append "console=ttyAMA0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
-            panda = Panda(
-                arch='arm', mem='256M', extra_args=args,
-                expect_prompt='/.*#', os_version='linux-32-generic')
+            hardware_args = '-machine versatilepb'
+            arch_type = 'arm'
+            #print(args)
+            #args = f'--nographic \
+            #    -kernel {kernel} \
+            #    -initrd ./cache/customfs.cpio \
+            #    -machine versatilepb \
+            #    -append "console=ttyAMA0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
+            #print(f"NEW ARGS: {args}")
+            #panda = Panda(
+            #    arch='arm', mem='256M', extra_args=args,
+            #    expect_prompt='/.*#', os_version='linux-32-generic')
         elif arch in ['aarch64']:
-            args = f'--nographic \
-                -kernel {kernel} \
-                -initrd ./cache/customfs.cpio \
-                -machine virt \
-                -cpu cortex-a53 \
-                -append "console=ttyAMA0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
-            panda = Panda(
-                arch='aarch64', mem='256M', extra_args=args,
-                expect_prompt='~ # ', os_version='linux-64-generic')
+            hardware_args = "-machine virt -cpu cortex-a53"
+            expect_prompt_entry = '~ # '
+            arch_type = 'aarch64'
+            os_version_entry = 'linux-64-generic'
+            #panda = Panda(
+            #    arch='aarch64', mem='256M', extra_args=hardware_args,
+            #    expect_prompt=, os_version='linux-64-generic')
         else:
-            my_console = 'ttyS0'
-            args = f'--nographic \
-                -kernel {kernel} \
-                -initrd ./cache/customfs.cpio \
-                -append "console={my_console} earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
-            panda = Panda(
-                arch=arch_type, mem=mem_use, extra_args=args,
-                expect_prompt=my_prompt, os_version=my_os_version)
-        #args = f'--nographic \
-        #   -kernel {kernel} \
-        #    -initrd ./cache/customfs.cpio \
-        #    -append "console=ttyS0 earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
-        #panda = Panda(
-        #    arch=arch, mem='256M', extra_args=args,
-        #    expect_prompt='/.*#', os_version='linux-32-generic')
+            console_version = 'ttyS0'
+        args = f'--nographic \
+            -kernel {kernel} \
+            -initrd ./cache/customfs.cpio \
+            {hardware_args} \
+            -append "console={console_version} earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
+        panda = Panda(
+            arch=arch_type, mem=mem_use, extra_args=args,
+            expect_prompt=expect_prompt_entry, os_version=os_version_entry)
+
 
     panda.pyplugins.load(Exert, args={
         'callback': callback,
