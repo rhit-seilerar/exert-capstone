@@ -118,7 +118,7 @@ def dev_test(in_docker, reset):
     make_usermode()
     run_docker(command = 'pytest --cov-config=.coveragerc --cov=exert tests/',
         in_docker = in_docker)
-    
+
     if not in_docker:
         reverse_sync()
 
@@ -131,9 +131,9 @@ def dev_rules(in_docker, version, arch, reset):
         time.sleep(1)
     if not in_docker:
         sync_volume()
-    run_docker(command = f'python -u -m exert.utilities.parser {version} {arch}',
+    run_docker(command = f'python -u -m exert.parser.parser {version} {arch}',
         in_docker = in_docker)
-    
+
     if not in_docker:
         reverse_sync()
 
@@ -185,7 +185,7 @@ def sync_volume():
             f'rm -rf /mount/kernels/ && '
             f'rsync -auv --progress {exclude} /local/ /mount',
         capture_output=True)
-    
+
 def reverse_sync():
     local_mount = f'-v "{os.path.dirname(os.path.realpath(__file__))}:/local"'
     exclude = '--exclude .git'
@@ -242,7 +242,8 @@ def run_docker(container = PANDA_CONTAINER, *, name = 'pandare', command = '',
                 if name == 'pandare':
                     run_command(f'docker exec -t {name} bash -c '
                         '"cd /mount; chmod +x ./setup.sh; ./setup.sh"')
-            run_command(f'docker exec -t {name} bash -c "cd /mount; {command}"', capture_output, True)
+            run_command(f'docker exec -t {name} bash -c "cd /mount; {command}"',
+                capture_output, True)
             if interactive:
                 run_command(f'docker exec -it {name} bash"')
     except CalledProcessError:
@@ -263,8 +264,7 @@ def validate_initialized():
 
 def make_usermode():
     # TODO: Compile usermode for specific version
-    run_docker(XMAKE_CONTAINER, name = None,
-        command=f'make -C /mount/exert/usermode')
+    run_docker(XMAKE_CONTAINER, name = None, command='make -C /mount/exert/usermode')
 
 def validate_iso(image):
     try:

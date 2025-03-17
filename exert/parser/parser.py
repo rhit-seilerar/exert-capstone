@@ -4,6 +4,7 @@ import glob
 from exert.parser.tokenizer import Tokenizer
 from exert.parser.tokenmanager import TokenManager
 from exert.parser.preprocessor import Preprocessor
+from exert.parser import serializer
 from exert.usermode import rules
 from exert.utilities.command import run_command
 
@@ -29,7 +30,7 @@ def switch_to_version(version):
     run_command(f'git checkout v{version}', True, True, './cache/linux')
 
 SOURCE = """
-#include <linux/sched.h>
+#include <linux/types.h>
 """
 
 PREPROCESSOR_CACHE = './cache/linux-preprocessor'
@@ -44,53 +45,23 @@ def parse(filename, arch):
             f'{SOURCE_PATH}/arch/{arch}/include/',
             lambda path: f'{SOURCE_PATH}/include/asm-generic/{path[4:]}'
                 if path.startswith('asm/') else None
-        ]
+        ],
+        defns = {
+            '__signed__': 'signed',
+            '__extension__': ''
+        }
     )
-    preprocessor.preprocess(SOURCE, PREPROCESSOR_CACHE)
+    preprocessor.preprocess(SOURCE, PREPROCESSOR_CACHE, False)
     preprocessor.load(PREPROCESSOR_CACHE)
     print(str(preprocessor))
-    # parser = Parser(
-    #     Preprocessor(
-    #         Tokenizer(),
-    #         includes = [
-    #             f'{SOURCE_PATH}/include/',
-    #             f'{SOURCE_PATH}/include/uapi/',
-    #             f'{SOURCE_PATH}/arch/{arch}/include/',
-    #             f'{SOURCE_PATH}/arch/{arch}/include/uapi/'
-    #         ]
-    #     ),
-    #     types = {
-    #         '__s8': [rules.Int(size = 1, signed = True)],
-    #         '__s16': [rules.Int(size = 2, signed = True)],
-    #         '__s32': [rules.Int(size = 4, signed = True)],
-    #         '__s64': [rules.Int(size = 8, signed = True)],
-    #         '__u8': [rules.Int(size = 1, signed = False)],
-    #         '__u16': [rules.Int(size = 2, signed = False)],
-    #         '__u32': [rules.Int(size = 4, signed = False)],
-    #         '__u64': [rules.Int(size = 8, signed = False)]
-    #     },
-    #     definitions = {
-    #         '__signed': [[('keyword', 'signed')]],
-    #         '__signed__': [[('keyword', 'signed')]]
-    #     }
-    # )
-    # parser.parse(filename)
-    # print('================ TYPES ================')
-    # print(parser.types)
-    # print('================ DEFINITIONS ================')
-    # print(parser.preprocessor.definitions)
-    # print('================ UNRESOLVED ================')
-    # print(parser.unresolved)
+
+    parser = Parser()
+    parser.parse(PREPROCESSOR_CACHE)
 
 class Parser(TokenManager):
-    def __init__(self, preprocessor, types = None, definitions = None):
+    def __init__(self, types = None):
         super().__init__()
-        self.preprocessor = preprocessor
-        self.directive_nesting_level = 0
-        self.resolved_nesting_level = 0
-        self.definitions = definitions.copy() if definitions is not None else dict()
-        self.types = types.copy() if types is not None else dict()
-        self.unresolved = set()
+        self.types = types.copy() if types is not None else {}
 
     def add(self, values, key, value):
         values[key] = (arr := values.get(key, list()))
@@ -108,9 +79,6 @@ class Parser(TokenManager):
 
     def has(self, values, key):
         return key in values
-
-    def is_defined(self, key):
-        return self.definitions.get(key) or self.types.get(key)
 
     def consume_terminators(self):
         if not self.consume_operator(';'):
@@ -187,8 +155,6 @@ class Parser(TokenManager):
         while self.has_next():
             if self.consume_terminators():
                 continue
-            # if self.parse_directives():
-            #     continue
             decls = self.parse_type_declarations()
             if not decls:
                 break
@@ -245,28 +211,18 @@ class Parser(TokenManager):
 
     def parse(self, filename):
         super().reset()
-        self.directive_nesting_level = 0
-        self.resolved_nesting_level = 0
-
-        self.preprocessor.preprocess(filename)
-        self.tokens = self.preprocessor.tokens
-        self.definitions += self.preprocessor.definitions
-
-        # while self.has_next() and not self.has_error:
-        #     if self.parse_directives():
-        #         continue
-        #     if self.consume_terminators():
-        #         continue
-        #     if self.consume_keyword('typedef'):
-        #         decls = self.parse_type_declarations()
-        #         if not decls:
-        #             return self.err("Expected a type declaration after typedef")
-        #         for decl in decls:
-        #             self.add(self.types, decl[0], decl[1])
-        #         continue
-        #     return self.err('Unrecognized syntax, cannot proceed.')
-        # if self.directive_nesting_level != 0:
-        #     return self.err('Mismatched #if/#endif pairs')
+        tokens = serializer.read_tokens(filename)
+        while self.has_next() and not self.has_error:
+            if self.consume_terminators():
+                continue
+            if self.consume_keyword('typedef'):
+                decls = self.parse_type_declarations()
+                if not decls:
+                    return self.err("Expected a type declaration after typedef")
+                for decl in decls:
+                    self.add(self.types, decl[0], decl[1])
+                continue
+            return self.err('Unrecognized syntax, cannot proceed.')
 
 if __name__ == '__main__':
     generate(sys.argv[1], sys.argv[2])
