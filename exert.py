@@ -118,7 +118,7 @@ def dev_test(in_docker, reset):
     make_usermode()
     run_docker(command = 'pytest --cov-config=.coveragerc --cov=exert tests/',
         in_docker = in_docker)
-    
+
     if not in_docker:
         reverse_sync()
 
@@ -131,9 +131,9 @@ def dev_rules(in_docker, version, arch, reset):
         time.sleep(1)
     if not in_docker:
         sync_volume()
-    run_docker(command = f'python -u -m exert.utilities.parser {version} {arch}',
+    run_docker(command = f'python -u -m exert.parser.parser {version} {arch}',
         in_docker = in_docker)
-    
+
     if not in_docker:
         reverse_sync()
 
@@ -183,7 +183,7 @@ def sync_volume():
     run_docker(name = 'pandare-init',
         command = f'rm -rf /mount/exert/ && rm -rf /mount/tests && '
             f'rsync -av --progress {exclude} /local/ /mount')
-    
+
 def reverse_sync():
     local_mount = f'-v "{os.path.dirname(os.path.realpath(__file__))}:/local"'
     exclude = '--exclude .git'

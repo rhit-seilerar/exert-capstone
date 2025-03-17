@@ -1,13 +1,12 @@
 def tok_str(token, newlines = False):
     n = token
-    string = '#endif\n' if n == ('optional', '') \
-        else f'#if {n[1]}\n' if n[0] == 'optional' \
+    string = f'#{n[1]} {n[2]}\n' if n[0] == 'optional' \
         else '#' if n[0] == 'directive' \
-        else f'<{n[1]}> ' if n[0] == 'string' and n[2] == '<' \
-        else f'{n[2]}"{n[1]}" ' if n[0] == 'string' \
         else f'{n[1]}\n' if n[0] == 'operator' and n[1] in [';', '{', '}'] \
         else f'{n[1]} ' if n[0] == 'operator' \
-        else f'{n[1]} ' if n[0] in ['keyword', 'identifier', 'integer', 'string'] \
+        else f'{n[1]} ' if n[0] in ['keyword', 'identifier'] \
+        else f'{n[1]}{n[2]} ' if n[0] == 'integer' \
+        else f'{n[2]}{n[1]}{">" if n[2] == "<" else n[2]} ' if n[0] == 'string' \
         else f'<ANY>{{{", ".join(str(v) for v in n[1])}}} ' if n[0] == 'any' \
         else str(n[1])
     if newlines:
@@ -39,7 +38,7 @@ class TokenManager:
         self.index += 1
 
     def peek(self, offset = 0):
-        if self.index + offset < self.len:
+        if 0 <= self.index + offset and self.index + offset < self.len:
             return self.tokens[self.index+offset]
         return None
 
@@ -72,9 +71,6 @@ class TokenManager:
     def consume_identifier(self, name):
         return self.consume(('identifier', name))
 
-    def consume_integer(self, name):
-        return self.consume(('integer', name))
-
     def parse_identifier(self):
         if (token := self.consume_type('identifier')):
             return token[1]
@@ -103,19 +99,22 @@ class TokenManager:
             if i == self.index:
                 offset = ' ' * len(ctx_str) + '^' * len(addend)
             ctx_str += addend
-        print(ctx_str)
-        print(offset)
+        out = ctx_str + '\n' + offset
+        print(out)
+        return out
 
     def print_progress(self):
         self.progress_counter += 1
         if self.progress_counter % 2000 == 0:
-            print(f'Preprocessed {self.tokens_consumed} of {self.tokens_added} tokens '
-                f'({self.tokens_consumed / self.tokens_added * 100:.2f}%) '
-                f'with a running buffer ({self.index} / {self.len})')
+            out = f'Processed {self.tokens_consumed} of {self.tokens_added} tokens ' \
+                f'({self.tokens_consumed / self.tokens_added * 100:.2f}%) ' \
+                f'with a running buffer ({self.index} / {self.len})'
+            print(out)
             self.progress_counter = 0
+            return out
+        return ''
 
     def err(self, *message):
         print(*message)
         self.print_current()
         assert False
-        return None

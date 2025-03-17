@@ -73,7 +73,7 @@ def test_def_copy():
         assert new_def.options != defn.options
 
 def test_def_invalid():
-    defn = Def(DefOption([('integer', 1)]))
+    defn = Def(DefOption([('integer', 1, '')]))
     defn.defined = False
     utils.expect_error(defn.validate, ValueError)
 
@@ -99,7 +99,7 @@ def test_def_define():
         assert defs1[0].define('abc')
     except TypeError:
         pass
-    option = DefOption([('integer', 4)])
+    option = DefOption([('integer', 4, '')])
     for defn in defs1:
         was_uncertain = defn.is_uncertain()
         prev_options = defn.options
@@ -210,7 +210,7 @@ def test_def_str():
         and set(str(defs[2])[2:-2].split(', ')) == {'1', '2'}
     assert str(defs[3]).startswith('{ ') and str(defs[3]).endswith(' }') \
         and set(str(defs[3])[2:-2].split(', ')) == {'1', '2', '<undefined>'}
-    invl = Def(DefOption([('integer', 1)]))
+    invl = Def(DefOption([('integer', 1, '')]))
     invl.defined = False
     assert str(invl) == '<invalid>'
 
@@ -367,7 +367,7 @@ def test_defstate():
     assert defstate.get_replacements(('identifier', 'DEFN0')) \
         == {DefOption([('identifier', 'DEFN0')])}
     defstate.on_elifndef('def')
-    defstate.on_define('DEFN2', [], [('integer', 1)])
+    defstate.on_define('DEFN2', [], [('integer', 1, '')])
     defstate.on_endif()
     defstate.on_endif()
     defstate.on_undef('DEFN2')
@@ -380,24 +380,24 @@ def test_defstate():
     defstate.on_endif()
 
     defstate.on_if({})
-    defstate.on_define('TEST_DEFN', [], [('integer', 1)])
+    defstate.on_define('TEST_DEFN', [], [('integer', 1, '')])
     defstate.on_elif({})
     defstate.on_undef('TEST_DEFN')
     defstate.on_endif()
 
     defstate.on_ifndef('TEST_DEFN2')
-    defstate.on_define('TEST_DEFN2', [], [('integer', 2)])
+    defstate.on_define('TEST_DEFN2', [], [('integer', 2, '')])
     defstate.on_else()
     defstate.on_undef('TEST_DEFN2')
-    defstate.on_define('TEST_DEFN2', [], [('integer', 3)])
+    defstate.on_define('TEST_DEFN2', [], [('integer', 3, '')])
     defstate.on_endif()
 
     assert defstate.flat_unknowns() == {'TEST_DEFN'}
 
     assert defstate.flat_defines() == {
         'TEST_DEFN2': Def(
-            DefOption([('integer', 2)]),
-            DefOption([('integer', 3)]),
+            DefOption([('integer', 2, '')]),
+            DefOption([('integer', 3, '')]),
             defined = True
         )
     }

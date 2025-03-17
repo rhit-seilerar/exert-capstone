@@ -1,10 +1,3 @@
-"""
-This file handles constant integer expressions, needed for #if/#elif macros. It expects
-all defined tokens and define() to be expanded prior to parsing. It also expects
-character constants to be pre-expanded to integers, 'true' to 1, and all other identifiers
-to 0.
-"""
-
 class Expression:
     def evaluate(self, bitsize):
         assert False
