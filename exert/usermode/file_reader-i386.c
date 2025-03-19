@@ -2,10 +2,9 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <cpuid.h>
+#include "hypercall.h"
 //open a file
 //give the file descriptor to plugin
-//make a new filereader for arm??
 int main(int argc, char** argv){
     if(argc <= 1){
         return -1;
@@ -20,19 +19,8 @@ int main(int argc, char** argv){
     }
     else {
         printf("The file is: %d\n", file_thing);
-
-        int input = file_thing;
-        int output;
-
-        __asm ( "mov %1, %%eax; "
-            "cpuid;"
-            "mov %%eax, %0;"
-            :"=r"(output)
-            :"r"(input)
-            :"%eax","%ebx","%ecx","%edx"
-        );
+        igloo_hypercall(0, file_thing);
     }
-  
     return file_thing;
 
 }

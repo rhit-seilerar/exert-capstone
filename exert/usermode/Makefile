@@ -1,10 +1,12 @@
-all: setup file_reader-x86_64 file_reader-armv5l file_reader-i386
+all: setup file_reader-x86_64 file_reader-armv5l file_reader-i386 file_reader-aarch64
 
 CC_i386 = /opt/cross/i686-linux-musl-cross/bin/i686-linux-musl-cc
 
 CC_X86_64 = /opt/cross/x86_64-linux-musl-cross/bin/x86_64-linux-musl-cc
 
 CC_ARM = /opt/cross/arm-linux-musleabi-cross/bin/arm-linux-musleabi-cc
+
+CC_AARCH64 = /opt/cross/aarch64-linux-musl-cross/bin/aarch64-linux-musl-cc
 
 CFLAGS += -ggdb -static-libgcc -static
 
@@ -18,6 +20,9 @@ file_reader-x86_64: file_reader-x86_64.c
 
 file_reader-armv5l: file_reader-armv5l.c
 	${CC_ARM} ${CFLAGS} -o build/$@ $^
+
+file_reader-aarch64: file_reader-aarch64.c
+	${CC_AARCH64} ${CFLAGS} -o build/$@ $^
 
 setup:
 	if [ ! -d build ]; then mkdir build; \
