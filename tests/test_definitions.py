@@ -10,7 +10,6 @@ def test_defoption_eq():
     assert empty != defoption12
     assert empty != 'abc'
     assert empty == DefOption([])
-    assert empty == empty
     assert defoption12 != defoptionab
     assert defoption12 == DefOption([('number', 1), ('number', 2)])
 

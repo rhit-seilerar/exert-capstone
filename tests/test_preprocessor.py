@@ -45,7 +45,7 @@ FILES = {
 
 def dummy_reader(path):
     return FILES.get(path)
-    
+
 def test_read_file():
     assert read_file('exert.py')
     assert not read_file('__dummy_does_not_exist__.abc')

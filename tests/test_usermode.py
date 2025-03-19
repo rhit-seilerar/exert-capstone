@@ -1,7 +1,7 @@
 import os
-import exert.utilities.command as cmd
 import subprocess
 
+import exert.utilities.command as cmd
 from exert.utilities.debug import RUN_PLUGIN_TESTS
 from exert.usermode import plugin
 
@@ -27,7 +27,7 @@ def run_test(arch, generic, kernel, test):
 
     def callback(panda, cpu):
         return
-    
+
     def hypervisor_callback(panda, cpu):
         set_called_back(True)
         test(panda, cpu)
@@ -39,10 +39,9 @@ def run_test(arch, generic, kernel, test):
 
 def file_reader_callback(panda, cpu):
     magic = panda.arch.get_arg(cpu, 0, convention='syscall')
-    type = panda.arch.get_arg(cpu, 1, convention='syscall')
+    typ = panda.arch.get_arg(cpu, 1, convention='syscall')
     assert magic == 0
-    assert type == 3
-    return
+    assert typ == 3
 
 def test_i386_file_reader():
     do_test(file_reader_callback, 'i386',
@@ -51,7 +50,7 @@ def test_i386_file_reader():
 def test_x86_file_reader():
     do_test(file_reader_callback, 'x86_64',
             generic=False, kernel='./kernels/vmlinuz-x86_64-4.4.100')
-    
+
 def test_armv5l_file_reader():
     do_test(file_reader_callback, 'armv5l',
             generic=False, kernel='./kernels/vmlinuz-arm-3.2.51-1')

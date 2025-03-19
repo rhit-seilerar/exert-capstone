@@ -10,6 +10,7 @@ exert/usermode/build
 *.gz
 *.elf
 *.log
+*.osi
 linux
 cache/rootfs/bin/sh
 cache/rootfs/dev/fd
