@@ -15,13 +15,13 @@ def test_roundtrip():
         ('optional', 'endif', ''),
         ('optional', 'else', ''),
         ('optional', 'if', 'defined(TEST)'),
-        ('any', {
+        ('any', 'a1', {
             DefOption([('identifier', 'a'), ('identifier', 'b')]),
-            DefOption([('any', {
+            DefOption([('any', 'a2', {
                 DefOption([])
             })])
         }),
-        ('any', set())
+        ('any', 'a3', set())
     ]
 
     new_tokens = []

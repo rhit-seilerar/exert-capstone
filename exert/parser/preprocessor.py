@@ -1,11 +1,16 @@
 """
 TODO There are still a number of optimizations that can be done for better results:
  - #defines with a replacement with no #undef preceding them guarantee only no definition from cli
+ - Guarantees from #if/#elif expressions
  - Guarantees from #if/#elif can be used in the rules system
+ - #error should cancel the block
+ - #pragma
+ - String concatenation, token concatenation, token stringification
 """
 
 import os
 import types
+
 from exert.parser.tokenmanager import tok_seq, TokenManager
 from exert.parser.definitions import DefState, Def, DefOption
 from exert.parser.serializer import write_tokens, read_tokens
@@ -19,7 +24,7 @@ def read_file(path):
         return None
 
 class Preprocessor(TokenManager):
-    def __init__(self, tokenizer, includes, defns, filereader = read_file):
+    def __init__(self, tokenizer, bitsize, includes, defns, filereader = read_file):
         super().__init__()
         self.tokenizer = tokenizer
         self.includes = includes
@@ -27,7 +32,7 @@ class Preprocessor(TokenManager):
         self.invalid_paths = set()
         self.tokenized_cache = {}
         self.unresolved = []
-        self.defs = DefState({key: \
+        self.defs = DefState(bitsize, initial = {key: \
             Def(DefOption(tokenizer.tokenize(defns[key])), defined = True) \
                 for key in defns})
 
@@ -202,7 +207,7 @@ class Preprocessor(TokenManager):
     def handle_if(self):
         if not (tokens := self.skip_to_newline()):
             return False
-        if self.defs.on_if({}):
+        if self.defs.on_if({}, tokens):
             self.push_optional('if', ' '.join(str(n[1]) for n in tokens))
         return True
 
@@ -212,7 +217,7 @@ class Preprocessor(TokenManager):
         condition = None
         if self.defs.layers[-1].any_kept:
             condition = self.pop_optional('else')
-        if self.defs.on_elif({}):
+        if self.defs.on_elif({}, tokens):
             cond_str = " ".join(str(n) for n in tokens)
             if condition is not None:
                 self.push_optional('if', f'!({condition}) && ({cond_str})')
@@ -243,7 +248,6 @@ class Preprocessor(TokenManager):
         return True
 
     def handle_error(self):
-        #TODO error should cancel the current block
         if not self.defs.is_skipping():
             dprint(2, '  ' * self.defs.depth() + '#error')
         return self.skip_to_newline()
@@ -308,34 +312,8 @@ class Preprocessor(TokenManager):
         self.tokens_added += size
 
     def substitute(self):
-        expansion_stack = []
-        def subst(token):
-            if token[0] not in ['identifier', 'keyword']:
-                return None
-            if token[1] in expansion_stack:
-                return None
-            substitutions = set()
-            opts = self.defs.get_replacements(token)
-            if opts == set():
-                return []
-            if opts == {DefOption([token])}:
-                return None
-            expansion_stack.append(token[1])
-            for opt in opts:
-                tokens = []
-                for token in opt.tokens:
-                    tokens += subst(token) or [token]
-                if tokens:
-                    substitutions.add(DefOption(tokens))
-            expansion_stack.pop()
-            if len(substitutions) > 1:
-                return [('any', substitutions)]
-            elif len(substitutions) == 1:
-                return list(substitutions)[0].tokens
-            return []
-
         tok = self.next()
-        result = subst(tok)
+        result = self.defs.substitute(tok)
         if result is not None:
             dprint(3, f"::Substituting {tok[0]} '{tok[1]}': {tok_seq(result)}")
             self.emit_tokens(result)

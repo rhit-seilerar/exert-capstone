@@ -1,5 +1,12 @@
+class Evaluator:
+    def __init__(self, bitsize):
+        self.bitsize = bitsize
+
+    def evaluate(self, expression):
+        return expression.evaluate(self).evaluate(self).value
+
 class Expression:
-    def evaluate(self, bitsize):
+    def evaluate(self, evaluator):
         assert False
 
     def __str__(self):
@@ -10,11 +17,9 @@ class Integer(Expression):
         self.value = value
         self.unsigned = unsigned
 
-    def evaluate(self, bitsize):
-        base = 1 << bitsize
-        print(self.value)
+    def evaluate(self, evaluator):
+        base = 1 << evaluator.bitsize
         value = self.value % base
-        print(value)
         if not self.unsigned and value >= base / 2:
             value -= base
         return Integer(value, self.unsigned)
@@ -26,8 +31,8 @@ class Group(Expression):
     def __init__(self, expression):
         self.expression = expression
 
-    def evaluate(self, bitsize):
-        return self.expression.evaluate(bitsize)
+    def evaluate(self, evaluator):
+        return self.expression.evaluate(evaluator)
 
     def __str__(self):
         return f'({str(self.expression)})'
@@ -42,8 +47,8 @@ class UnaryOperator(Operator):
         self.a = a
         self.signop = (lambda asig: asig) if signop is None else signop
 
-    def evaluate(self, bitsize):
-        aint = self.a.evaluate(bitsize)
+    def evaluate(self, evaluator):
+        aint = self.a.evaluate(evaluator)
         unsigned = self.signop(aint.unsigned)
         return Integer(self.op(aint.value), unsigned)
 
@@ -58,9 +63,9 @@ class BinaryOperator(Operator):
         self.b = b
         self.signop = (lambda asig, bsig: asig or bsig) if signop is None else signop
 
-    def evaluate(self, bitsize):
-        aint = self.a.evaluate(bitsize)
-        bint = self.b.evaluate(bitsize)
+    def evaluate(self, evaluator):
+        aint = self.a.evaluate(evaluator)
+        bint = self.b.evaluate(evaluator)
         unsigned = self.signop(aint.unsigned, bint.unsigned)
         return Integer(self.op(aint.value, bint.value), unsigned)
 
@@ -115,24 +120,24 @@ class LeftShift(BinaryOperator):
     def __init__(self, a, b):
         super().__init__(a, b, '<<', None)
 
-    def evaluate(self, bitsize):
-        aint = self.a.evaluate(bitsize)
-        bint = self.b.evaluate(bitsize)
+    def evaluate(self, evaluator):
+        aint = self.a.evaluate(evaluator)
+        bint = self.b.evaluate(evaluator)
         unsigned = aint.unsigned
-        return Integer(0 if bint.value < 0 or bint.value >= bitsize
+        return Integer(0 if bint.value < 0 or bint.value >= evaluator.bitsize
             else aint.value << bint.value, unsigned)
 
 class RightShift(BinaryOperator):
     def __init__(self, a, b):
         super().__init__(a, b, '>>', None)
 
-    def evaluate(self, bitsize):
-        aint = self.a.evaluate(bitsize)
-        bint = self.b.evaluate(bitsize)
+    def evaluate(self, evaluator):
+        aint = self.a.evaluate(evaluator)
+        bint = self.b.evaluate(evaluator)
         unsigned = aint.unsigned
         return Integer(0 if bint.value < 0
-            else -1 if bint.value >= bitsize and aint.value < 0
-            else 0 if bint.value >= bitsize
+            else -1 if bint.value >= evaluator.bitsize and aint.value < 0
+            else 0 if bint.value >= evaluator.bitsize
             else aint.value >> bint.value, unsigned)
 
 class LogicalNot(UnaryOperator):
@@ -177,10 +182,10 @@ class Conditional(Operator):
         self.b = b
         self.c = c
 
-    def evaluate(self, bitsize):
-        aint = self.a.evaluate(bitsize)
-        bint = self.b.evaluate(bitsize)
-        cint = self.c.evaluate(bitsize)
+    def evaluate(self, evaluator):
+        aint = self.a.evaluate(evaluator)
+        bint = self.b.evaluate(evaluator)
+        cint = self.c.evaluate(evaluator)
         unsigned = bint.unsigned or cint.unsigned
         return Integer(bint.value if aint.value else cint.value, unsigned)
 
@@ -266,7 +271,6 @@ def parse_expression(tokens, bitsize):
             elif gstart is None:
                 nex.append(token[1])
         else:
-            print(token)
             assert False
     assert gstart is None
     cur = nex
@@ -313,5 +317,9 @@ def parse_expression(tokens, bitsize):
     assert len(cur) == 1 and isinstance(cur[0], Expression)
     return cur[0]
 
-def evaluate(expression, bitsize):
-    return expression.evaluate(bitsize).evaluate(bitsize).value
+def eval_expression(expression, bitsize):
+    return Evaluator(bitsize).evaluate(expression)
+
+def evaluate(tokens, bitsize):
+    expression = parse_expression(tokens, bitsize)
+    return Evaluator(bitsize).evaluate(expression)

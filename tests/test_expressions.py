@@ -45,13 +45,14 @@ def test_parse():
 def evaluate(expr, bitsize, expected, unsigned):
     tokens = TOKENIZER.tokenize(expr)
     parsed = expressions.parse_expression(tokens, bitsize)
-    rint = parsed.evaluate(bitsize).evaluate(bitsize)
-    result = expressions.evaluate(parsed, bitsize)
+    evaluator = expressions.Evaluator(bitsize)
+    rint = parsed.evaluate(evaluator).evaluate(evaluator)
+    result = expressions.eval_expression(parsed, bitsize)
     assert result == expected
     assert rint.value == expected
     assert rint.unsigned == unsigned
 
-def test_evaluate():
+def test_eval():
     evaluate('1u', 32, 1, True)
     evaluate('(1u)', 32, 1, True)
     evaluate('-(1u)', 32, -1, False)
@@ -79,3 +80,13 @@ def test_bitsize():
     evaluate('1 << 32', 64, 2**32, False)
     evaluate('0xffffffffu + 1', 32, 0, True)
     evaluate('0xffffffffu + 1', 64, 2**32, True)
+
+def test_evaluate():
+    tokens = [
+        ('integer', 1, ''),
+        ('operator', '+'),
+        ('integer', 3, '')
+    ]
+    result1 = expressions.evaluate(tokens, 32)
+    result2 = expressions.eval_expression(expressions.parse_expression(tokens, 32), 32)
+    assert result1 == result2 and result2 == 4

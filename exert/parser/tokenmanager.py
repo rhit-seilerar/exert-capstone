@@ -7,7 +7,7 @@ def tok_str(token, newlines = False):
         else f'{n[1]} ' if n[0] in ['keyword', 'identifier'] \
         else f'{n[1]}{n[2]} ' if n[0] == 'integer' \
         else f'{n[2]}{n[1]}{">" if n[2] == "<" else n[2]} ' if n[0] == 'string' \
-        else f'<ANY>{{{", ".join(str(v) for v in n[1])}}} ' if n[0] == 'any' \
+        else f'<ANY {n[1]}>{{{", ".join(str(v) for v in n[2])}}} ' if n[0] == 'any' \
         else str(n[1])
     if newlines:
         return string
@@ -16,6 +16,18 @@ def tok_str(token, newlines = False):
 def tok_seq(tokens, newlines = False):
     return ''.join(tok_str(n, newlines) for n in tokens).strip() \
         if isinstance(tokens, list) else tokens
+
+def mk_int(num, suffix = ''):
+    return ('integer', num, suffix)
+
+def mk_ident(sym):
+    return ('identifier', sym)
+
+def mk_op(op):
+    return ('operator', op)
+
+def mk_str(string, suffix = '"'):
+    return ('string', string, suffix)
 
 class TokenManager:
     def __init__(self):

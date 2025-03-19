@@ -40,6 +40,7 @@ def parse(filename, arch):
 
     preprocessor = Preprocessor(
         tokenizer,
+        64, #TODO bitsize
         includes = [
             f'{SOURCE_PATH}/include/',
             f'{SOURCE_PATH}/arch/{arch}/include/',

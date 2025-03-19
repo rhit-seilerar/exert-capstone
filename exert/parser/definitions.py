@@ -1,4 +1,7 @@
-from exert.parser.tokenmanager import tok_seq
+import itertools
+
+from exert.parser import expressions
+from exert.parser.tokenmanager import tok_seq, mk_ident, mk_op, mk_int
 from exert.utilities.debug import dprint
 
 def def_dict_str(defs):
@@ -296,7 +299,8 @@ class DefState:
     of symbols.
     """
 
-    def __init__(self, initial = None):
+    def __init__(self, bitsize, initial = None):
+        self.bitsize = bitsize
         self.keys = set()
         self.layers = [DefLayer(False)]
         self.layers[0].add_map(DefMap(None, False, initial), False, closing = True)
@@ -334,33 +338,45 @@ class DefState:
             self.keys.add(sym)
             self.layers[-1].current.undefine(sym)
 
-    def on_if(self, conditions):
-        dprint(2, '  ' * self.depth() + f'#if {def_dict_str(conditions)}')
+    def on_if(self, guarantees, cond_tokens):
+        dprint(2, '  ' * self.depth() + f'#if {def_dict_str(guarantees)}')
         parent = self.layers[-1].current if len(self.layers) > 0 else None
-        defmap = DefMap(parent, initial = conditions)
+        defmap = DefMap(parent, initial = guarantees)
         skipping = not self.layers[-1].current.matches(defmap)
         self.layers.append(DefLayer(self.is_skipping()))
         self.layers[-1].add_map(defmap, skipping)
         return not skipping
 
     def on_ifdef(self, sym):
-        return self.on_if({ sym: Def(defined = True) })
+        return self.on_if(
+            { sym: Def(defined = True) },
+            [ mk_ident('defined'), mk_ident(sym) ]
+        )
 
     def on_ifndef(self, sym):
-        return self.on_if({ sym: Def(undefined = True) })
+        return self.on_if(
+            { sym: Def(undefined = True) },
+            [ mk_op('!'), mk_ident('defined'), mk_ident(sym) ]
+        )
 
-    def on_elif(self, conditions):
-        dprint(2, '  ' * self.depth() + f'#elif {def_dict_str(conditions)}')
-        defmap = DefMap(self.layers[-2].current, initial = conditions)
+    def on_elif(self, guarantees, cond_tokens):
+        dprint(2, '  ' * self.depth() + f'#elif {def_dict_str(guarantees)}')
+        defmap = DefMap(self.layers[-2].current, initial = guarantees)
         skipping = not self.layers[-1].current.matches(defmap)
         self.layers[-1].add_map(defmap, skipping)
         return not skipping
 
     def on_elifdef(self, sym):
-        return self.on_elif({ sym: Def(defined = True) })
+        return self.on_elif(
+            { sym: Def(defined = True) },
+            [ mk_ident('defined'), mk_ident(sym) ]
+        )
 
     def on_elifndef(self, sym):
-        return self.on_if({ sym: Def(undefined = True) })
+        return self.on_elif(
+            { sym: Def(undefined = True) },
+            [ mk_op('!'), mk_ident('defined'), mk_ident(sym) ]
+        )
 
     def on_else(self):
         dprint(2, '  ' * self.depth() + '#else')
@@ -375,8 +391,131 @@ class DefState:
         layer = self.layers.pop()
         self.layers[-1].current.combine(layer.accumulator.defs, replace = layer.closed)
 
-    def get_replacements(self, sym_tok):
+    def get_replacements(self, sym_tok, undef_value = None):
         replacements = self.layers[-1].current[sym_tok[1]].options.copy()
         if not self.layers[-1].current[sym_tok[1]].is_defined():
-            replacements.add(DefOption([sym_tok]))
+            replacements.add(DefOption([sym_tok] if undef_value is None
+                else undef_value))
         return replacements
+
+    def substitute(self, tok):
+        expansion_stack = []
+        def subst(token):
+            if token[0] not in ['identifier', 'keyword']:
+                return None
+            if token[1] in expansion_stack:
+                return None
+            substitutions = set()
+            opts = self.get_replacements(token)
+            if opts == set():
+                return []
+            if opts == {DefOption([token])}:
+                return None
+            expansion_stack.append(token[1])
+            for opt in opts:
+                tokens = []
+                for opt_token in opt.tokens:
+                    tokens += subst(opt_token) or [opt_token]
+                if tokens:
+                    substitutions.add(DefOption(tokens))
+            expansion_stack.pop()
+            if len(substitutions) > 1:
+                return [('any', token[1], substitutions)]
+            if len(substitutions) == 1:
+                return list(substitutions)[0].tokens
+            return []
+        return subst(tok)
+
+    def eval_unary_defined(self, toks):
+        # Convert 'defined(DEFN)' to 0 or 1
+        nex = []
+        i = 0
+        identlike = ['identifier', 'keyword']
+        while i < len(toks):
+            if toks[i] == mk_ident('defined'):
+                candidate = None
+                if i + 2 < len(toks) and toks[i+1] == mk_op('(') \
+                    and toks[i+2][0] in identlike \
+                    and toks[i+3] == mk_op(')'):
+                    candidate = toks[i+2]
+                    i += 4
+                elif i + 1 < len(toks) and toks[i+1][0] in identlike:
+                    candidate = toks[i+1]
+                    i += 2
+                if candidate is not None:
+                    defn = self.layers[-1].current[candidate[1]]
+                    if defn.is_defined():
+                        nex.append(mk_int(1))
+                    elif defn.is_undefined():
+                        nex.append(mk_int(0))
+                    else:
+                        nex.append(('any', f'defined({candidate[1]})', {
+                            DefOption([mk_int(0)]),
+                            DefOption([mk_int(1)])
+                        }))
+                    continue
+            nex.append(toks[i])
+            i += 1
+        return nex
+
+    def eval_replace_identifiers(self, toks):
+        # Replace any remaining identifiers with 0, except 'true', which is 1
+        multis = {}
+        def remove_identifiers(tokens):
+            nex = []
+            for tok in tokens:
+                if tok[0] == 'identifier':
+                    nex.append(mk_int(1) if tok[1] == 'true' else mk_int(0))
+                elif tok[0] == 'any':
+                    opts = [remove_identifiers(op.tokens.copy()) for op in tok[2]]
+                    multis[tok[1]] = opts
+                    nex.append(('any', tok[1], {DefOption(t) for t in opts}))
+                else:
+                    nex.append(tok)
+            return nex
+        return remove_identifiers(toks), multis
+
+    def eval_expression(self, toks):
+        if len(toks) == 0:
+            return expressions.evaluate([mk_int(1)], self.bitsize)
+
+        toks = self.eval_unary_defined(toks)
+
+        # Substitute the macros
+        nex = []
+        for tok in toks:
+            newtoks = self.substitute(tok)
+            if newtoks is None:
+                newtoks = [tok]
+            nex += newtoks
+        toks = nex
+
+        toks, multis = self.eval_replace_identifiers(toks)
+
+        # Early-out if we don't have any multi-value macros
+        if len(multis) == 0:
+            return expressions.evaluate(toks, self.bitsize)
+
+        # Permute all multi-value macros into a chain of 'or's
+        # TODO please improve this
+        # Note that this doesn't consider CLI definitions
+        lists = [[(k, v) for v in vs] for k, vs in multis.items()]
+        permutations = list(itertools.product(*lists))
+        lookups = [{k: v for (k, v) in p} for p in permutations]
+
+        joined = []
+        def insert_permutation(lookup, tokens):
+            nex = []
+            for tok in tokens:
+                if tok[0] == 'any':
+                    nex += insert_permutation(lookup, lookup[tok[1]])
+                else:
+                    nex.append(tok)
+            return nex
+        for lookup in lookups:
+            variant = insert_permutation(lookup, toks)
+            joined += variant
+            joined.append(mk_op('||'))
+        del joined[-1]
+
+        return expressions.evaluate(joined, self.bitsize)

@@ -52,6 +52,6 @@ def test_read_file():
 
 def test_preprocessor():
     tokenizer = Tokenizer()
-    preprocessor = Preprocessor(tokenizer, [], {}, filereader = dummy_reader)
+    preprocessor = Preprocessor(tokenizer, 32, [], {}, filereader = dummy_reader)
     preprocessor.preprocess('#include "base.h"', './cache/test-preprocessor')
     print(str(preprocessor))

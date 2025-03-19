@@ -1,4 +1,6 @@
 from tests import utils
+from exert.parser.tokenizer import Tokenizer
+from exert.parser import tokenmanager as tm
 from exert.parser.definitions import DefOption, Def, DefMap, DefLayer, DefState
 
 def test_defoption_eq():
@@ -354,10 +356,10 @@ def test_deflayer_add_map():
         pass
 
 def test_defstate():
-    defstate = DefState()
-    defstate.on_if({})
+    defstate = DefState(64)
+    defstate.on_if({}, [])
     defstate.on_undef('DEFN1')
-    defstate.on_elif({})
+    defstate.on_elif({}, [])
     defstate.on_ifndef('if')
     defstate.on_ifdef('abc')
     defstate.on_define('DEFN1', ['x', '__VA_ARGS__'], \
@@ -379,9 +381,9 @@ def test_defstate():
     defstate.on_undef('DEFN5')
     defstate.on_endif()
 
-    defstate.on_if({})
+    defstate.on_if({}, [])
     defstate.on_define('TEST_DEFN', [], [('integer', 1, '')])
-    defstate.on_elif({})
+    defstate.on_elif({}, [])
     defstate.on_undef('TEST_DEFN')
     defstate.on_endif()
 
@@ -392,7 +394,7 @@ def test_defstate():
     defstate.on_define('TEST_DEFN2', [], [('integer', 3, '')])
     defstate.on_endif()
 
-    assert defstate.flat_unknowns() == {'TEST_DEFN'}
+    assert defstate.flat_unknowns() == {'DEFN1', 'TEST_DEFN'}
 
     assert defstate.flat_defines() == {
         'TEST_DEFN2': Def(
@@ -401,3 +403,139 @@ def test_defstate():
             defined = True
         )
     }
+
+def test_substitute():
+    defstate = DefState(64)
+
+    defstate.on_define('STRING', [], [('string', '%d', '"')])
+    defstate.on_define('DEFN', ['a'], [tm.mk_ident('a'), tm.mk_op('*'), tm.mk_int(3)])
+    assert defstate.substitute(tm.mk_ident('STRING')) == \
+        [('string', '%d', '"')]
+    assert defstate.substitute(tm.mk_ident('DEFN')) == \
+        [tm.mk_ident('a'), tm.mk_op('*'), tm.mk_int(3)]
+
+    defstate.on_undef('STRING')
+    assert defstate.substitute(tm.mk_ident('STRING')) is None
+
+    defstate.on_undef('STRING')
+    defstate.on_define('STRING', [], [tm.mk_ident('SECOND')])
+    defstate.on_define('SECOND', [], [tm.mk_ident('THIRD')])
+    assert defstate.substitute(tm.mk_ident('STRING')) == [tm.mk_ident('THIRD')]
+
+    defstate.on_undef('SECOND')
+    defstate.on_define('SECOND', [], [tm.mk_ident('STRING')])
+    assert defstate.substitute(tm.mk_ident('STRING')) == [tm.mk_ident('STRING')]
+
+    defstate.on_undef('STRING')
+    defstate.on_define('STRING', [], [])
+    assert defstate.substitute(tm.mk_ident('STRING')) == []
+
+    defstate.on_undef('STRING')
+    defstate.layers[-1].current['STRING'] = Def()
+    assert defstate.substitute(tm.mk_ident('STRING')) is None
+    defstate.layers[-1].current['STRING'] = Def(undefined = True)
+    assert defstate.substitute(tm.mk_ident('STRING')) is None
+    defstate.layers[-1].current['STRING'] = Def(defined = True)
+    assert defstate.substitute(tm.mk_ident('STRING')) == []
+    defstate.on_undef('SECOND')
+    defstate.on_undef('THIRD')
+    defstate.layers[-1].current['STRING'] = Def(
+        DefOption([('string', '%d', '"')]),
+        DefOption([tm.mk_ident('SECOND'), tm.mk_ident('THIRD')]),
+        undefined = True,
+        defined = True)
+    result = defstate.substitute(tm.mk_ident('STRING'))
+    assert len(result) == 1
+    assert result[0][0] == 'any'
+    assert result[0][1] == 'STRING'
+    assert isinstance(result[0][2], set)
+    opts = [opt.tokens for opt in result[0][2]]
+    assert [('string', '%d', '"')] in opts
+    assert [tm.mk_ident('STRING')] in opts
+    assert [tm.mk_ident('SECOND'), (tm.mk_ident('THIRD'))] in opts
+
+    defstate.layers[-1].current['SECOND'] = Def(
+        DefOption([tm.mk_int(0)]),
+        DefOption([tm.mk_int(1)]),
+    )
+    assert defstate.substitute(tm.mk_ident('SECOND'))[0][0] == 'any'
+
+def test_eval_unary_defined():
+    ds = DefState(64)
+    def expect(string, value):
+        assert tm.tok_seq(ds.eval_unary_defined(Tokenizer().tokenize(string))) \
+            .strip() == value
+    expect('1 2 3', '1 2 3')
+    expect('defined 1', 'defined 1')
+    expect('defined()', 'defined ( )')
+
+    ds.on_define('FIRST', [], [])
+    expect('3 2 defined(FIRST) 4', '3 2 1 4')
+    ds.on_undef('FIRST')
+    ds.on_define('FIRST', [], [tm.mk_int(1)])
+    expect('3 2 defined(FIRST) 4', '3 2 1 4')
+    ds.on_undef('FIRST')
+    expect('3 2 defined(FIRST) 4', '3 2 0 4')
+    expect('3 2 defined FIRST 4', '3 2 0 4')
+
+    ds.layers[-1].current['FIRST'] = Def(defined = True, undefined = True)
+    toks = ds.eval_unary_defined(Tokenizer().tokenize('abc defined(FIRST) def'))
+    assert toks[0] == tm.mk_ident('abc')
+    assert toks[1][0] == 'any'
+    assert toks[1][1] == 'defined(FIRST)'
+    assert isinstance(toks[1][2], set) and len(toks[1][2]) == 2
+    assert DefOption([tm.mk_int(0)]) in toks[1][2]
+    assert DefOption([tm.mk_int(1)]) in toks[1][2]
+    assert toks[2] == tm.mk_ident('def')
+
+def test_eval_replace_identifiers():
+    ds = DefState(64)
+    def expect(string, value, expected_multis):
+        toks = Tokenizer().tokenize(string)
+        toks, multis = ds.eval_replace_identifiers(toks)
+        assert tm.tok_seq(toks).strip() == value
+        assert multis == expected_multis
+    expect('1 2 ABC 3 4', '1 2 0 3 4', {})
+    expect('1 2 true 3 4', '1 2 1 3 4', {})
+    toks, multis = ds.eval_replace_identifiers([
+        tm.mk_str('abc'),
+        ('any', 'FIRST', {
+            DefOption([tm.mk_int(1)]),
+            DefOption([tm.mk_str('def'), tm.mk_ident('ghi')])
+        })
+    ])
+    assert toks[0] == tm.mk_str('abc')
+    assert toks[1][0] == 'any'
+    assert toks[1][1] == 'FIRST'
+    assert isinstance(toks[1][2], set) and len(toks[1][2]) == 2
+    assert DefOption([tm.mk_int(1)]) in toks[1][2]
+    assert DefOption([tm.mk_str('def'), tm.mk_int(0)]) in toks[1][2]
+    assert 'FIRST' in multis
+    assert [tm.mk_int(1)] in multis['FIRST']
+    assert [tm.mk_str('def'), tm.mk_int(0)] in multis['FIRST']
+
+def test_eval_expression():
+    ds = DefState(64)
+    def expect(string, value):
+        assert ds.eval_expression(Tokenizer().tokenize(string)) == value
+
+    expect('', 1)
+    expect('1u', 1)
+    expect('0', 0)
+
+    ds.on_define('FIRST', [], [tm.mk_int(4)])
+    expect('defined(FIRST)', 1)
+    expect('!defined(FIRST)', 0)
+    ds.on_undef('FIRST')
+    expect('FIRST', 0)
+
+    ds.layers[-1].current['SECOND'] = Def(
+        DefOption([tm.mk_int(0)]),
+        DefOption([tm.mk_int(1)]),
+    )
+    expect('!SECOND', 1)
+    ds.layers[-1].current['SECOND'] = Def(
+        DefOption([tm.mk_int(2)]),
+        DefOption([tm.mk_int(1)]),
+    )
+    expect('!SECOND', 0)
