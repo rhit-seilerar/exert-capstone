@@ -10,8 +10,8 @@ from exert.utilities.command import run_command, get_stdout
 
 PANDA_CONTAINER = 'pandare/panda'
 XMAKE_CONTAINER = 'ghcr.io/panda-re/embedded-toolchains'
-def command_dict(my_command, my_capture_output = False, my_check = True):
-    cd = {'comm' : my_command, 'cap': my_capture_output, 'chk' : my_check}
+def command_dict(command, capture_output = False, check = True):
+    cd = {'comm' : command, 'cap': capture_output, 'chk' : check}
     return cd
 
 def main():
@@ -54,8 +54,8 @@ def main():
     dev_attach_parser.add_argument('-c', '--container', default='PANDA',
         help='Specify which Docker container to attach into')
     dev_attach_parser.set_defaults(func = lambda parsed:
-            dev_rta(in_docker=parsed.docker, reset=parsed.reset, container=parsed.container, rta_mode=2)
-            )
+            dev_rta(in_docker=parsed.docker, reset=parsed.reset,
+                container=parsed.container, rta_mode=2))
 
     dev_test_parser = dev_subparsers.add_parser('test',
         help='Run the unit tests for the EXERT system')
@@ -79,8 +79,8 @@ def main():
     dev_rules_parser.add_argument('-r', '--reset', action='store_true',
         help='Reset the container first')
     dev_rules_parser.set_defaults(func = lambda parsed:
-            dev_rta(in_docker=parsed.docker, reset=parsed.reset, version=parsed.version, arch=parsed.arch, rta_mode=0)
-            )
+            dev_rta(in_docker=parsed.docker, reset=parsed.reset, version=parsed.version,
+                arch=parsed.arch, rta_mode=0))
 
     parsed = parser.parse_args()
     parsed.func(parsed)
@@ -90,10 +90,12 @@ def dev_reset():
     run_command('docker stop pandare-init', True, False)
     volume_srd(2)
 
-def dev_rta(in_docker, reset, version=None, arch=None, container = None, rta_mode = 1): #Rules, Tests, Attach. 0,1,2 to determine if its a rules, tests, or attach. true if test, false if rules
-    my_command = ''
-    my_name = 'pandare'
-    my_container = PANDA_CONTAINER
+# Rules, Tests, Attach. 0,1,2 to determine if its a rules, tests, or attach.
+# true if test, false if rules
+def dev_rta(in_docker, reset, version=None, arch=None, container = None, rta_mode = 1):
+    command = ''
+    name = 'pandare'
+    container = container or PANDA_CONTAINER
     if reset:
         if in_docker:
             print("Cannot reset from within a container. Command cancelled.")
@@ -105,18 +107,19 @@ def dev_rta(in_docker, reset, version=None, arch=None, container = None, rta_mod
 
     if rta_mode == 1:
         make_usermode()
-        my_command = 'pytest --cov-config=.coveragerc --cov=exert tests/'
+        command = 'pytest --cov-config=.coveragerc --cov=exert tests/'
     elif rta_mode == 0:
-        my_command = f'python -u -m exert.parser.parser {version} {arch}'
+        command = f'python -u -m exert.parser.parser {version} {arch}'
     else:
         if container == 'PANDA':
             print('Container is panda')
         elif container == 'XMAKE':
-            my_name = 'XMAKE'
-            my_container = XMAKE_CONTAINER
+            print('Container is xmake')
+            name = 'XMAKE'
         else:
             print('Container not recognized, defaulting')
-    run_docker(interactive = True, command = my_command, in_docker = in_docker, name = my_name, container=my_container)
+    run_docker(interactive = True, command = command, in_docker = in_docker,
+        name = name, container=container)
 
     if rta_mode == 2 or not in_docker:
         volume_srd(1)
@@ -150,7 +153,8 @@ def init(parsed):
 
     print('EXERT successfully initialized!')
 
-def volume_srd(srd=0): #about to do something super silly. srd = Sync Reverse Delete. 0 = sync, 1 = reverse, 2 = delete
+# srd = Sync Reverse Delete. 0 = sync, 1 = reverse, 2 = delete
+def volume_srd(srd=0):
     local_mount = f'-v "{os.path.dirname(os.path.realpath(__file__))}:/local"'
     exclude = '--exclude .git'
 
@@ -163,22 +167,21 @@ def volume_srd(srd=0): #about to do something super silly. srd = Sync Reverse De
             return
         exclude += ' --exclude cache'
 
-    my_command = ''
-    my_cap = False
-    my_extra_args = ''
+    command = ''
+    cap = False
+    extra_args = ''
     if not container_is_running('pandare-init'):
-        my_command = 'apt-get update && apt-get install -y rsync'
-        my_extra_args = local_mount
+        command = 'apt-get update && apt-get install -y rsync'
+        extra_args = local_mount
+        cap = True
     if srd == 1:
-        my_command = f'rsync -auv --progress {exclude} /mount/ /local'
-        my_cap = True
+        command = f'rsync -auv --progress {exclude} /mount/ /local'
+        cap = True
     else:
-        my_command = f'rm -rf /mount/exert/ && rm -rf /mount/tests && rm -rf /mount/kernels/ && rsync -auv --progress {exclude} /local/ /mount'
-        my_cap = True
-    run_docker(name = 'pandare-init',
-               command = my_command,
-               capture_output=my_cap,
-               extra_args=my_extra_args)
+        command = f'rm -rf /mount/exert/ && rm -rf /mount/tests && rm -rf /mount/kernels/ \
+            && rsync -auv --progress {exclude} /local/ /mount'
+        cap = True
+    run_docker(name = 'pandare-init', command = command, capture_output=cap, extra_args=extra_args)
 
 def osi(parsed):
     """Validate the provided image, and then generate its OSI information"""
@@ -206,18 +209,20 @@ def run_docker(container = PANDA_CONTAINER, *, name = 'pandare', command = '',
         args = f'--rm -it {name_arg} {mount} {extra_args} {container}'
 
         if name is None:
-            commands.append(command_dict(f'docker run {args} bash -c "cd /mount; {command}"', capture_output, False))
+            commands.append(command_dict(f'docker run {args} bash -c "cd /mount; {command}"',
+                capture_output, False))
         else:
             if not container_is_running(name):
                 commands.append(command_dict(f'docker run -d {args}'))
                 if name == 'pandare':
                     commands.append(command_dict(f'docker exec -t {name} bash -c '
                         '"cd /mount; chmod +x ./setup.sh; ./setup.sh"'))
-            commands.append(command_dict(f'docker exec -t {name} bash -c "cd /mount; {command}"'))
+            commands.append(command_dict(f'docker exec -t {name} bash -c "cd /mount; {command}"',
+                capture_output))
 
             if interactive:
                 commands.append(command_dict(f'docker exec -it {name} bash"'))
-        for i, c in enumerate(commands):
+        for c in commands:
             run_command(c['comm'], capture_output=c['cap'], check=c['chk'])
     except CalledProcessError:
         print("Commands failed! Exiting.")
