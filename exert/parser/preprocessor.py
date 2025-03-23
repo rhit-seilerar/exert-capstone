@@ -1,11 +1,16 @@
 """
 TODO There are still a number of optimizations that can be done for better results:
  - #defines with a replacement with no #undef preceding them guarantee only no definition from cli
+ - Guarantees from #if/#elif expressions
  - Guarantees from #if/#elif can be used in the rules system
+ - #error should cancel the block
+ - #pragma
+ - String concatenation, token concatenation, token stringification
 """
 
 import os
 import types
+
 from exert.parser.tokenmanager import tok_seq, TokenManager
 from exert.parser.definitions import DefState, Def, DefOption
 from exert.parser.serializer import write_tokens, read_tokens
@@ -19,7 +24,7 @@ def read_file(path):
         return None
 
 class Preprocessor(TokenManager):
-    def __init__(self, tokenizer, includes, defns, filereader = read_file):
+    def __init__(self, tokenizer, bitsize, includes, defns, filereader = read_file):
         super().__init__()
         self.tokenizer = tokenizer
         self.includes = includes
@@ -27,9 +32,9 @@ class Preprocessor(TokenManager):
         self.invalid_paths = set()
         self.tokenized_cache = {}
         self.unresolved = []
-        self.defs = DefState({key: \
-            Def(DefOption(tokenizer.tokenize(defns[key])), defined = True) \
-                for key in defns})
+        self.defs = DefState(bitsize, initial = {
+            key: Def(DefOption(tokenizer.tokenize(defns[key]))) for key in defns
+        })
 
     def load_file(self, path, is_relative):
         if self.defs.is_skipping():
@@ -75,13 +80,13 @@ class Preprocessor(TokenManager):
         self.invalid_paths.add(path)
         return True
 
-    def push_optional(self, dirtype, name):
-        self.conditions.append(name)
-        self.emit_tokens([('optional', dirtype, name)])
+    def push_optional(self):
+        if not self.defs.is_skipping():
+            self.emit_tokens([('optional', self.defs.get_cond_tokens())])
 
-    def pop_optional(self, dirtype):
-        self.emit_tokens([('optional', dirtype, '')])
-        return self.conditions.pop()
+    def pop_optional(self):
+        if not self.defs.is_skipping():
+            self.emit_tokens([('optional', [])])
 
     def skip_to_newline(self, offset = 0):
         tokens = []
@@ -156,8 +161,8 @@ class Preprocessor(TokenManager):
             return self.err('#ifdef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        if self.defs.on_ifdef(name):
-            self.push_optional('if', f'defined({name})')
+        self.defs.on_ifdef(name)
+        self.push_optional()
         return True
 
     def handle_ifndef(self):
@@ -165,8 +170,8 @@ class Preprocessor(TokenManager):
             return self.err('#ifndef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        if self.defs.on_ifndef(name):
-            self.push_optional('if', f'!defined({name})')
+        self.defs.on_ifndef(name)
+        self.push_optional()
         return True
 
     def handle_elifdef(self):
@@ -174,14 +179,9 @@ class Preprocessor(TokenManager):
             return self.err('#elifdef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        if self.defs.on_elifdef(name):
-            condition = None
-            if self.defs.layers[-1].any_kept:
-                condition = self.pop_optional('else')
-            if condition is not None:
-                self.push_optional('if', f'!({condition}) && defined({name})')
-            else:
-                self.push_optional('if', f'defined({name})')
+        self.pop_optional()
+        self.defs.on_elifdef(name)
+        self.push_optional()
         return True
 
     def handle_elifndef(self):
@@ -189,61 +189,42 @@ class Preprocessor(TokenManager):
             return self.err('#elifndef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        condition = None
-        if self.defs.layers[-1].any_kept:
-            condition = self.pop_optional('else')
-        if self.defs.on_elifndef(name):
-            if condition is not None:
-                self.push_optional('if', f'!({condition}) && !defined({name})')
-            else:
-                self.push_optional('if', f'!defined({name})')
+        self.pop_optional()
+        self.defs.on_elifndef(name)
+        self.push_optional()
         return True
 
     def handle_if(self):
         if not (tokens := self.skip_to_newline()):
             return False
-        if self.defs.on_if({}):
-            self.push_optional('if', ' '.join(str(n[1]) for n in tokens))
+        self.defs.on_if(tokens)
+        self.push_optional()
         return True
 
     def handle_elif(self):
         if not (tokens := self.skip_to_newline()):
             return False
-        condition = None
-        if self.defs.layers[-1].any_kept:
-            condition = self.pop_optional('else')
-        if self.defs.on_elif({}):
-            cond_str = " ".join(str(n) for n in tokens)
-            if condition is not None:
-                self.push_optional('if', f'!({condition}) && ({cond_str})')
-            else:
-                self.push_optional('if', f'{cond_str}')
+        self.pop_optional()
+        self.defs.on_elif(tokens)
+        self.push_optional()
         return True
 
     def handle_else(self):
-        #TODO get cond str from defmap conditions
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        condition = None
-        if self.defs.layers[-1].any_kept:
-            condition = self.pop_optional('else')
-        if self.defs.on_else():
-            if condition is not None:
-                self.push_optional('if', f'!({condition})')
-            else:
-                self.push_optional('if', '1')
+        self.pop_optional()
+        self.defs.on_else()
+        self.push_optional()
         return True
 
     def handle_endif(self):
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        if self.defs.layers[-1].any_kept:
-            self.pop_optional('endif')
+        self.pop_optional()
         self.defs.on_endif()
         return True
 
     def handle_error(self):
-        #TODO error should cancel the current block
         if not self.defs.is_skipping():
             dprint(2, '  ' * self.defs.depth() + '#error')
         return self.skip_to_newline()
@@ -308,39 +289,11 @@ class Preprocessor(TokenManager):
         self.tokens_added += size
 
     def substitute(self):
-        expansion_stack = []
-        def subst(token):
-            if token[0] not in ['identifier', 'keyword']:
-                return None
-            if token[1] in expansion_stack:
-                return None
-            substitutions = set()
-            opts = self.defs.get_replacements(token)
-            if opts == set():
-                return []
-            if opts == {DefOption([token])}:
-                return None
-            expansion_stack.append(token[1])
-            for opt in opts:
-                tokens = []
-                for token in opt.tokens:
-                    tokens += subst(token) or [token]
-                if tokens:
-                    substitutions.add(DefOption(tokens))
-            expansion_stack.pop()
-            if len(substitutions) > 1:
-                return [('any', substitutions)]
-            elif len(substitutions) == 1:
-                return list(substitutions)[0].tokens
-            return []
-
         tok = self.next()
-        result = subst(tok)
-        if result is not None:
+        result = self.defs.substitute(tok)
+        if result != [tok]:
             dprint(3, f"::Substituting {tok[0]} '{tok[1]}': {tok_seq(result)}")
-            self.emit_tokens(result)
-        else:
-            self.emit_tokens([tok])
+        self.emit_tokens(result)
 
     def emit_tokens(self, tokens):
         if self.cache_file:
@@ -354,39 +307,41 @@ class Preprocessor(TokenManager):
 
         if os.path.exists(cache):
             if not reset_cache:
-                return
+                return self
             os.remove(cache)
-
-        print('Cache file not found: Generating...')
+            assert not os.path.exists(cache)
+            print('Regenerating...')
+        else:
+            print('Cache file not found: Generating...')
 
         # String combination not implemented
         # Stringification and concatenation not implemented
 
-        self.cache_file = open(cache, mode = 'bw')
-        flush_size = 40000
+        with open(cache, mode = 'bw') as file:
+            self.cache_file = file
+            flush_size = 40000
 
-        while self.has_next() and not self.has_error:
-            self.print_progress()
+            while self.has_next() and not self.has_error:
+                self.print_progress()
 
-            if self.index > flush_size + 20:
-                del self.tokens[:flush_size]
-                self.index -= flush_size
-                self.len -= flush_size
+                if self.index > flush_size + 20:
+                    del self.tokens[:flush_size]
+                    self.index -= flush_size
+                    self.len -= flush_size
 
-            if self.consume_directive('#'):
-                self.parse_directive()
-                continue
+                if self.consume_directive('#'):
+                    self.parse_directive()
+                    continue
 
-            if self.defs.is_skipping():
-                self.next()
-                continue
+                if self.defs.is_skipping():
+                    self.next()
+                    continue
 
-            if self.peek_type() in ['identifier', 'keyword']:
-                self.substitute()
-                continue
+                if self.peek_type() in ['identifier', 'keyword']:
+                    self.substitute()
+                    continue
 
-            self.emit_tokens([self.next()])
-
+                self.emit_tokens([self.next()])
         return self
 
     def load(self, cache):

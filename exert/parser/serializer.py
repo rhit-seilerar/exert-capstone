@@ -44,15 +44,19 @@ def read_token(file):
         if tok_type == 'directive':
             return (tok_type, read_string(file, sizelength = 1))
         if tok_type == 'optional':
-            return (tok_type, read_string(file, sizelength = 1), read_string(file))
+            tokens = []
+            for _ in range(read_number(file)):
+                tokens.append(read_token(file))
+            return (tok_type, tokens)
         if tok_type == 'any':
+            name = read_string(file)
             options = set()
             for _ in range(read_number(file)):
                 option_tokens = []
                 for _ in range(read_number(file)):
                     option_tokens.append(read_token(file))
                 options.add(DefOption(option_tokens))
-            return (tok_type, options)
+            return (tok_type, name, options)
     assert False
 
 def read_tokens(path):
@@ -84,10 +88,11 @@ def write_tokens(file, tokens):
         elif token[0] == 'directive':
             write_string(file, token[1], sizelength = 1)
         elif token[0] == 'optional':
-            write_string(file, token[1], sizelength = 1)
-            write_string(file, token[2])
-        elif token[0] == 'any':
             write_number(file, len(token[1]))
-            for option in token[1]:
+            write_tokens(file, token[1])
+        elif token[0] == 'any':
+            write_string(file, token[1])
+            write_number(file, len(token[2]))
+            for option in token[2]:
                 write_number(file, len(option.tokens))
                 write_tokens(file, option.tokens)

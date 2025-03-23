@@ -1,5 +1,7 @@
+import exert.parser.tokenmanager as tm
+
 class Expression:
-    def evaluate(self, bitsize):
+    def evaluate(self, evaluator):
         assert False
 
     def __str__(self):
@@ -10,11 +12,9 @@ class Integer(Expression):
         self.value = value
         self.unsigned = unsigned
 
-    def evaluate(self, bitsize):
-        base = 1 << bitsize
-        print(self.value)
+    def evaluate(self, evaluator):
+        base = 1 << evaluator.bitsize
         value = self.value % base
-        print(value)
         if not self.unsigned and value >= base / 2:
             value -= base
         return Integer(value, self.unsigned)
@@ -22,12 +22,19 @@ class Integer(Expression):
     def __str__(self):
         return str(self.value) + ('u' if self.unsigned else '')
 
+class Identifier(Expression):
+    def __init__(self, a):
+        self.a = a
+
+    def evaluate(self, evaluator):
+        return Integer(1 if self.a == 'true' else 0, False)
+
 class Group(Expression):
     def __init__(self, expression):
         self.expression = expression
 
-    def evaluate(self, bitsize):
-        return self.expression.evaluate(bitsize)
+    def evaluate(self, evaluator):
+        return self.expression.evaluate(evaluator)
 
     def __str__(self):
         return f'({str(self.expression)})'
@@ -42,8 +49,8 @@ class UnaryOperator(Operator):
         self.a = a
         self.signop = (lambda asig: asig) if signop is None else signop
 
-    def evaluate(self, bitsize):
-        aint = self.a.evaluate(bitsize)
+    def evaluate(self, evaluator):
+        aint = self.a.evaluate(evaluator)
         unsigned = self.signop(aint.unsigned)
         return Integer(self.op(aint.value), unsigned)
 
@@ -58,14 +65,28 @@ class BinaryOperator(Operator):
         self.b = b
         self.signop = (lambda asig, bsig: asig or bsig) if signop is None else signop
 
-    def evaluate(self, bitsize):
-        aint = self.a.evaluate(bitsize)
-        bint = self.b.evaluate(bitsize)
+    def evaluate(self, evaluator):
+        aint = self.a.evaluate(evaluator)
+        bint = self.b.evaluate(evaluator)
         unsigned = self.signop(aint.unsigned, bint.unsigned)
         return Integer(self.op(aint.value, bint.value), unsigned)
 
     def __str__(self):
         return str(self.a) + f' {self.opname} ' + str(self.b)
+
+class UnaryDefined(UnaryOperator):
+    def __init__(self, a):
+        super().__init__(a, 'defined', lambda a: a)
+
+    def evaluate(self, evaluator):
+        if self.a in evaluator.lookup and evaluator.lookup[self.a].defined:
+            evaluator.defines[self.a] = True
+            return Integer(1, False)
+        evaluator.defines[self.a] = False
+        return Integer(0, False)
+
+    def __str__(self):
+        return f'defined({self.a})'
 
 class UnaryPlus(UnaryOperator):
     def __init__(self, a):
@@ -115,24 +136,24 @@ class LeftShift(BinaryOperator):
     def __init__(self, a, b):
         super().__init__(a, b, '<<', None)
 
-    def evaluate(self, bitsize):
-        aint = self.a.evaluate(bitsize)
-        bint = self.b.evaluate(bitsize)
+    def evaluate(self, evaluator):
+        aint = self.a.evaluate(evaluator)
+        bint = self.b.evaluate(evaluator)
         unsigned = aint.unsigned
-        return Integer(0 if bint.value < 0 or bint.value >= bitsize
+        return Integer(0 if bint.value < 0 or bint.value >= evaluator.bitsize
             else aint.value << bint.value, unsigned)
 
 class RightShift(BinaryOperator):
     def __init__(self, a, b):
         super().__init__(a, b, '>>', None)
 
-    def evaluate(self, bitsize):
-        aint = self.a.evaluate(bitsize)
-        bint = self.b.evaluate(bitsize)
+    def evaluate(self, evaluator):
+        aint = self.a.evaluate(evaluator)
+        bint = self.b.evaluate(evaluator)
         unsigned = aint.unsigned
         return Integer(0 if bint.value < 0
-            else -1 if bint.value >= bitsize and aint.value < 0
-            else 0 if bint.value >= bitsize
+            else -1 if bint.value >= evaluator.bitsize and aint.value < 0
+            else 0 if bint.value >= evaluator.bitsize
             else aint.value >> bint.value, unsigned)
 
 class LogicalNot(UnaryOperator):
@@ -177,10 +198,10 @@ class Conditional(Operator):
         self.b = b
         self.c = c
 
-    def evaluate(self, bitsize):
-        aint = self.a.evaluate(bitsize)
-        bint = self.b.evaluate(bitsize)
-        cint = self.c.evaluate(bitsize)
+    def evaluate(self, evaluator):
+        aint = self.a.evaluate(evaluator)
+        bint = self.b.evaluate(evaluator)
+        cint = self.c.evaluate(evaluator)
         unsigned = bint.unsigned or cint.unsigned
         return Integer(bint.value if aint.value else cint.value, unsigned)
 
@@ -237,37 +258,36 @@ PRECEDENCE_MAP = [
     }
 ]
 
-def parse_expression(tokens, bitsize):
-    # Early out if it's just a number
+def parse_expression(tokens):
     assert len(tokens) > 0
-    if len(tokens) == 1:
-        assert tokens[0][0] == 'integer'
-        return Integer(tokens[0][1], 'u' in tokens[0][2])
 
-    # Handle groups and terminals
+    # Handle groups, identifiers, defined(), and terminals
     nex = []
     gstart = None
     indent = 0
-    for i, token in enumerate(tokens):
-        if token[0] == 'integer':
-            if gstart is None:
+    i = 0
+    while i < len(tokens):
+        token = tokens[i]
+        if token == tm.mk_op('('):
+            if indent == 0:
+                gstart = i+1
+            indent += 1
+        elif token == tm.mk_op(')'):
+            indent -= 1
+            if indent == 0:
+                assert gstart is not None
+                nex.append(Group(parse_expression(tokens[gstart:i])))
+                gstart = None
+        elif gstart is None:
+            if token[0] == 'integer':
                 nex.append(Integer(token[1], 'u' in token[2]))
-        elif token[0] == 'operator':
-            if token[1] == '(':
-                if indent == 0:
-                    gstart = i+1
-                indent += 1
-            elif token[1] == ')':
-                indent -= 1
-                if indent == 0:
-                    assert gstart is not None
-                    nex.append(Group(parse_expression(tokens[gstart:i], bitsize)))
-                    gstart = None
-            elif gstart is None:
+            elif token[0] == 'defined':
+                nex.append(UnaryDefined(token[1]))
+            elif token[0] in ['identifier', 'keyword']:
+                nex.append(Identifier(token[1]))
+            elif token[0] == 'operator':
                 nex.append(token[1])
-        else:
-            print(token)
-            assert False
+        i += 1
     assert gstart is None
     cur = nex
 
@@ -313,5 +333,11 @@ def parse_expression(tokens, bitsize):
     assert len(cur) == 1 and isinstance(cur[0], Expression)
     return cur[0]
 
-def evaluate(expression, bitsize):
-    return expression.evaluate(bitsize).evaluate(bitsize).value
+class Evaluator:
+    def __init__(self, bitsize):
+        self.bitsize = bitsize
+
+    def evaluate(self, tokens):
+        parsed = parse_expression(tokens)
+        result = parsed.evaluate(self).evaluate(self)
+        return result.value, result.unsigned

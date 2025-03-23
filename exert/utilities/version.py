@@ -14,7 +14,10 @@ def version_from_string(entry):
 
 def compare_version(entry, target):
     if entry.x > target.x:
+    if entry.x > target.x:
         return True
+    if entry.x == target.x:
+        if entry.y > target.y:
     if entry.x == target.x:
         if entry.y > target.y:
             return True

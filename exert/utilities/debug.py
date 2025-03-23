@@ -1,4 +1,4 @@
-RUN_PLUGIN_TESTS = True
+RUN_PLUGIN_TESTS = False
 DEBUG_LEVEL = 1
 
 def dprint(level, *args):

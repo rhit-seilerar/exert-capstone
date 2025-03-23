@@ -1,4 +1,7 @@
 from tests import utils
+from exert.parser.tokenizer import Tokenizer
+from exert.parser import tokenmanager as tm
+from exert.parser import definitions
 from exert.parser.definitions import DefOption, Def, DefMap, DefLayer, DefState
 
 def test_defoption_eq():
@@ -8,7 +11,6 @@ def test_defoption_eq():
     assert empty != defoption12
     assert empty != 'abc'
     assert empty == DefOption([])
-    assert empty == empty
     assert defoption12 != defoptionab
     assert defoption12 == DefOption([('number', 1), ('number', 2)])
 
@@ -123,15 +125,6 @@ def test_def_get_replacements():
     assert defs[1].get_replacements(sym) == {DefOption([sym])}
     assert defs[2].get_replacements(sym) == options
     assert defs[3].get_replacements(sym) == options | {DefOption([sym])}
-
-def test_def_invert():
-    defs = make_def_variants()
-    for defn in defs:
-        defn.invert()
-    assert defs[0] == Def()
-    assert defs[1] == Def(defined = True)
-    assert defs[2] == Def(undefined = True)
-    assert defs[3] == Def(undefined = True)
 
 def test_def_combine():
     replace_defs = make_def_variants()
@@ -306,98 +299,187 @@ def test_defmap_str():
     assert str(defmap) == 'DefMap(parent = None, skipping = True, defs = ' \
         "{'abc': <undefined>})"
 
-def test_deflayer_add_map():
-    deflayer = DefLayer(False)
-    assert deflayer.conditions == DefMap(None)
-    assert deflayer.accumulator == DefMap(None)
-    assert deflayer.current is None
-    assert not deflayer.any_kept
-    assert not deflayer.closed
-    deflayer.add_map(DefMap(None, initial = {'abc': Def(defined = True)}), True)
-    assert deflayer.conditions == DefMap(None, initial = {
-        'abc': Def(undefined = True)
+def test_substitute():
+    defstate = DefState(64)
+
+    defstate.on_define('STRING', [], [('string', '%d', '"')])
+    defstate.on_define('DEFN', ['a'], [tm.mk_ident('a'), tm.mk_op('*'), tm.mk_int(3)])
+    assert defstate.substitute(tm.mk_ident('STRING')) == \
+        [('string', '%d', '"')]
+    assert defstate.substitute(tm.mk_ident('DEFN')) == \
+        [tm.mk_ident('a'), tm.mk_op('*'), tm.mk_int(3)]
+
+    defstate.on_undef('STRING')
+    assert defstate.substitute(tm.mk_ident('STRING')) == [tm.mk_ident('STRING')]
+
+    defstate.on_undef('STRING')
+    defstate.on_define('STRING', [], [tm.mk_ident('SECOND')])
+    defstate.on_define('SECOND', [], [tm.mk_ident('THIRD')])
+    assert defstate.substitute(tm.mk_ident('STRING')) == [tm.mk_ident('THIRD')]
+
+    defstate.on_undef('SECOND')
+    defstate.on_define('SECOND', [], [tm.mk_ident('STRING')])
+    assert defstate.substitute(tm.mk_ident('STRING')) == [tm.mk_ident('STRING')]
+
+    defstate.on_undef('STRING')
+    defstate.on_define('STRING', [], [])
+    assert defstate.substitute(tm.mk_ident('STRING')) == []
+
+    defstate.on_undef('STRING')
+    defstate.layers[-1].current['STRING'] = Def()
+    assert defstate.substitute(tm.mk_ident('STRING')) == [tm.mk_ident('STRING')]
+    defstate.layers[-1].current['STRING'] = Def(undefined = True)
+    assert defstate.substitute(tm.mk_ident('STRING')) == [tm.mk_ident('STRING')]
+    defstate.layers[-1].current['STRING'] = Def(defined = True)
+    assert defstate.substitute(tm.mk_ident('STRING')) == []
+    defstate.on_undef('SECOND')
+    defstate.on_undef('THIRD')
+    defstate.layers[-1].current['STRING'] = Def(
+        DefOption([('string', '%d', '"')]),
+        DefOption([tm.mk_ident('SECOND'), tm.mk_ident('THIRD')]),
+        undefined = True,
+        defined = True)
+    result = defstate.substitute(tm.mk_ident('STRING'))
+    assert len(result) == 1
+    assert result[0][0] == 'any'
+    assert result[0][1] == 'STRING'
+    assert isinstance(result[0][2], set)
+    opts = [opt.tokens for opt in result[0][2]]
+    assert [('string', '%d', '"')] in opts
+    assert [tm.mk_ident('STRING')] in opts
+    assert [tm.mk_ident('SECOND'), (tm.mk_ident('THIRD'))] in opts
+
+    defstate.layers[-1].current['SECOND'] = Def(
+        DefOption([tm.mk_int(0)]),
+        DefOption([tm.mk_int(1)]),
+    )
+    assert defstate.substitute(tm.mk_ident('SECOND'))[0][0] == 'any'
+
+TK = Tokenizer()
+
+def test_defevaluator_none():
+    de = definitions.DefEvaluator(64, DefMap(None))
+    assert de.evaluate([tm.mk_int(0)]) == (False, False, DefMap(de.defs))
+    assert de.evaluate([tm.mk_int(1)]) == (True, True, DefMap(de.defs))
+    assert de.evaluate([tm.mk_ident('abc')]) == (False, False, DefMap(de.defs))
+    assert de.evaluate([tm.mk_ident('true')]) == (True, True, DefMap(de.defs))
+    de.defs['abc'] = Def(DefOption([tm.mk_int(1)]), undefined = True)
+    print(de.evaluate(TK.tokenize('abc == 2'))[2])
+    assert de.evaluate(TK.tokenize('abc == 2')) == (False, False, DefMap(de.defs))
+
+def test_defevaluator_single():
+    de = definitions.DefEvaluator(64, DefMap(None))
+    de.defs['abc'] = Def(defined = True)
+    assert de.evaluate([tm.mk_ident('defined'), tm.mk_op('('),
+        tm.mk_ident('abc'), tm.mk_op(')')]) == \
+        (True, True, DefMap(de.defs, initial = {'abc': Def(defined = True)}))
+    de.defs['abc'] = Def(DefOption([]), defined = True)
+    assert de.evaluate([tm.mk_ident('defined'), tm.mk_ident('abc')]) == \
+        (True, True, DefMap(de.defs, initial = {'abc': Def(DefOption([]), defined = True)}))
+    de.defs['abc'] = Def(DefOption([tm.mk_int(3)]), defined = True)
+    assert de.evaluate([tm.mk_ident('defined'), tm.mk_ident('abc')]) == \
+        (True, True, DefMap(de.defs, initial = {
+            'abc': Def(DefOption([tm.mk_int(3)]), defined = True)}))
+    de.defs['abc'] = Def(undefined = True)
+    assert de.evaluate([tm.mk_ident('defined'), tm.mk_ident('abc')]) == \
+        (False, False, DefMap(de.defs))
+
+def test_defevaluator_multiple():
+    de = definitions.DefEvaluator(64, DefMap(None))
+    assert de.evaluate(TK.tokenize('defined abc')) == \
+        (True, False, DefMap(de.defs, initial = {'abc': Def(defined = True)}))
+    de.defs['abc'] = Def(defined = True, undefined = True)
+    assert de.evaluate(TK.tokenize('defined abc')) == \
+        (True, False, DefMap(de.defs, initial = {'abc': Def(defined = True)}))
+    assert de.evaluate(TK.tokenize('defined abc || !defined abc')) == \
+        (True, True, DefMap(de.defs, initial = {
+            'abc': Def(defined = True, undefined = True)}))
+    de.defs['abc'] = Def(DefOption([tm.mk_int(1)]), DefOption([tm.mk_int(2)]),
+        defined = True, undefined = True)
+    assert de.evaluate(TK.tokenize('!defined abc || abc == 2')) == \
+        (True, False, DefMap(de.defs, initial = {
+            'abc': Def(DefOption([tm.mk_int(2)]), undefined = True)}))
+    assert de.evaluate(TK.tokenize('abc == 1 || abc == 2')) == \
+        (True, False, DefMap(de.defs, initial = {
+            'abc': Def(DefOption([tm.mk_int(2)]), DefOption([tm.mk_int(1)]))}))
+
+def test_deflayer_skip_all():
+    dl = DefLayer(DefMap(None), 32, True)
+    dl.add_map([tm.mk_ident('abc')], closing = True)
+    assert dl.current == DefMap(None, skipping = True)
+
+def test_deflayer_first():
+    parent = DefMap(None, initial = {'abc': Def(DefOption([tm.mk_int(1)]),
+        DefOption([tm.mk_int(2)]), undefined = True)})
+    dl = DefLayer(parent, 32, False)
+    dl.add_map(TK.tokenize('defined abc'))
+    assert dl.cond_acc == TK.tokenize('!(defined abc)')
+    assert dl.current['abc'] == Def(DefOption([tm.mk_int(1)]), DefOption([tm.mk_int(2)]))
+    assert not dl.current.skipping
+    assert not dl.skip_rest
+    assert not dl.closed
+
+    dl = DefLayer(parent, 32, False)
+    dl.add_map(TK.tokenize('abc == 3'))
+    assert dl.cond_acc == TK.tokenize('!(abc == 3)')
+    assert dl.current.skipping
+    assert not dl.skip_rest
+    assert not dl.closed
+
+def test_deflayer_next():
+    parent = DefMap(None, initial = {
+        'abc': Def(DefOption([tm.mk_int(1)]), DefOption([tm.mk_int(2)]), undefined = True),
+        'def': Def(undefined = True)
     })
-    assert deflayer.accumulator == DefMap(None)
-    assert deflayer.current == DefMap(None, True)
-    assert not deflayer.any_kept
-    assert not deflayer.closed
-    deflayer.add_map(DefMap(None, initial = {'def': Def()}), False)
-    assert deflayer.conditions == DefMap(None, initial = {
-        'abc': Def(undefined = True),
-        'def': Def()
-    })
-    assert deflayer.accumulator == DefMap(None)
-    assert deflayer.current == DefMap(None, initial = {
-        'abc': Def(undefined = True),
-        'def': Def()
-    })
-    assert deflayer.any_kept
-    assert not deflayer.closed
-    deflayer.add_map(DefMap(None, initial = {
-        'ghi': Def(defined = True, undefined = True)
-    }), True, closing = True)
-    assert deflayer.conditions == DefMap(None, initial = {
-        'abc': Def(undefined = True),
-        'def': Def(),
-        'ghi': Def(undefined = True)
-    })
-    assert deflayer.accumulator == DefMap(None, initial = {
-        'abc': Def(undefined = True),
-        'def': Def()
-    })
-    assert deflayer.current == DefMap(None, True, initial = {})
-    assert deflayer.any_kept
-    assert deflayer.closed
-    try:
-        assert deflayer.add_map({}, False)
-    except TypeError:
-        pass
+    dl = DefLayer(parent, 32, False)
+    dl.add_map(TK.tokenize('defined abc'))
+
+    dl.add_map(TK.tokenize('!defined abc'))
+    assert dl.cond == TK.tokenize('!(defined abc) && (!defined abc)')
+    assert dl.cond_acc == TK.tokenize('!(defined abc) && !(!defined abc)')
+    assert dl.accumulator['abc'] == Def(DefOption([tm.mk_int(1)]), DefOption([tm.mk_int(2)]))
+    assert dl.current['abc'] == Def(undefined = True)
+    assert not dl.current.skipping
+    assert not dl.skip_rest
+    assert not dl.closed
+
+    dl.add_map(TK.tokenize('!defined(def)'), closing = True)
+    assert dl.cond_acc == TK.tokenize('!(defined abc) && !(!defined abc) && !(!defined(def))')
+    assert dl.current.skipping
+    assert not dl.skip_rest
+    assert dl.closed
+
+    dl = DefLayer(parent, 32, False)
+    dl.add_map(TK.tokenize('1'))
+    assert dl.cond_acc == TK.tokenize('!(1)')
+    assert not dl.current.skipping
+    assert dl.skip_rest
+    assert dl.closed
 
 def test_defstate():
-    defstate = DefState()
-    defstate.on_if({})
-    defstate.on_undef('DEFN1')
-    defstate.on_elif({})
-    defstate.on_ifndef('if')
-    defstate.on_ifdef('abc')
-    defstate.on_define('DEFN1', ['x', '__VA_ARGS__'], \
-        [('identifier', 'x'), ('identifier', '__VA_ARGS__')])
-    assert defstate.get_replacements(('identifier', 'DEFN1')) \
-        == {DefOption([('identifier', 'x'), ('identifier', '__VA_ARGS__')])}
-    assert defstate.get_replacements(('identifier', 'DEFN0')) \
-        == {DefOption([('identifier', 'DEFN0')])}
-    defstate.on_elifndef('def')
-    defstate.on_define('DEFN2', [], [('integer', 1, '')])
-    defstate.on_endif()
-    defstate.on_endif()
-    defstate.on_undef('DEFN2')
-    defstate.on_elifdef('ghi')
-    defstate.on_undef('DEFN3')
-    defstate.on_elifndef('jkl')
-    defstate.on_undef('DEFN4')
-    defstate.on_else()
-    defstate.on_undef('DEFN5')
-    defstate.on_endif()
+    ds = DefState(64, initial = {
+        'abc': Def(DefOption([tm.mk_int(1)])),
+        'def': Def(DefOption([]), undefined = True)
+    })
+    assert ds.flat_defines() == {'abc': Def(DefOption([tm.mk_int(1)]))}
+    assert ds.flat_unknowns() == {'def'}
 
-    defstate.on_if({})
-    defstate.on_define('TEST_DEFN', [], [('integer', 1, '')])
-    defstate.on_elif({})
-    defstate.on_undef('TEST_DEFN')
-    defstate.on_endif()
+    ds.on_ifndef('abc')
+    assert ds.is_skipping()
+    ds.on_elif([tm.mk_ident('abc'), tm.mk_op('=='), tm.mk_int(2)])
+    assert ds.is_skipping()
+    ds.on_else()
+    assert ds.substitute(tm.mk_ident('abc')) == [tm.mk_int(1)]
+    assert ds.get_cond_tokens() == TK.tokenize('!(!defined abc) && !(abc == 2) && (1)')
+    assert ds.get_replacements(tm.mk_ident('abc')) == {DefOption([tm.mk_int(1)])}
+    assert ds.layers[-1].closed
+    ds.on_endif()
+    assert len(ds.layers) == 1
 
-    defstate.on_ifndef('TEST_DEFN2')
-    defstate.on_define('TEST_DEFN2', [], [('integer', 2, '')])
-    defstate.on_else()
-    defstate.on_undef('TEST_DEFN2')
-    defstate.on_define('TEST_DEFN2', [], [('integer', 3, '')])
-    defstate.on_endif()
-
-    assert defstate.flat_unknowns() == {'TEST_DEFN'}
-
-    assert defstate.flat_defines() == {
-        'TEST_DEFN2': Def(
-            DefOption([('integer', 2, '')]),
-            DefOption([('integer', 3, '')]),
-            defined = True
-        )
-    }
+    ds.on_ifdef('def')
+    assert not ds.is_skipping()
+    ds.on_elifndef('def')
+    assert not ds.is_skipping()
+    ds.on_elifdef('abc')
+    assert ds.is_skipping()
+    ds.on_endif()

@@ -114,9 +114,6 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None,
 
     panda.run()
 
-
-
-
 def get_task_address(kernel, arch, version):
     version_supported = False
 

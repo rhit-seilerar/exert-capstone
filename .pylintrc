@@ -10,9 +10,12 @@ disable=
     missing-module-docstring,
     missing-class-docstring,
     no-name-in-module,
+    attribute-defined-outside-init,
     too-few-public-methods,
     too-many-arguments,
+    too-many-branches,
+    too-many-statements,
+    too-many-public-methods,
     too-many-return-statements,
-    attribute-defined-outside-init,
     too-many-instance-attributes,
     too-many-locals

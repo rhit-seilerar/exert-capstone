@@ -1,18 +1,20 @@
 from tests import utils
 from exert.parser import expressions
+from exert.parser import definitions
+from exert.parser.expressions import Evaluator, parse_expression
 from exert.parser.tokenizer import Tokenizer
 
 TOKENIZER = Tokenizer()
 
 def expect_error(expr, bitsize, exception = AssertionError):
     utils.expect_error(lambda: \
-        expressions.parse_expression(TOKENIZER.tokenize(expr), bitsize), exception)
+        parse_expression(TOKENIZER.tokenize(expr)), exception)
 
 def roundtrip(expr, bitsize, expected = None):
     if expected is None:
         expected = expr
     tokens = TOKENIZER.tokenize(expr)
-    parsed = expressions.parse_expression(tokens, bitsize)
+    parsed = parse_expression(tokens)
     assert str(parsed) == expected
 
 def test_base():
@@ -42,16 +44,13 @@ def test_parse():
     roundtrip('+-!~1 * 2 / 3 % 4 + 5 - 6 << 7 >> 8 < 9 <= 10' \
         ' > 11 >= 12 == 13 != 14 & 15 ^ 16 | 17 && 18 || 19 ? 20 : 21', 32)
 
-def evaluate(expr, bitsize, expected, unsigned):
+def evaluate(expr, bitsize, expected, expected_unsigned):
     tokens = TOKENIZER.tokenize(expr)
-    parsed = expressions.parse_expression(tokens, bitsize)
-    rint = parsed.evaluate(bitsize).evaluate(bitsize)
-    result = expressions.evaluate(parsed, bitsize)
-    assert result == expected
-    assert rint.value == expected
-    assert rint.unsigned == unsigned
+    value, unsigned = Evaluator(bitsize).evaluate(tokens)
+    assert value == expected
+    assert unsigned == expected_unsigned
 
-def test_evaluate():
+def test_eval():
     evaluate('1u', 32, 1, True)
     evaluate('(1u)', 32, 1, True)
     evaluate('-(1u)', 32, -1, False)
@@ -73,6 +72,17 @@ def test_evaluate():
     evaluate('8 >> 2', 32, 2, False)
     evaluate('8 >> 2u', 32, 2, False)
     evaluate('8u >> 2', 32, 2, True)
+    evaluate('abc', 32, 0, False)
+    evaluate('true', 32, 1, False)
+
+    evlr = Evaluator(32)
+    evlr.lookup = {'abc': definitions.Def(defined = True)}
+    evlr.defines = {}
+    assert evlr.evaluate([('defined', 'abc')]) == (1, False)
+    assert evlr.evaluate([('defined', 'def')]) == (0, False)
+    assert evlr.defines['abc']
+    assert not evlr.defines['def']
+    assert str(parse_expression([('defined', 'abc')])) == 'defined(abc)'
 
 def test_bitsize():
     evaluate('1 << 32', 32, 0, False)

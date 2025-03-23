@@ -1,7 +1,7 @@
 import os
-import exert.utilities.command as cmd
 import subprocess
 
+import exert.utilities.command as cmd
 from exert.utilities.debug import RUN_PLUGIN_TESTS
 from exert.usermode import plugin
 
@@ -27,7 +27,7 @@ def run_test(arch, generic, kernel, test):
 
     def callback(panda, cpu):
         return
-    
+
     def hypervisor_callback(panda, cpu):
         set_called_back(True)
         test(panda, cpu)
@@ -37,30 +37,27 @@ def run_test(arch, generic, kernel, test):
                command = './user_prog /init', hypercall_callback = hypervisor_callback)
     assert CALLED_BACK
 
-def file_reader_callback_i386(panda, cpu):
-    assert panda.arch.get_reg(cpu, 'EAX') == 3
-    return
-
-def file_reader_callback_x86_64(panda, cpu):
-    assert panda.arch.get_reg(cpu, 'RAX') == 3
-    return
-
-def file_reader_callback_armv5l(panda, cpu):
-    assert panda.arch.get_reg(cpu, 'R0') == 3
-    return
+def file_reader_callback(panda, cpu):
+    magic = panda.arch.get_arg(cpu, 0, convention='syscall')
+    typ = panda.arch.get_arg(cpu, 1, convention='syscall')
+    assert magic == 0
+    assert typ == 3
 
 def test_i386_file_reader():
-    do_test(file_reader_callback_i386, 'i386',
+    do_test(file_reader_callback, 'i386',
             generic=False, kernel='./kernels/vmlinuz-i386-4.4.100')
 
 def test_x86_file_reader():
-    do_test(file_reader_callback_x86_64, 'x86_64',
+    do_test(file_reader_callback, 'x86_64',
             generic=False, kernel='./kernels/vmlinuz-x86_64-4.4.100')
-    
+
 def test_armv5l_file_reader():
-    do_test(file_reader_callback_armv5l, 'armv5l',
+    do_test(file_reader_callback, 'armv5l',
             generic=False, kernel='./kernels/vmlinuz-arm-3.2.51-1')
 
+def test_aarch64_file_reader():
+    do_test(file_reader_callback, 'aarch64',
+            generic=False, kernel='./kernels/vmlinuz-aarch64-4.4.100')
 
 def _test_compile():
     cmd.run_command('pushd usermode')
