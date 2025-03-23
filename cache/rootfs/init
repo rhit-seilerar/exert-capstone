@@ -6,9 +6,8 @@
 /busybox mount /dev -t devtmpfs dev
 
 /busybox echo -e "\nBoot took $(/busybox cut -d' ' -f1 /proc/uptime) seconds\n"
+/busybox --install
  
-if [ -f /user_prog ]; then
-    /user_prog;
-fi
+
 
 exec /busybox sh
