@@ -1,3 +1,5 @@
+import exert.parser.definitions as dm
+import exert.parser.tokenmanager as tm
 from exert.parser.tokenizer import Tokenizer
 from exert.parser.preprocessor import Preprocessor, read_file
 
@@ -50,8 +52,67 @@ def test_read_file():
     assert read_file('exert.py')
     assert not read_file('__dummy_does_not_exist__.abc')
 
-def test_preprocessor():
-    tokenizer = Tokenizer()
-    preprocessor = Preprocessor(tokenizer, 32, [], {}, filereader = dummy_reader)
-    preprocessor.preprocess('#include "base.h"', './cache/test-preprocessor')
-    print(str(preprocessor))
+TK = Tokenizer()
+CACHE = './cache/test-preprocessor'
+
+def check(incls, defns, str_in, str_out):
+    pp = Preprocessor(TK, 32, incls, defns, filereader = dummy_reader)
+    pp.preprocess(str_in, CACHE, reset_cache = True)
+    pp.load(CACHE)
+    assert pp.tokens == TK.tokenize(str_out)
+
+def test_standard():
+    check([], {}, """
+        typedef int dummy;
+        int main(int argc, char **argv) {
+            printf("Hello!\n");
+            return 0;
+        }
+    """, """
+        typedef int dummy;
+        int main(int argc, char **argv) {
+            printf("Hello!\n");
+            return 0;
+        }
+    """)
+    #TODO string concat
+
+def test_defines():
+    check([], {}, """
+        #define ABC typedef int[3] vec3
+        ABC;
+        #undef ABC
+        ABC;
+    """, """
+        typedef int[3] vec3;
+        ABC;
+    """)
+    #TODO ident stringification
+    #TODO ident concat
+
+def test_blocks():
+    pp = Preprocessor(TK, 32, [], {}, filereader = dummy_reader)
+    pp.preprocess("""
+        #ifndef ABC
+        #define ABC 1
+        #else
+        #undef ABC
+        #define ABC 2
+        #endif
+        ABC;
+    """, CACHE, reset_cache = True)
+    pp.load(CACHE)
+    assert pp.tokens == [
+        ('optional', TK.tokenize('(!defined ABC)')),
+        ('optional', []),
+        ('optional', TK.tokenize('!(!defined ABC) && (1)')),
+        ('optional', []),
+        ('any', 'ABC', {
+            dm.DefOption([tm.mk_int(1)]),
+            dm.DefOption([tm.mk_int(2)])
+        }),
+        tm.mk_op(';')
+    ]
+
+def test_include():
+    pass

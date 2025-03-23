@@ -435,6 +435,7 @@ def test_deflayer_next():
     dl.add_map(TK.tokenize('defined abc'))
 
     dl.add_map(TK.tokenize('!defined abc'))
+    assert dl.cond == TK.tokenize('!(defined abc) && (!defined abc)')
     assert dl.cond_acc == TK.tokenize('!(defined abc) && !(!defined abc)')
     assert dl.accumulator['abc'] == Def(DefOption([tm.mk_int(1)]), DefOption([tm.mk_int(2)]))
     assert dl.current['abc'] == Def(undefined = True)
@@ -469,7 +470,7 @@ def test_defstate():
     assert ds.is_skipping()
     ds.on_else()
     assert ds.substitute(tm.mk_ident('abc')) == [tm.mk_int(1)]
-    assert ds.get_cond_tokens() == TK.tokenize('!(!defined abc) && !(abc == 2) && !(1)')
+    assert ds.get_cond_tokens() == TK.tokenize('!(!defined abc) && !(abc == 2) && (1)')
     assert ds.get_replacements(tm.mk_ident('abc')) == {DefOption([tm.mk_int(1)])}
     assert ds.layers[-1].closed
     ds.on_endif()

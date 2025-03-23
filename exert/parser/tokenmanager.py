@@ -1,7 +1,8 @@
 def tok_str(token, newlines = False):
     n = token
     string = '<NONE> ' if n is None \
-        else f'#{n[1]} {n[2]}\n' if n[0] == 'optional' \
+        else f'#{"endif" if len(n[1]) == 0 else "if"} {tok_seq(n[1], newlines)}\n' \
+            if n[0] == 'optional' \
         else n[1] if n[0] == 'directive' \
         else f'{n[1]}\n' if n[0] == 'operator' and n[1] in [';', '{', '}'] \
         else f'{n[1]} ' if n[0] == 'operator' \

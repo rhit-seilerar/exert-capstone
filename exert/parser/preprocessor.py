@@ -82,11 +82,11 @@ class Preprocessor(TokenManager):
 
     def push_optional(self):
         if not self.defs.is_skipping():
-            self.emit_tokens([('optional', 'if', self.defs.get_cond_tokens())])
+            self.emit_tokens([('optional', self.defs.get_cond_tokens())])
 
     def pop_optional(self):
         if not self.defs.is_skipping():
-            self.emit_tokens([('optional', 'endif', '')])
+            self.emit_tokens([('optional', [])])
 
     def skip_to_newline(self, offset = 0):
         tokens = []
@@ -309,37 +309,39 @@ class Preprocessor(TokenManager):
             if not reset_cache:
                 return self
             os.remove(cache)
-
-        print('Cache file not found: Generating...')
+            assert not os.path.exists(cache)
+            print('Regenerating...')
+        else:
+            print('Cache file not found: Generating...')
 
         # String combination not implemented
         # Stringification and concatenation not implemented
 
-        self.cache_file = open(cache, mode = 'bw')
-        flush_size = 40000
+        with open(cache, mode = 'bw') as file:
+            self.cache_file = file
+            flush_size = 40000
 
-        while self.has_next() and not self.has_error:
-            self.print_progress()
+            while self.has_next() and not self.has_error:
+                self.print_progress()
 
-            if self.index > flush_size + 20:
-                del self.tokens[:flush_size]
-                self.index -= flush_size
-                self.len -= flush_size
+                if self.index > flush_size + 20:
+                    del self.tokens[:flush_size]
+                    self.index -= flush_size
+                    self.len -= flush_size
 
-            if self.consume_directive('#'):
-                self.parse_directive()
-                continue
+                if self.consume_directive('#'):
+                    self.parse_directive()
+                    continue
 
-            if self.defs.is_skipping():
-                self.next()
-                continue
+                if self.defs.is_skipping():
+                    self.next()
+                    continue
 
-            if self.peek_type() in ['identifier', 'keyword']:
-                self.substitute()
-                continue
+                if self.peek_type() in ['identifier', 'keyword']:
+                    self.substitute()
+                    continue
 
-            self.emit_tokens([self.next()])
-
+                self.emit_tokens([self.next()])
         return self
 
     def load(self, cache):

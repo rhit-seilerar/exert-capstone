@@ -11,10 +11,8 @@ def test_mk():
     assert tm.mk_str('abc', '<') == ('string', 'abc', '<')
 
 def test_tok_str():
-    assert tok_str(('optional', 'if', '!A && B + C')) == '#if !A && B + C '
-    assert tok_str(('optional', 'else', '')) == '#else  '
-    assert tok_str(('optional', 'else', ''), True) == '#else \n'
-    assert tok_str(('optional', 'endif', '')) == '#endif  '
+    assert tok_str(('optional', [tm.mk_op('!'), tm.mk_ident('A')])) == '#if ! A '
+    assert tok_str(('optional', []), True) == '#endif \n'
     assert tok_str(('directive', '#')) == '#'
     assert tok_str(('keyword', 'abcdef')) == 'abcdef '
     assert tok_str(('identifier', 'ghi')) == 'ghi '
@@ -31,9 +29,10 @@ def test_tok_str():
 
 def test_tok_seq():
     assert tok_seq([('integer', 1, 'u'), ('string', 'abc', '<')]) == '1u <abc>'
-    assert tok_seq([('optional', 'if', 'a || b'), ('optional', 'endif', '')], False) \
+    aorb = [tm.mk_ident('a'), tm.mk_op('||'), tm.mk_ident('b')]
+    assert tok_seq([('optional', aorb), ('optional', [])], False) \
         == '#if a || b #endif'
-    assert tok_seq([('optional', 'if', 'a || b'), ('optional', 'endif', '')], True) \
+    assert tok_seq([('optional', aorb), ('optional', [])], True) \
         == '#if a || b\n#endif'
 
 def test_reset():

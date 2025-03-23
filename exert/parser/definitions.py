@@ -367,6 +367,7 @@ class DefLayer:
     def __init__(self, parent, bitsize, skip_all):
         self.evaluator = DefEvaluator(bitsize, parent)
         self.cond_acc = []
+        self.cond = []
         self.accumulator = DefMap(None)
         self.skip_rest = skip_all
         self.current = None
@@ -386,8 +387,8 @@ class DefLayer:
         wrapped = [mk_op('(')] + cond_tokens + [mk_op(')')]
         if len(self.cond_acc) > 0:
             self.cond_acc.append(mk_op('&&'))
-        test_cond = self.cond_acc + wrapped
-        any_match, all_match, matches = self.evaluator.evaluate(test_cond)
+        self.cond = self.cond_acc + wrapped
+        any_match, all_match, matches = self.evaluator.evaluate(self.cond)
         self.cond_acc += [mk_op('!')] + wrapped
 
         self.apply()
@@ -484,4 +485,4 @@ class DefState:
         return substitute(self.layers[-1].current, tok)
 
     def get_cond_tokens(self):
-        return self.layers[-1].cond_acc
+        return self.layers[-1].cond
