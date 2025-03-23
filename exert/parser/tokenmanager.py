@@ -2,7 +2,7 @@ def tok_str(token, newlines = False):
     n = token
     string = '<NONE> ' if n is None \
         else f'#{n[1]} {n[2]}\n' if n[0] == 'optional' \
-        else '#' if n[0] == 'directive' \
+        else n[1] if n[0] == 'directive' \
         else f'{n[1]}\n' if n[0] == 'operator' and n[1] in [';', '{', '}'] \
         else f'{n[1]} ' if n[0] == 'operator' \
         else f'{n[1]} ' if n[0] in ['keyword', 'identifier'] \

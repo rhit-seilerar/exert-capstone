@@ -1,3 +1,5 @@
+import exert.parser.tokenmanager as tm
+
 class Tokenizer:
     def __init__(self):
         self.keywords = [
@@ -34,11 +36,11 @@ class Tokenizer:
 
     def consume_comment(self):
         if self.consume('//'):
-            while not self.consume('\r\n', '\n', ''):
+            while self.has_next() and not self.consume('\r\n', '\n'):
                 if not self.consume('\\\r\n', '\\\n'):
                     self.bump()
             return True
-        elif self.consume('/*'):
+        if self.consume('/*'):
             while not self.consume('*/'):
                 assert self.has_next(), \
                     "Reached EOF without finding the closing '*/'"
@@ -55,8 +57,8 @@ class Tokenizer:
             value = self.data[start:self.index]
             if value in self.keywords:
                 return ('keyword', value)
-            if len(self.tokens) > 0 and self.tokens[-1] == ('directive', '#') \
-                and value == 'define' and self.peek() == '(':
+            if len(self.tokens) > 0 and self.in_directive \
+                and self.tokens[-1] == tm.mk_ident('define') and self.peek() == '(':
                 self.next_parenthesis_is_directive = True
             return ('identifier', value)
         return None
@@ -87,8 +89,9 @@ class Tokenizer:
             num = num * radix + v
             self.bump()
 
-        if self.peek().isalnum():
-            if not (suffix := self.consume('u', 'U', 'l', 'L', 'll', 'LL')):
+        if self.peek().isalnum() or self.peek() == '_':
+            if not (suffix := self.consume('u', 'U', 'l', 'L', 'll', 'LL')) \
+                or self.peek().isalnum() or self.peek() == '_':
                 self.index = start
                 return None
             return ('integer', num, suffix.lower())
@@ -105,15 +108,11 @@ class Tokenizer:
                 delim = '>'
         if delim:
             start = self.index
-            while not self.consume(delim):
-                if not self.has_next():
-                    assert delim != '#', \
-                        'Reached EOF without finding the closing quation mark'
-                    self.index = old
-                    return None
+            while self.has_next():
+                if self.consume(delim):
+                    return ('string', self.data[start:self.index-1], modifier)
                 if not self.consume('\\"'):
                     self.bump()
-            return ('string', self.data[start:self.index-1], modifier)
         self.index = old
         return None
 
