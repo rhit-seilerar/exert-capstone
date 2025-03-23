@@ -1,9 +1,4 @@
-class Evaluator:
-    def __init__(self, bitsize):
-        self.bitsize = bitsize
-
-    def evaluate(self, expression):
-        return expression.evaluate(self).evaluate(self).value
+import exert.parser.tokenmanager as tm
 
 class Expression:
     def evaluate(self, evaluator):
@@ -26,6 +21,13 @@ class Integer(Expression):
 
     def __str__(self):
         return str(self.value) + ('u' if self.unsigned else '')
+
+class Identifier(Expression):
+    def __init__(self, a):
+        self.a = a
+
+    def evaluate(self, evaluator):
+        return Integer(1 if self.a == 'true' else 0, False)
 
 class Group(Expression):
     def __init__(self, expression):
@@ -71,6 +73,20 @@ class BinaryOperator(Operator):
 
     def __str__(self):
         return str(self.a) + f' {self.opname} ' + str(self.b)
+
+class UnaryDefined(UnaryOperator):
+    def __init__(self, a):
+        super().__init__(a, 'defined', lambda a: a)
+
+    def evaluate(self, evaluator):
+        if self.a in evaluator.lookup and evaluator.lookup[self.a].defined:
+            evaluator.defines[self.a] = True
+            return Integer(1, False)
+        evaluator.defines[self.a] = False
+        return Integer(0, False)
+
+    def __str__(self):
+        return f'defined({self.a})'
 
 class UnaryPlus(UnaryOperator):
     def __init__(self, a):
@@ -242,36 +258,36 @@ PRECEDENCE_MAP = [
     }
 ]
 
-def parse_expression(tokens, bitsize):
-    # Early out if it's just a number
+def parse_expression(tokens):
     assert len(tokens) > 0
-    if len(tokens) == 1:
-        assert tokens[0][0] == 'integer'
-        return Integer(tokens[0][1], 'u' in tokens[0][2])
 
-    # Handle groups and terminals
+    # Handle groups, identifiers, defined(), and terminals
     nex = []
     gstart = None
     indent = 0
-    for i, token in enumerate(tokens):
-        if token[0] == 'integer':
-            if gstart is None:
+    i = 0
+    while i < len(tokens):
+        token = tokens[i]
+        if token == tm.mk_op('('):
+            if indent == 0:
+                gstart = i+1
+            indent += 1
+        elif token == tm.mk_op(')'):
+            indent -= 1
+            if indent == 0:
+                assert gstart is not None
+                nex.append(Group(parse_expression(tokens[gstart:i])))
+                gstart = None
+        elif gstart is None:
+            if token[0] == 'integer':
                 nex.append(Integer(token[1], 'u' in token[2]))
-        elif token[0] == 'operator':
-            if token[1] == '(':
-                if indent == 0:
-                    gstart = i+1
-                indent += 1
-            elif token[1] == ')':
-                indent -= 1
-                if indent == 0:
-                    assert gstart is not None
-                    nex.append(Group(parse_expression(tokens[gstart:i], bitsize)))
-                    gstart = None
-            elif gstart is None:
+            elif token[0] == 'defined':
+                nex.append(UnaryDefined(token[1]))
+            elif token[0] in ['identifier', 'keyword']:
+                nex.append(Identifier(token[1]))
+            elif token[0] == 'operator':
                 nex.append(token[1])
-        else:
-            assert False
+        i += 1
     assert gstart is None
     cur = nex
 
@@ -317,9 +333,11 @@ def parse_expression(tokens, bitsize):
     assert len(cur) == 1 and isinstance(cur[0], Expression)
     return cur[0]
 
-def eval_expression(expression, bitsize):
-    return Evaluator(bitsize).evaluate(expression)
+class Evaluator:
+    def __init__(self, bitsize):
+        self.bitsize = bitsize
 
-def evaluate(tokens, bitsize):
-    expression = parse_expression(tokens, bitsize)
-    return Evaluator(bitsize).evaluate(expression)
+    def evaluate(self, tokens):
+        parsed = parse_expression(tokens)
+        result = parsed.evaluate(self).evaluate(self)
+        return result.value, result.unsigned

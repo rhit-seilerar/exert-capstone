@@ -25,8 +25,7 @@ file_reader-aarch64: file_reader-aarch64.c
 	${CC_AARCH64} ${CFLAGS} -o build/$@ $^
 
 setup:
-	if [ ! -d build ]; then mkdir build; \
-	fi
+	@if [ ! -d build ]; then mkdir build; fi
 
 clean:
 	rm -rf build

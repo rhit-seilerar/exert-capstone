@@ -32,9 +32,9 @@ class Preprocessor(TokenManager):
         self.invalid_paths = set()
         self.tokenized_cache = {}
         self.unresolved = []
-        self.defs = DefState(bitsize, initial = {key: \
-            Def(DefOption(tokenizer.tokenize(defns[key])), defined = True) \
-                for key in defns})
+        self.defs = DefState(bitsize, initial = {
+            key: Def(DefOption(tokenizer.tokenize(defns[key]))) for key in defns
+        })
 
     def load_file(self, path, is_relative):
         if self.defs.is_skipping():
@@ -80,13 +80,13 @@ class Preprocessor(TokenManager):
         self.invalid_paths.add(path)
         return True
 
-    def push_optional(self, dirtype, name):
-        self.conditions.append(name)
-        self.emit_tokens([('optional', dirtype, name)])
+    def push_optional(self):
+        if not self.defs.is_skipping():
+            self.emit_tokens([('optional', 'if', self.defs.get_cond_tokens())])
 
-    def pop_optional(self, dirtype):
-        self.emit_tokens([('optional', dirtype, '')])
-        return self.conditions.pop()
+    def pop_optional(self):
+        if not self.defs.is_skipping():
+            self.emit_tokens([('optional', 'endif', '')])
 
     def skip_to_newline(self, offset = 0):
         tokens = []
@@ -161,8 +161,8 @@ class Preprocessor(TokenManager):
             return self.err('#ifdef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        if self.defs.on_ifdef(name):
-            self.push_optional('if', f'defined({name})')
+        self.defs.on_ifdef(name)
+        self.push_optional()
         return True
 
     def handle_ifndef(self):
@@ -170,8 +170,8 @@ class Preprocessor(TokenManager):
             return self.err('#ifndef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        if self.defs.on_ifndef(name):
-            self.push_optional('if', f'!defined({name})')
+        self.defs.on_ifndef(name)
+        self.push_optional()
         return True
 
     def handle_elifdef(self):
@@ -179,14 +179,9 @@ class Preprocessor(TokenManager):
             return self.err('#elifdef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        if self.defs.on_elifdef(name):
-            condition = None
-            if self.defs.layers[-1].any_kept:
-                condition = self.pop_optional('else')
-            if condition is not None:
-                self.push_optional('if', f'!({condition}) && defined({name})')
-            else:
-                self.push_optional('if', f'defined({name})')
+        self.pop_optional()
+        self.defs.on_elifdef(name)
+        self.push_optional()
         return True
 
     def handle_elifndef(self):
@@ -194,56 +189,38 @@ class Preprocessor(TokenManager):
             return self.err('#elifndef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        condition = None
-        if self.defs.layers[-1].any_kept:
-            condition = self.pop_optional('else')
-        if self.defs.on_elifndef(name):
-            if condition is not None:
-                self.push_optional('if', f'!({condition}) && !defined({name})')
-            else:
-                self.push_optional('if', f'!defined({name})')
+        self.pop_optional()
+        self.defs.on_elifndef(name)
+        self.push_optional()
         return True
 
     def handle_if(self):
         if not (tokens := self.skip_to_newline()):
             return False
-        if self.defs.on_if({}, tokens):
-            self.push_optional('if', ' '.join(str(n[1]) for n in tokens))
+        self.defs.on_if(tokens)
+        self.push_optional()
         return True
 
     def handle_elif(self):
         if not (tokens := self.skip_to_newline()):
             return False
-        condition = None
-        if self.defs.layers[-1].any_kept:
-            condition = self.pop_optional('else')
-        if self.defs.on_elif({}, tokens):
-            cond_str = " ".join(str(n) for n in tokens)
-            if condition is not None:
-                self.push_optional('if', f'!({condition}) && ({cond_str})')
-            else:
-                self.push_optional('if', f'{cond_str}')
+        self.pop_optional()
+        self.defs.on_elif(tokens)
+        self.push_optional()
         return True
 
     def handle_else(self):
-        #TODO get cond str from defmap conditions
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        condition = None
-        if self.defs.layers[-1].any_kept:
-            condition = self.pop_optional('else')
-        if self.defs.on_else():
-            if condition is not None:
-                self.push_optional('if', f'!({condition})')
-            else:
-                self.push_optional('if', '1')
+        self.pop_optional()
+        self.defs.on_else()
+        self.push_optional()
         return True
 
     def handle_endif(self):
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        if self.defs.layers[-1].any_kept:
-            self.pop_optional('endif')
+        self.pop_optional()
         self.defs.on_endif()
         return True
 
@@ -314,11 +291,9 @@ class Preprocessor(TokenManager):
     def substitute(self):
         tok = self.next()
         result = self.defs.substitute(tok)
-        if result is not None:
+        if result != [tok]:
             dprint(3, f"::Substituting {tok[0]} '{tok[1]}': {tok_seq(result)}")
-            self.emit_tokens(result)
-        else:
-            self.emit_tokens([tok])
+        self.emit_tokens(result)
 
     def emit_tokens(self, tokens):
         if self.cache_file:
@@ -332,7 +307,7 @@ class Preprocessor(TokenManager):
 
         if os.path.exists(cache):
             if not reset_cache:
-                return
+                return self
             os.remove(cache)
 
         print('Cache file not found: Generating...')
