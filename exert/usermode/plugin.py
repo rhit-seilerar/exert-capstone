@@ -76,10 +76,9 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None,
         arch_type = arch
         mem_use = "256M"
         hardware_args = ''
-        console_version = "ttyAMA0"
+        console_ver = "ttyAMA0"
         expect_prompt_entry = '/.*#'
-        os_version_entry = 'linux-32-generic'
-        
+        os_ver_entry = 'linux-32-generic'
         if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
             hardware_args = '-machine versatilepb'
             arch_type = 'arm'
@@ -87,18 +86,18 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None,
             hardware_args = "-machine virt -cpu cortex-a53"
             expect_prompt_entry = '~ # '
             arch_type = 'aarch64'
-            os_version_entry = 'linux-64-generic'
+            os_ver_entry = 'linux-64-generic'
         else:
-            console_version = 'ttyS0'
+            console_ver = 'ttyS0'
 
         args = f'--nographic \
             -kernel {kernel} \
             -initrd ./cache/customfs.cpio \
             {hardware_args} \
-            -append "console={console_version} earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
+            -append "console={console_ver} earlyprintk=serial nokaslr init=/bin/sh root=/dev/ram0"'
         panda = Panda(
             arch=arch_type, mem=mem_use, extra_args=args,
-            expect_prompt=expect_prompt_entry, os_version=os_version_entry)
+            expect_prompt=expect_prompt_entry, os_version=os_ver_entry)
 
 
     panda.pyplugins.load(Exert, args={
@@ -121,13 +120,13 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None,
 def get_task_address(kernel, arch, version):
     version_supported = False
 
-    version_entry = ver.version_from_string(version)
+    ver_entry = ver.version_from_string(version)
 
     print("LOCATING TASK ADDRESS")
-    min_version = ver.Version(2,6,13)
-    max_version = ver.Version(5,14,21)
+    min_ver = ver.Version(2,6,13)
+    max_ver = ver.Version(5,14,21)
     if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
-        if(ver.compare_version(version_entry, min_version) and ver.compare_version_max(version_entry, max_version):
+        if(ver.compare_version(ver_entry, min_ver) and ver.compare_version(max_ver, ver_entry)):
             version_supported = True
             run(arch, task_struct_stack.task_address_arm_callback, False, kernel)
             print("Task Address: " + hex(task_struct_stack.TASK_ADDRESS))
