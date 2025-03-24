@@ -12,7 +12,7 @@ def test_file_print():
     fs = osi.FS()
     qstr = osi.QSTR()
     osi_path = osi.Path()
-    demo_path = "demo_osi.osi"
+    demo_path = "./cache/test_osi.osi"
     osi.main(header_line=header_line,
              osi_name=osi_name,
              osi_version=osi_version,

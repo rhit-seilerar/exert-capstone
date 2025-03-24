@@ -95,6 +95,7 @@ def dev_reset():
 def dev_rta(in_docker, reset, version=None, arch=None, container = None, rta_mode = 1):
     command = ''
     name = 'pandare'
+
     container = container or PANDA_CONTAINER
     if reset:
         if in_docker:
@@ -105,12 +106,14 @@ def dev_rta(in_docker, reset, version=None, arch=None, container = None, rta_mod
     if not in_docker:
         volume_srd(0)
 
+    interactive = False
     if rta_mode == 1:
         make_usermode()
         command = 'pytest --cov-config=.coveragerc --cov=exert tests/'
     elif rta_mode == 0:
         command = f'python -u -m exert.parser.parser {version} {arch}'
     else:
+        interactive = True
         if container == 'PANDA':
             print('Container is panda')
         elif container == 'XMAKE':
@@ -118,7 +121,7 @@ def dev_rta(in_docker, reset, version=None, arch=None, container = None, rta_mod
             name = 'XMAKE'
         else:
             print('Container not recognized, defaulting')
-    run_docker(interactive = True, command = command, in_docker = in_docker,
+    run_docker(interactive = interactive, command = command, in_docker = in_docker,
         name = name, container=container)
 
     if rta_mode == 2 or not in_docker:
@@ -168,20 +171,16 @@ def volume_srd(srd=0):
         exclude += ' --exclude cache'
 
     command = ''
-    cap = False
     extra_args = ''
     if not container_is_running('pandare-init'):
-        command = 'apt-get update && apt-get install -y rsync'
+        command = 'apt-get update && apt-get install -y rsync &&'
         extra_args = local_mount
-        cap = True
     if srd == 1:
-        command = f'rsync -auv --progress {exclude} /mount/ /local'
-        cap = True
+        command += f'rsync -auv --progress {exclude} /mount/ /local'
     else:
-        command = f'rm -rf /mount/exert/ && rm -rf /mount/tests && rm -rf /mount/kernels/ \
+        command += f'rm -rf /mount/exert/ && rm -rf /mount/tests && rm -rf /mount/kernels/ \
             && rsync -auv --progress {exclude} /local/ /mount'
-        cap = True
-    run_docker(name = 'pandare-init', command = command, capture_output=cap, extra_args=extra_args)
+    run_docker(name = 'pandare-init', command = command, capture_output=False, extra_args=extra_args)
 
 def osi(parsed):
     """Validate the provided image, and then generate its OSI information"""

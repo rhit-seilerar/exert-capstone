@@ -9,6 +9,7 @@ from exert.usermode import rules
 from exert.utilities.command import run_command
 
 REPO_URL = 'git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git'
+VERSION_PATH = './cache/linux-version.txt'
 SOURCE_PATH = './cache/linux'
 PARSE_CACHE = './cache/parsed'
 
@@ -23,11 +24,17 @@ def get_files():
     return glob.glob(f'{SOURCE_PATH}/include/linux/**/*.h', recursive = True)
 
 def switch_to_version(version):
+    old_version = None
     if not os.path.exists(SOURCE_PATH):
-        print('Cloning Linux...')
-        run_command(f'git clone {REPO_URL} {SOURCE_PATH}', True, True)
-    print(f'Checking out version {version}...')
-    run_command(f'git checkout v{version}', True, True, './cache/linux')
+        run_command(f'git init {SOURCE_PATH}')
+    else:
+        with open(VERSION_PATH, 'r', encoding = 'utf-8') as file:
+            old_version = file.read()
+    if old_version != version:
+        with open(VERSION_PATH, 'w', encoding = 'utf-8') as file:
+            file.write(version)
+        print(f'Checking out linux v{version}')
+        run_command(f'git fetch --depth 1 {REPO_URL} v{version}', cwd = SOURCE_PATH)
 
 SOURCE = """
 #include <linux/types.h>
