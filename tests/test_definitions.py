@@ -121,7 +121,7 @@ def test_def_get_replacements():
     defs = make_def_variants()
     sym = ('identifier', 'abc')
     options = {DefOption([('number', 1)]), DefOption([('number', 2)])}
-    assert defs[0].get_replacements(sym) == {DefOption([sym])}
+    assert defs[0].get_replacements(sym) == {DefOption([('any', 'abc', set())])}
     assert defs[1].get_replacements(sym) == {DefOption([sym])}
     assert defs[2].get_replacements(sym) == options
     assert defs[3].get_replacements(sym) == options | {DefOption([sym])}
@@ -331,7 +331,7 @@ def test_substitute():
     defstate.layers[-1].current['STRING'] = Def(undefined = True)
     assert defstate.substitute(tm.mk_ident('STRING')) == [tm.mk_ident('STRING')]
     defstate.layers[-1].current['STRING'] = Def(defined = True)
-    assert defstate.substitute(tm.mk_ident('STRING')) == []
+    assert defstate.substitute(tm.mk_ident('STRING')) == [('any', 'STRING', set())]
     defstate.on_undef('SECOND')
     defstate.on_undef('THIRD')
     defstate.layers[-1].current['STRING'] = Def(
@@ -483,3 +483,46 @@ def test_defstate():
     ds.on_elifdef('abc')
     assert ds.is_skipping()
     ds.on_endif()
+
+def test_defstate_multilayer():
+    ds = DefState(64)
+    wild_abc = DefOption([('any', 'ABC', set())])
+    wild_def = DefOption([('any', 'DEF', set())])
+    assert ds.get_replacements(tm.mk_ident('ABC')) == {wild_abc}
+    ds.on_ifdef('ABC')
+    assert ds.get_replacements(tm.mk_ident('ABC')) == {wild_abc}
+    assert not ds.is_skipping()
+    assert not ds.layers[-1].skip_rest
+    assert len(ds.layers) == 2
+    ds.on_if(TK.tokenize('ABC == 2'))
+    assert len(ds.layers) == 3
+    # Currently can't make the '==' guarantee with wildcards
+    assert ds.get_replacements(tm.mk_ident('ABC')) == {wild_abc}
+    assert not ds.is_skipping()
+    assert not ds.layers[-1].skip_rest
+    ds.on_define('DEF', [], TK.tokenize('1'))
+    assert ds.get_replacements(tm.mk_ident('DEF')) == {DefOption([tm.mk_int(1)])}
+    assert not ds.is_skipping()
+    assert not ds.layers[-1].skip_rest
+    ds.on_elifdef('DEF')
+    assert len(ds.layers) == 3
+    assert ds.get_replacements(tm.mk_ident('DEF')) == {wild_def}
+    assert not ds.is_skipping()
+    assert not ds.layers[-1].skip_rest
+    ds.on_endif()
+    assert len(ds.layers) == 2
+    assert not ds.is_skipping()
+    assert not ds.layers[-1].skip_rest
+    ds.on_elifndef('DEF')
+    assert not ds.is_skipping()
+    assert not ds.layers[-1].skip_rest
+    ds.on_elif(TK.tokenize('DEF != 1'))
+    assert len(ds.layers) == 2
+    assert not ds.is_skipping()
+    assert not ds.layers[-1].skip_rest
+    ds.on_undef('DEF')
+    ds.on_define('DEF', [], TK.tokenize('1'))
+    assert not ds.is_skipping()
+    assert not ds.layers[-1].skip_rest
+    ds.on_endif()
+    assert len(ds.layers) == 1

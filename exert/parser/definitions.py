@@ -84,16 +84,18 @@ class Def:
 
     def get_replacements(self, sym):
         """
-        [ initial,   {}      ]: [[sym]]
+        [ initial,   {}      ]: [[{}]]
         [ undefined, {}      ]: [[sym]]
         [ defined,   options ]: [options]
+        [ defined,   {}      ]: [[{}]]
         [ uncertain, options ]: [[sym], options]
+        [ uncertain, {}      ]: [[sym], [{}]]
         """
         replacements = self.options.copy()
-        if self.defined and len(replacements) == 0:
-            replacements = {DefOption([])}
-        if not self.is_defined():
+        if self.undefined:
             replacements.add(DefOption([sym]))
+        elif len(self.options) == 0:
+            replacements.add(DefOption([('any', sym[1], set())]))
         return replacements
 
     def combine(self, other, replace):
@@ -292,7 +294,9 @@ class DefEvaluator(expressions.Evaluator):
         if keys:
             # Permute all multi-value macros into a chain of 'or's
             # TODO please improve this
-            # Note that this currently doesn't consider CLI definitions
+            # Note that this currently doesn't consider open-ended
+            # definitions correctly
+            # Also, wildcards could be improved in accuracy
             lists = []
             keylist = list(keys)
             for i, k in enumerate(keylist):
@@ -319,7 +323,7 @@ class DefEvaluator(expressions.Evaluator):
         def insert_permutation(lookup, tokens):
             nex = []
             for tok in tokens:
-                if tok[0] == 'any':
+                if tok[0] == 'any' and len(tok[2]) > 0:
                     repl = lookup[tok[1]].get_replacements(('identifier', tok[1]))
                     repl_toks = list(repl)[0].tokens
                     nex += insert_permutation(lookup, repl_toks)
@@ -332,7 +336,10 @@ class DefEvaluator(expressions.Evaluator):
             self.lookup = lookup
             current = insert_permutation(lookup, tokens) if lookup else tokens
             result = expressions.parse_expression(current).evaluate(self).evaluate(self)
-            if result.value == 0:
+            if isinstance(result, expressions.Wildcard):
+                self.any_match = True
+                self.all_match = False
+            elif result.value == 0:
                 self.all_match = False
             else:
                 for k, v in self.defines.items():

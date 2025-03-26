@@ -17,6 +17,7 @@ def test():
     roundtrip('#include <abc>')
     roundtrip('#include <abc> // Lookie here', '#include <abc>')
     roundtrip('1ds', 'ds')
+    roundtrip('ABC == 2')
     roundtrip("""
         #ifndef ABC
         #define ABC(_1, _2, ...) __VA_ARGS__

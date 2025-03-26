@@ -346,6 +346,8 @@ class Preprocessor(TokenManager):
 
     def load(self, cache):
         self.tokens = read_tokens(cache)
+        print(self.tokens)
+        return self
 
     def __str__(self):
         tokens = tok_seq(self.tokens, newlines = True)
