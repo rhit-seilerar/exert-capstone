@@ -116,9 +116,11 @@ def dev_rta(in_docker, reset, version=None, arch=None, container = None, rta_mod
         interactive = True
         if container == 'PANDA':
             print('Container is panda')
+            container = PANDA_CONTAINER
         elif container == 'XMAKE':
             print('Container is xmake')
             name = 'XMAKE'
+            container = XMAKE_CONTAINER
         else:
             print('Container not recognized, defaulting')
     run_docker(interactive = interactive, command = command, in_docker = in_docker,
