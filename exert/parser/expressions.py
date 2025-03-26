@@ -33,6 +33,9 @@ class Wildcard(Expression):
     def evaluate(self, evaluator):
         return self
 
+    def __str__(self):
+        return '<wildcard>'
+
 class Group(Expression):
     def __init__(self, expression):
         self.expression = expression
@@ -48,6 +51,7 @@ class Operator(Expression):
 
 class UnaryOperator(Operator):
     def __init__(self, a, opname, op, signop = None):
+        assert isinstance(a, (Expression, str))
         self.opname = opname
         self.op = op
         self.a = a
@@ -65,6 +69,8 @@ class UnaryOperator(Operator):
 
 class BinaryOperator(Operator):
     def __init__(self, a, b, opname, op, signop = None):
+        assert isinstance(a, Expression)
+        assert isinstance(b, Expression)
         self.opname = opname
         self.op = op
         self.a = a
@@ -357,4 +363,6 @@ class Evaluator:
     def evaluate(self, tokens):
         parsed = parse_expression(tokens)
         result = parsed.evaluate(self).evaluate(self)
+        if isinstance(result, Wildcard):
+            return result
         return result.value, result.unsigned

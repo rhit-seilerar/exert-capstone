@@ -1,6 +1,7 @@
 from tests import utils
-from exert.parser import expressions
 from exert.parser import definitions
+from exert.parser import expressions
+import exert.parser.tokenmanager as tm
 from exert.parser.expressions import Evaluator, parse_expression
 from exert.parser.tokenizer import Tokenizer
 
@@ -78,6 +79,26 @@ def test_eval():
     evlr = Evaluator(32)
     evlr.lookup = {'abc': definitions.Def(defined = True)}
     evlr.defines = {}
+    assert isinstance(evlr.evaluate([('any', 'abc', set())]), expressions.Wildcard)
+    assert str(expressions.Wildcard()) == '<wildcard>'
+    assert isinstance(evlr.evaluate([
+        tm.mk_op('('),
+        tm.mk_op('('),
+        tm.mk_op('-'),
+        ('any', 'abc', set()),
+        tm.mk_op('<<'),
+        tm.mk_int(2),
+        tm.mk_op(')'),
+        tm.mk_op('>>'),
+        tm.mk_int(1),
+        tm.mk_op(')'),
+        tm.mk_op('=='),
+        tm.mk_int(3),
+        tm.mk_op('?'),
+        tm.mk_int(0),
+        tm.mk_op(':'),
+        tm.mk_int(1)
+    ]), expressions.Wildcard)
     assert evlr.evaluate([('defined', 'abc')]) == (1, False)
     assert evlr.evaluate([('defined', 'def')]) == (0, False)
     assert evlr.defines['abc']

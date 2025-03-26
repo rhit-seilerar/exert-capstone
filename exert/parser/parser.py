@@ -25,16 +25,16 @@ def get_files():
 
 def switch_to_version(version):
     old_version = None
-    if not os.path.exists(SOURCE_PATH):
-        run_command(f'git init {SOURCE_PATH}')
-    else:
+    try:
         with open(VERSION_PATH, 'r', encoding = 'utf-8') as file:
             old_version = file.read()
+    except FileNotFoundError:
+        pass
     if old_version != version:
         with open(VERSION_PATH, 'w', encoding = 'utf-8') as file:
             file.write(version)
         print(f'Checking out linux v{version}')
-        run_command(f'git fetch --depth 1 {REPO_URL} v{version}', cwd = SOURCE_PATH)
+        run_command(f'git clone --depth 1 {REPO_URL} -b v{version} {SOURCE_PATH}')
 
 SOURCE = """
 #include <linux/types.h>

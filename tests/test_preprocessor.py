@@ -114,31 +114,44 @@ def test_blocks():
         tm.mk_op(';')
     ]
 
-    # assert pp.preprocess("""
-    #     #ifdef ABC
-    #         #if ABC == 2
-    #             #define DEF 1
-    #         #elifdef DEF
-    #             #warning DEF already defined
-    #         #endif
-    #     #elifndef DEF
-    #         #error DEF not defined
-    #     #elif DEF != 1
-    #         #undef DEF
-    #         #define DEF 1
-    #     #endif
-    # """, CACHE, True).load(CACHE).tokens == [
-    #     ('optional', TK.tokenize('(defined ABC)')),
-    #     ('optional', TK.tokenize('(ABC == 2)')),
-    #     ('optional', []),
-    #     ('optional', TK.tokenize('!(ABC == 2) && (defined DEF)')),
-    #     ('optional', []),
-    #     ('optional', []),
-    #     ('optional', TK.tokenize('!(defined ABC) && (!defined DEF)')),
-    #     ('optional', []),
-    #     ('optional', TK.tokenize('!(defined ABC) && !(!defined DEF) && (DEF != 1)')),
-    #     ('optional', []),
-    # ]
+    pp = Preprocessor(TK, 32, [], {}, filereader = dummy_reader)
+    assert pp.preprocess("""
+        #ifdef ABC
+        #elifndef DEF
+        #endif
+    """, CACHE, True).load(CACHE).tokens == [
+        ('optional', TK.tokenize('(defined ABC)')),
+        ('optional', []),
+        ('optional', TK.tokenize('!(defined ABC) && (!defined DEF)')),
+        ('optional', []),
+    ]
+
+    pp = Preprocessor(TK, 32, [], {}, filereader = dummy_reader)
+    assert pp.preprocess("""
+        #ifdef ABC
+            #if ABC == 2
+                #define DEF 1
+            #elifdef DEF
+                #warning DEF already defined
+            #endif
+        #elifndef DEF
+            #error DEF not defined
+        #elif DEF != 1
+            #undef DEF
+            #define DEF 1
+        #endif
+    """, CACHE, True).load(CACHE).tokens == [
+        ('optional', TK.tokenize('(defined ABC)')),
+        ('optional', TK.tokenize('(ABC == 2)')),
+        ('optional', []),
+        ('optional', TK.tokenize('!(ABC == 2) && (defined DEF)')),
+        ('optional', []),
+        ('optional', []),
+        ('optional', TK.tokenize('!(defined ABC) && (!defined DEF)')),
+        ('optional', []),
+        ('optional', TK.tokenize('!(defined ABC) && !(!defined DEF) && (DEF != 1)')),
+        ('optional', []),
+    ]
 
 def test_line_and_include():
     pass
