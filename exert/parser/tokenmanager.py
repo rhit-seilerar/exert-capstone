@@ -1,15 +1,14 @@
 def tok_str(token, newlines = False):
     n = token
     string = '<NONE> ' if n is None \
-        else f'#{"endif" if len(n[1]) == 0 else "if"} {tok_seq(n[1], newlines)}\n' \
-            if n[0] == 'optional' \
         else n[1] if n[0] == 'directive' \
         else f'{n[1]}\n' if n[0] == 'operator' and n[1] in [';', '{', '}'] \
         else f'{n[1]} ' if n[0] == 'operator' \
         else f'{n[1]} ' if n[0] in ['keyword', 'identifier'] \
         else f'{n[1]}{n[2]} ' if n[0] == 'integer' \
         else f'{n[2]}{n[1]}{">" if n[2] == "<" else n[2]} ' if n[0] == 'string' \
-        else f'<ANY {n[1]}>{{{", ".join(str(v) for v in n[2])}}} ' if n[0] == 'any' \
+        else f'<ANY {n[1]}>[{len(n[2])}]{{ {", ".join(str(v) for v in n[2])} }} ' \
+            if n[0] == 'any' \
         else str(n[1])
     if newlines:
         return string
@@ -22,8 +21,11 @@ def tok_seq(tokens, newlines = False):
 def mk_int(num, suffix = ''):
     return ('integer', num, suffix)
 
-def mk_ident(sym):
+def mk_id(sym):
     return ('identifier', sym)
+
+def mk_kw(sym):
+    return ('keyword', sym)
 
 def mk_op(op):
     return ('operator', op)

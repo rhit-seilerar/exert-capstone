@@ -1,5 +1,5 @@
 RUN_PLUGIN_TESTS = False
-DEBUG_LEVEL = 5
+DEBUG_LEVEL = 0
 
 def dprint(level, *args):
     if level <= DEBUG_LEVEL:

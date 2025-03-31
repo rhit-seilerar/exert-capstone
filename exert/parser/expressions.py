@@ -5,7 +5,7 @@ class Expression:
         assert False
 
     def __str__(self):
-        return ''
+        return '<err>'
 
 class Integer(Expression):
     def __init__(self, value, unsigned):
@@ -22,12 +22,9 @@ class Integer(Expression):
     def __str__(self):
         return str(self.value) + ('u' if self.unsigned else '')
 
-class Identifier(Expression):
+class Identifier(Integer):
     def __init__(self, a):
-        self.a = a
-
-    def evaluate(self, evaluator):
-        return Integer(1 if self.a == 'true' else 0, False)
+        super().__init__(1 if a == 'true' else 0, False)
 
 class Wildcard(Expression):
     def evaluate(self, evaluator):
@@ -60,6 +57,7 @@ class UnaryOperator(Operator):
     def evaluate(self, evaluator):
         aint = self.a.evaluate(evaluator)
         if isinstance(aint, Wildcard):
+            aint.options = set()
             return aint
         unsigned = self.signop(aint.unsigned)
         return Integer(self.op(aint.value), unsigned)
@@ -80,8 +78,12 @@ class BinaryOperator(Operator):
     def evaluate(self, evaluator):
         aint = self.a.evaluate(evaluator)
         bint = self.b.evaluate(evaluator)
-        if isinstance(aint, Wildcard) or isinstance(bint, Wildcard):
+        if isinstance(aint, Wildcard):
+            aint.options = set()
             return aint
+        if isinstance(bint, Wildcard):
+            bint.options = set()
+            return bint
         unsigned = self.signop(aint.unsigned, bint.unsigned)
         return Integer(self.op(aint.value, bint.value), unsigned)
 
@@ -153,8 +155,12 @@ class LeftShift(BinaryOperator):
     def evaluate(self, evaluator):
         aint = self.a.evaluate(evaluator)
         bint = self.b.evaluate(evaluator)
-        if isinstance(aint, Wildcard) or isinstance(bint, Wildcard):
+        if isinstance(aint, Wildcard):
+            aint.options = set()
             return aint
+        if isinstance(bint, Wildcard):
+            bint.options = set()
+            return bint
         unsigned = aint.unsigned
         return Integer(0 if bint.value < 0 or bint.value >= evaluator.bitsize
             else aint.value << bint.value, unsigned)
@@ -166,8 +172,12 @@ class RightShift(BinaryOperator):
     def evaluate(self, evaluator):
         aint = self.a.evaluate(evaluator)
         bint = self.b.evaluate(evaluator)
-        if isinstance(aint, Wildcard) or isinstance(bint, Wildcard):
+        if isinstance(aint, Wildcard):
+            aint.options = set()
             return aint
+        if isinstance(bint, Wildcard):
+            bint.options = set()
+            return bint
         unsigned = aint.unsigned
         return Integer(0 if bint.value < 0
             else -1 if bint.value >= evaluator.bitsize and aint.value < 0
@@ -220,9 +230,15 @@ class Conditional(Operator):
         aint = self.a.evaluate(evaluator)
         bint = self.b.evaluate(evaluator)
         cint = self.c.evaluate(evaluator)
-        if isinstance(aint, Wildcard) or isinstance(bint, Wildcard) \
-            or isinstance(cint, Wildcard):
+        if isinstance(aint, Wildcard):
+            aint.options = set()
             return aint
+        if isinstance(bint, Wildcard):
+            bint.options = set()
+            return bint
+        if isinstance(cint, Wildcard):
+            cint.options = set()
+            return cint
         unsigned = bint.unsigned or cint.unsigned
         return Integer(bint.value if aint.value else cint.value, unsigned)
 

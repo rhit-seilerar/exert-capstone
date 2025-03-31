@@ -1,5 +1,4 @@
 from tests import utils
-import exert.parser.tokenmanager as tm
 from exert.parser.serializer import write_tokens, read_tokens
 from exert.parser.definitions import DefOption
 
@@ -13,9 +12,6 @@ def test_roundtrip():
         ('operator', '>>>'),
         ('keyword', 'while'),
         ('directive', '#'),
-        ('optional', []),
-        ('optional', [
-            tm.mk_ident('defined'), tm.mk_op('('), tm.mk_ident('TEST'), tm.mk_op(')')]),
         ('any', 'a1', {
             DefOption([('identifier', 'a'), ('identifier', 'b')]),
             DefOption([('any', 'a2', {

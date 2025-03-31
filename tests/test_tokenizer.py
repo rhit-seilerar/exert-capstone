@@ -33,5 +33,14 @@ def test():
         DEFN1 \\
         DEFN2
     """, '#define MULTILINE_DEFN DEFN1 DEFN2')
-    assert TK.tokenize('#define A(B)') == [('directive', '#'), tm.mk_ident('define'),
-        tm.mk_ident('A'), ('directive', '('), tm.mk_ident('B'), tm.mk_op(')'), ('newline', '')]
+    assert TK.tokenize('#define A(B)') == [('directive', '#'), tm.mk_id('define'),
+        tm.mk_id('A'), ('directive', '('), tm.mk_id('B'), tm.mk_op(')'), ('newline', '')]
+
+    roundtrip("""
+        #if ABC == 2
+            #define DEF 1
+            int A = 2; // ABC; // TODO: Guarantee
+        #elifdef DEF
+            int A = 2;
+        #endif
+    """, '#if ABC == 2  #define DEF 1  int A = 2 ; #elifdef DEF  int A = 2 ; #endif')

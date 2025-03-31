@@ -95,18 +95,22 @@ def test_blocks():
     pp.preprocess("""
         #ifndef ABC
         #define ABC 1
+        int A = ABC;
         #else
         #undef ABC
         #define ABC 2
+        int A = ABC;
         #endif
-        ABC;
-    """, CACHE, reset_cache = True)
-    pp.load(CACHE)
+        int B = ABC;
+    """, CACHE, True).load(CACHE)
     assert pp.tokens == [
-        ('optional', TK.tokenize('(!defined ABC)')),
-        ('optional', []),
-        ('optional', TK.tokenize('!(!defined ABC) && (1)')),
-        ('optional', []),
+        ('any', '', {
+            dm.DefOption(TK.tokenize('int A = 1;')),
+            dm.DefOption(TK.tokenize('int A = 2;'))
+        }),
+        tm.mk_kw('int'),
+        tm.mk_id('B'),
+        tm.mk_op('='),
         ('any', 'ABC', {
             dm.DefOption([tm.mk_int(1)]),
             dm.DefOption([tm.mk_int(2)])
@@ -115,42 +119,60 @@ def test_blocks():
     ]
 
     pp = Preprocessor(TK, 32, [], {}, filereader = dummy_reader)
-    assert pp.preprocess("""
+    pp.preprocess("""
         #ifdef ABC
+        int A;
         #elifndef DEF
+        int B;
         #endif
-    """, CACHE, True).load(CACHE).tokens == [
-        ('optional', TK.tokenize('(defined ABC)')),
-        ('optional', []),
-        ('optional', TK.tokenize('!(defined ABC) && (!defined DEF)')),
-        ('optional', []),
+    """, CACHE, True).load(CACHE)
+    assert pp.tokens == [
+        ('any', '', {
+            dm.DefOption(TK.tokenize('int A;')),
+            dm.DefOption(TK.tokenize('int B;')),
+            dm.DefOption([])
+        }),
     ]
 
     pp = Preprocessor(TK, 32, [], {}, filereader = dummy_reader)
-    assert pp.preprocess("""
+    pp.preprocess("""
         #ifdef ABC
             #if ABC == 2
                 #define DEF 1
+                int A = 2; // ABC; // TODO: Guarantee extraction from wildcards
             #elifdef DEF
                 #warning DEF already defined
+                #undef ABC
+                #define ABC 2
+                int A = ABC;
             #endif
+            int B = 3;
         #elifndef DEF
+            int B = 4;
             #error DEF not defined
         #elif DEF != 1
             #undef DEF
             #define DEF 1
+            int B = DEF;
+        #else
+            int B = 7;
         #endif
-    """, CACHE, True).load(CACHE).tokens == [
-        ('optional', TK.tokenize('(defined ABC)')),
-        ('optional', TK.tokenize('(ABC == 2)')),
-        ('optional', []),
-        ('optional', TK.tokenize('!(ABC == 2) && (defined DEF)')),
-        ('optional', []),
-        ('optional', []),
-        ('optional', TK.tokenize('!(defined ABC) && (!defined DEF)')),
-        ('optional', []),
-        ('optional', TK.tokenize('!(defined ABC) && !(!defined DEF) && (DEF != 1)')),
-        ('optional', []),
+        int C = 6;
+    """, CACHE, True).load(CACHE)
+    assert pp.tokens == [
+        ('any', '', {
+            dm.DefOption([
+                ('any', '', {
+                    dm.DefOption(TK.tokenize('int A = 2;')),
+                    dm.DefOption([])
+                }),
+                *TK.tokenize('int B = 3;')
+            ]),
+            dm.DefOption(TK.tokenize('int B = 4;')),
+            dm.DefOption(TK.tokenize('int B = 1;')),
+            dm.DefOption(TK.tokenize('int B = 7;'))
+        }),
+        *TK.tokenize('int C = 6;')
     ]
 
 def test_line_and_include():

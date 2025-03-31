@@ -2,9 +2,8 @@ import os
 import sys
 import glob
 from exert.parser.tokenizer import Tokenizer
-from exert.parser.tokenmanager import TokenManager
+from exert.parser.tokenmanager import tok_str, mk_kw, mk_op, mk_id, TokenManager
 from exert.parser.preprocessor import Preprocessor
-from exert.parser import serializer
 from exert.usermode import rules
 from exert.utilities.command import run_command
 
@@ -64,173 +63,317 @@ def parse(filename, arch):
     print(str(preprocessor))
 
     parser = Parser()
-    parser.parse(PREPROCESSOR_CACHE)
+    parser.parse(preprocessor.tokens)
 
 class Parser(TokenManager):
     def __init__(self, types = None):
         super().__init__()
         self.types = types.copy() if types is not None else {}
 
-    def add(self, values, key, value):
-        values[key] = (arr := values.get(key, list()))
-        arr.append(value)
+#     def add(self, values, key, value):
+#         values[key] = (arr := values.get(key, list()))
+#         arr.append(value)
 
-    def set(self, values, key, value):
-        values[key] = value
+#     def set(self, values, key, value):
+#         values[key] = value
 
-    def pop(self, values, key):
-        values.pop(key)
+#     def pop(self, values, key):
+#         values.pop(key)
 
-    def get(self, values, key):
-        arr = values.get(key)
-        return rules.Any(list(arr)) if arr else None
+#     def get(self, values, key):
+#         arr = values.get(key)
+#         return rules.Any(list(arr)) if arr else None
 
-    def has(self, values, key):
-        return key in values
+#     def has(self, values, key):
+#         return key in values
 
-    def consume_terminators(self):
-        if not self.consume_operator(';'):
-            return False
-        while self.consume_operator(';'):
-            pass
-        return True
+    def unwrap(self, k):
+        while isinstance(k, tuple) and len(k) == 3:
+            k = k[0](k[1], k[2])
+        return k
 
-    def parse_identifier(self):
-        if (token := self.consume_type('identifier')):
-            return token[1]
-        return ''
+    def chkpt(self, clause):
+        def env():
+            index = self.index
+            def pop(p, f):
+                self.index = index
+                return f
+            def intl(p, f):
+                return clause, p, (pop, p, f)
+            return intl
+        return env()
 
-    def parse_primitive_types(self):
-        prims = [
-            'void', 'char', 'int', 'float', 'double',
-            'long', 'short', 'unsigned', 'signed'
-        ]
-        mods = []
-        for _ in range(4):
-            tok = self.peek()
-            if tok[0] != 'keyword' or tok[1] not in prims:
-                break
-            mods.append(self.next())
+    def opt(self, clause):
+        def intl(p, f):
+            return clause, p, p
+        return intl
 
-        num_int = mods.count(('keyword', 'int'))
-        num_long = mods.count(('keyword', 'long'))
-        num_short = mods.count(('keyword', 'short'))
-        num_unsigned = mods.count(('keyword', 'unsigned'))
-        num_signed = mods.count(('keyword', 'signed'))
+    def por(self, *clauses):
+        def intl(p, f):
+            def intl1(p1, f1, rest):
+                def nex(p2, f2):
+                    return intl1(p2, f2, rest[1:])
+                if len(rest) == 0:
+                    return f1
+                return rest[0], p1, (nex, p1, f1)
+            return intl1(p, f, clauses)
+        return intl
 
-        if len(mods) == 0:
-            return None
+    def pand(self, *clauses):
+        def intl(p, f):
+            def intl1(p1, f1, rest):
+                def nex(p2, f2):
+                    return intl1(p2, f2, rest[1:])
+                if len(rest) == 0:
+                    return p1
+                return rest[0], (nex, p1, f1), f1
+            return intl1(p, f, clauses)
+        return self.chkpt(intl)
 
-        if mods.count(('keyword', 'void')):
-            if len(mods) != 1:
-                return self.err(f"Unknown void type '{' '.join(mods)}'")
-            return rules.Rule()
+    def check_for_any(self, p, f):
+        acc = set()
+        if self.peek_type() == 'any':
+            # Parse the rest of the file with each option
+            anytok = self.next()
+            for opt in anytok[2]:
+                # Back up state and insert the option
+                index = self.index
+                self.len += len(opt)
+                self.tokens[self.index:self.index] = opt.tokens
 
-        if mods.count(('keyword', 'char')):
-            if not (len(mods) == 1 or len(mods) == 2 and (num_signed or num_unsigned)):
-                return self.err(f"Unknown char type '{' '.join(mods)}'")
-            return rules.Int(size = 1, signed = num_signed)
+                # Try it out
+                result = self.unwrap(p)
 
-        if mods.count(('keyword', 'float')):
-            if len(mods) != 1:
-                return self.err(f"Unknown float type '{' '.join(mods)}'")
-            return self.err('Floats are not yet handled')
+                # Revert state and remove the option
+                self.index = index
+                del self.tokens[self.index:self.index+len(opt)]
+                self.len -= len(opt)
+                acc |= result
+            return acc
 
-        if mods.count(('keyword', 'double')):
-            if not (len(mods) == 1 or len(mods) == 2 and num_long):
-                return self.err(f"Unknown double type '{' '.join(mods)}'")
-            return self.err('Doubles are not yet handled')
+        # No any here, continue on
+        return p
 
-        valid_type = num_int <= 1
-        valid_sign = num_unsigned + num_signed <= 1
-        valid_size = (num_short == 1 and not num_long) or (not num_short and num_long <= 2)
-        valid_count = num_int + num_unsigned + num_signed + num_short + num_long == len(mods)
-        if not (valid_type and valid_sign and valid_size and valid_count):
-            return self.err(f"Unknown int type '{' '.join(mods)}'")
-        size = 2 if num_short else 8 if num_long == 2 else None if num_long == 1 else 4
-        return rules.Int(size = size, signed = not num_unsigned)
+    def tok(self, tok):
+        return self.pand(
+            self.check_for_any,
+            lambda p, f: p if self.peek() == tok else f
+        )
 
-    def parse_struct(self):
-        if not self.consume_keyword('struct'):
-            return None
-        name = self.parse_identifier()
-        if not self.consume(('operator', '{')):
-            if not name:
-                return self.err("No identifier for body-less struct")
-            return self.get(self.types, name)
-        groups = []
-        fields = []
-        while self.has_next():
-            if self.consume_terminators():
-                continue
-            decls = self.parse_type_declarations()
-            if not decls:
-                break
-            for decl in decls:
-                fields.append(rules.Field(decl[0], decl[1]))
-        if not self.consume_operator('}'):
-            return self.err("Struct body did not close")
-        groups.append(rules.FieldGroup(fields))
-        return rules.Struct(name, groups)
+    def typ(self, typ):
+        return self.pand(
+            self.check_for_any,
+            lambda p, f: p if self.peek_type() == typ else f
+        )
 
-    def parse_base_type(self):
-        if (struct := self.parse_struct()):
-            return struct
-        # if (union := self.parse_union()):
-        #     return union
-        # if (enum := self.parse_enum()):
-        #     return enum
-        if (prim := self.parse_primitive_types()):
-            return prim
-        if (ident := self.parse_identifier()):
-            rule = self.get(self.types, ident)
-            if not rule:
-                return self.err(f"No type found for '{ident}'")
-            return rule
+    # ===== Other =====
 
-    def parse_type_declarations(self):
-        def parse_per_ident_type(base_type):
-            if self.consume_operator('('):
-                #TODO
-                return self.err("Function pointers not yet implemented")
-            while self.consume_operator('*'):
-                base_type = rules.Pointer(rule = base_type)
-            if not (name := self.parse_identifier()):
-                return self.err("Expected an identifier here")
-            if self.consume_operator('['):
-                value = self.consume_type('integer')[1]
-                if not value:
-                    return self.err(f"Unknown array bounds {self.peek()}")
-                if not self.consume_operator(']'):
-                    return self.err("Array must close")
-                base_type = rules.Array(rule = base_type, count_min = value, count_max = value)
-            if self.consume_operator('['):
-                #TODO
-                return self.err("Multi-dimensional arrays not yet supported")
-            return (name, base_type)
-        if not (base_type := self.parse_base_type()):
-            return None
-        decls = [parse_per_ident_type(base_type)]
-        while self.consume_operator(','):
-            decls.append(parse_per_ident_type(base_type))
-        if not self.consume_terminators():
-            return self.err('Type did not terminate')
-        return decls
+    def parse_expression(self, p, f):
+        return p
 
-    def parse(self, filename):
+    def parse_attribute_specifier_sequence(self, p, f):
+        return p
+
+    def parse_declaration(self, p, f):
+        return p
+
+    def parse_declarator(self, p, f):
+        return p
+
+    def parse_declaration_specifiers(self, p, f):
+        return p
+
+    def parse_constant_expression(self, p, f):
+        return p
+
+    # ===== A.3.2 Expressions =====
+
+    # ===== A.3.3 Statements =====
+
+    def parse_statement(self, p, f):
+        return self.por(
+            self.parse_labeled_statement,
+            self.parse_unlabeled_statement
+        ), p, f
+
+    def parse_unlabeled_statement(self, p, f):
+        return self.por(
+            self.parse_expression_statement,
+            self.pand(
+                self.opt(self.parse_attribute_specifier_sequence),
+                self.parse_primary_block
+            ),
+            self.pand(
+                self.opt(self.parse_attribute_specifier_sequence),
+                self.parse_jump_statement
+            )
+        ), p, f
+
+    def parse_primary_block(self, p, f):
+        return self.por(
+            self.parse_compound_statement,
+            self.parse_selection_statement,
+            self.parse_iteration_statement
+        ), p, f
+
+    def parse_secondary_block(self, p, f):
+        return self.parse_statement, p, f
+
+    def parse_label(self, p, f):
+        return self.por(
+            self.pand(
+                self.opt(self.parse_attribute_specifier_sequence),
+                self.typ('identifier'),
+                self.tok(mk_op(':'))
+            ),
+            self.pand(
+                self.opt(self.parse_attribute_specifier_sequence),
+                self.tok(mk_kw('case')),
+                self.parse_constant_expression,
+                self.tok(mk_op(':'))
+            ),
+            self.pand(
+                self.opt(self.parse_attribute_specifier_sequence),
+                self.tok(mk_kw('default')),
+                self.tok(mk_op(':'))
+            )
+        ), p, f
+
+    def parse_labeled_statement(self, p, f):
+        return self.pand(
+            self.parse_label,
+            self.parse_statement
+        ), p, f
+
+    def parse_compound_statement(self, p, f):
+        return self.pand(
+            self.tok(mk_op('{')),
+            self.opt(self.parse_block_item_list),
+            self.tok(mk_op('}'))
+        ), p, f
+
+    def parse_block_item_list(self, p, f):
+        return self.pand(
+            self.parse_block_item,
+            self.opt(self.parse_block_item_list)
+        ), p, f
+
+    def parse_block_item(self, p, f):
+        return self.por(
+            self.parse_declaration,
+            self.parse_unlabeled_statement,
+            self.parse_label
+        ), p, f
+
+    def parse_expression_statement(self, p, f):
+        return self.pand(
+            self.opt(self.pand(
+                self.opt(self.parse_attribute_specifier_sequence),
+                self.parse_expression
+            )),
+            self.tok(mk_op(';'))
+        ), p, f
+
+    def parse_selection_statement(self, p, f):
+        return self.por(
+            self.pand(
+                self.tok(mk_kw('if')),
+                self.tok(mk_op('(')),
+                self.parse_expression,
+                self.tok(mk_op(')')),
+                self.parse_secondary_block,
+                self.opt(self.pand(
+                    self.tok(mk_kw('else')),
+                    self.parse_secondary_block
+                ))
+            ),
+            self.pand(
+                self.tok(mk_kw('switch')),
+                self.tok(mk_op('(')),
+                self.parse_expression,
+                self.tok(mk_op(')')),
+                self.parse_secondary_block
+            )
+        ), p, f
+
+    def parse_iteration_statement(self, p, f):
+        return self.por(
+            self.pand(
+                self.tok(mk_kw('while')),
+                self.tok(mk_op('(')),
+                self.parse_expression,
+                self.tok(mk_op(')')),
+                self.parse_secondary_block
+            ),
+            self.pand(
+                self.tok(mk_kw('do')),
+                self.parse_secondary_block,
+                self.tok(mk_kw('while')),
+                self.tok(mk_op('(')),
+                self.parse_expression,
+                self.tok(mk_op(')')),
+                self.tok(mk_op(';'))
+            ),
+            self.pand(
+                self.tok(mk_kw('for')),
+                self.tok(mk_op('(')),
+                self.por(
+                    self.parse_declaration,
+                    self.opt(self.parse_expression),
+                ),
+                self.tok(mk_op(';')),
+                self.opt(self.parse_expression),
+                self.tok(mk_op(';')),
+                self.opt(self.parse_expression),
+                self.tok(mk_op(')')),
+                self.parse_secondary_block
+            )
+        ), p, f
+
+    def parse_jump_statement(self, p, f):
+        return self.por(
+            self.pand(self.tok(mk_kw('goto')), self.typ('identifier'),
+                self.tok(mk_op(';'))),
+            self.pand(self.tok(mk_kw('continue')), self.tok(mk_op(';'))),
+            self.pand(self.tok(mk_kw('break')), self.tok(mk_op(';'))),
+            self.pand(self.tok(mk_kw('return')), self.opt(self.parse_expression),
+                self.tok(mk_op(';')))
+        ), p, f
+
+    # ===== A.3.4 External Definitions =====
+
+    def parse_translation_unit(self, p, f):
+        return self.pand(
+            self.parse_external_declaration,
+            self.opt(self.parse_translation_unit)
+        ), p, f
+
+    def parse_external_declaration(self, p, f):
+        return self.por(
+            self.parse_function_definition,
+            self.parse_declaration
+        ), p, f
+
+    def parse_function_definition(self, p, f):
+        return self.pand(
+            self.opt(self.parse_attribute_specifier_sequence),
+            self.parse_declaration_specifiers,
+            self.parse_declarator,
+            self.parse_function_body
+        ), p, f
+
+    def parse_function_body(self, p, f):
+        return self.parse_compound_statement, p, f
+
+    def parse(self, tokens):
         super().reset()
-        tokens = serializer.read_tokens(filename)
-        while self.has_next() and not self.has_error:
-            if self.consume_terminators():
-                continue
-            if self.consume_keyword('typedef'):
-                decls = self.parse_type_declarations()
-                if not decls:
-                    return self.err("Expected a type declaration after typedef")
-                for decl in decls:
-                    self.add(self.types, decl[0], decl[1])
-                continue
-            return self.err('Unrecognized syntax, cannot proceed.')
+        self.tokens = tokens
+        self.len = len(tokens)
+        self.outstr = ''
+
+        cont = self.unwrap((self.parse_translation_unit, True, False))
+        print(cont)
+        print(self.outstr)
 
 if __name__ == '__main__':
     generate(sys.argv[1], sys.argv[2])

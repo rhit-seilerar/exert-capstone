@@ -80,13 +80,33 @@ class Preprocessor(TokenManager):
         self.invalid_paths.add(path)
         return True
 
-    def push_optional(self):
-        if not self.defs.is_skipping():
-            self.emit_tokens([('optional', self.defs.get_cond_tokens())])
+    def package_emissions(self, is_start = False, is_end = False):
+        if is_start:
+            self.defs.layers[-1].blocks = []
+            self.defs.layers[-1].emitted = []
+            return
 
-    def pop_optional(self):
-        if not self.defs.is_skipping():
-            self.emit_tokens([('optional', [])])
+        block = self.defs.layers[-1].emitted
+        self.defs.layers[-1].emitted = []
+
+        if self.defs.is_skipping():
+            return
+
+        if len(block) > 0:
+            self.defs.layers[-1].blocks.append(block)
+
+        if is_end:
+            blocks = self.defs.layers[-1].blocks
+            if len(blocks) == 0:
+                return
+            if not self.defs.layers[-1].closed:
+                self.defs.layers[-1].blocks.append([])
+
+            if len(blocks) == 1:
+                self.defs.layers[-2].emitted += blocks[0]
+            else:
+                self.defs.layers[-2].emitted.append(('any', '',
+                    {DefOption(b) for b in blocks}))
 
     def skip_to_newline(self, offset = 0):
         tokens = []
@@ -162,7 +182,7 @@ class Preprocessor(TokenManager):
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         self.defs.on_ifdef(name)
-        self.push_optional()
+        self.package_emissions(is_start = True)
         return True
 
     def handle_ifndef(self):
@@ -171,7 +191,14 @@ class Preprocessor(TokenManager):
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         self.defs.on_ifndef(name)
-        self.push_optional()
+        self.package_emissions(is_start = True)
+        return True
+
+    def handle_if(self):
+        if not (tokens := self.skip_to_newline()):
+            return False
+        self.defs.on_if(tokens)
+        self.package_emissions(is_start = True)
         return True
 
     def handle_elifdef(self):
@@ -179,9 +206,8 @@ class Preprocessor(TokenManager):
             return self.err('#elifdef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        self.pop_optional()
+        self.package_emissions()
         self.defs.on_elifdef(name)
-        self.push_optional()
         return True
 
     def handle_elifndef(self):
@@ -189,38 +215,28 @@ class Preprocessor(TokenManager):
             return self.err('#elifndef must be followed by an identifier')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        self.pop_optional()
+        self.package_emissions()
         self.defs.on_elifndef(name)
-        self.push_optional()
-        return True
-
-    def handle_if(self):
-        if not (tokens := self.skip_to_newline()):
-            return False
-        self.defs.on_if(tokens)
-        self.push_optional()
         return True
 
     def handle_elif(self):
         if not (tokens := self.skip_to_newline()):
             return False
-        self.pop_optional()
+        self.package_emissions()
         self.defs.on_elif(tokens)
-        self.push_optional()
         return True
 
     def handle_else(self):
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        self.pop_optional()
+        self.package_emissions()
         self.defs.on_else()
-        self.push_optional()
         return True
 
     def handle_endif(self):
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
-        self.pop_optional()
+        self.package_emissions(is_end = True)
         self.defs.on_endif()
         return True
 
@@ -296,8 +312,8 @@ class Preprocessor(TokenManager):
         self.emit_tokens(result)
 
     def emit_tokens(self, tokens):
-        if self.cache_file:
-            write_tokens(self.cache_file, tokens)
+        if not self.defs.is_skipping():
+            self.defs.layers[-1].emitted += tokens
 
     def preprocess(self, data, cache, reset_cache = False):
         super().reset()
@@ -318,16 +334,16 @@ class Preprocessor(TokenManager):
         # Stringification and concatenation not implemented
 
         with open(cache, mode = 'bw') as file:
-            self.cache_file = file
-            flush_size = 40000
+            # flush_size = 40000
+            self.defs.layers[-1].emitted = []
 
             while self.has_next() and not self.has_error:
                 self.print_progress()
 
-                if self.index > flush_size + 20:
-                    del self.tokens[:flush_size]
-                    self.index -= flush_size
-                    self.len -= flush_size
+                # if self.index > flush_size + 20:
+                #     del self.tokens[:flush_size]
+                #     self.index -= flush_size
+                #     self.len -= flush_size
 
                 if self.consume_directive('#'):
                     self.parse_directive()
@@ -342,6 +358,9 @@ class Preprocessor(TokenManager):
                     continue
 
                 self.emit_tokens([self.next()])
+
+            write_tokens(file, self.defs.layers[-1].emitted)
+
         return self
 
     def load(self, cache):
