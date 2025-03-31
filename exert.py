@@ -182,7 +182,8 @@ def volume_srd(srd=0):
     else:
         command += f'rm -rf /mount/exert/ && rm -rf /mount/tests && rm -rf /mount/kernels/ \
             && rsync -auv --progress {exclude} /local/ /mount'
-    run_docker(name = 'pandare-init', command = command, capture_output=False, extra_args=extra_args)
+    run_docker(name = 'pandare-init', command = command,
+               capture_output=False, extra_args=extra_args)
 
 def osi(parsed):
     """Validate the provided image, and then generate its OSI information"""
