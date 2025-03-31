@@ -36,7 +36,7 @@ class Exert(PyPlugin):
             if self.called_back:
                 return
             print('Hooking into sys_execve...')
-            # panda.enable_callback('single_step')
+            panda.enable_callback('single_step')
             panda.enable_callback('hypercall')
 
         @panda.cb_guest_hypercall
@@ -48,17 +48,17 @@ class Exert(PyPlugin):
             else:
                 IPython.embed()
 
-        # @panda.cb_start_block_exec
-        # def single_step(cpu, tb):
-        #     if panda.in_kernel_mode(cpu):
-        #         panda.disable_callback('single_step')
-        #         self.called_back = True
-        #         if self.callback:
-        #             self.callback(panda, cpu)
-        #         else:
-        #             IPython.embed()
+        @panda.cb_start_block_exec
+        def single_step(cpu, tb):
+            if panda.in_kernel_mode(cpu):
+                panda.disable_callback('single_step')
+                self.called_back = True
+                if self.callback:
+                    self.callback(panda, cpu)
+                else:
+                    IPython.embed()
 
-        # panda.disable_callback('single_step')
+        panda.disable_callback('single_step')
         panda.disable_callback('hypercall')
 
 def run(arch = 'i386', callback = None, generic = True, kernel = None,
