@@ -77,8 +77,10 @@ class Task():
 task.per_cpu_offset_0_addr = {self.per_cpu_offset_0_addr}
 task.current_task_addr = {self.current_task_addr}
 task.init_addr = {self.init_addr}
-task.size = {self.size}\ntask.tasks_offset = {self.tasks_offset}
-task.pid_offset = {self.pid_offset}task.tgid_offset = {self.tgid_offset}
+task.size = {self.size}
+task.tasks_offset = {self.tasks_offset}
+task.pid_offset = {self.pid_offset}
+task.tgid_offset = {self.tgid_offset}
 task.group_leader_offset = {self.group_leader_offset}
 task.thread_group_offset = {self.thread_group_offset}
 task.real_parent_offset = {self.real_parent_offset}

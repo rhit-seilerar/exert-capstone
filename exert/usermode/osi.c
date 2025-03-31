@@ -21,7 +21,7 @@ int data_address() {
 }
 
 int task_struct_size() {
-    FILE *slabInfo = popen("/proc/slabinfo", "r");
+    FILE *slabInfo = fopen("/proc/slabinfo", "r");
     char * line = NULL;
     size_t len = 0;
     size_t read;
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     }
 
     if (strncmp(argv[1], "task_struct_size", 17) == 0) {
-        return data_address();
+        return task_struct_size();
     }
 
     return 0;

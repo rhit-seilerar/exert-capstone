@@ -102,8 +102,17 @@ def get_osi_info(kernel, arch, version):
             data = open("tmp_data", "rb")
             init_task_struct_addr = pickle.load(data)
             data.close()
+
+            task_struct_size_prefix = PANDA_PLUGIN_PREFIX.format(arch, False, kernel, osi_prog,
+                                                                 './user_prog task_struct_size',
+                                                                 'osi.' + empty_callback.__name__,
+                                                                 'osi.' + get_task_struct_size.__name__)
+            subprocess.run(['python'], input = task_struct_size_prefix, check = True, text = True)
+            data = open("tmp_data", "rb")
+            task_struct_size = pickle.load(data)
+            data.close()
+
             os.remove("tmp_data")
-            print(init_task_struct_addr)
             
             header_line = osi.HeaderLine("[linux:" + version + ":" + bits + "]")
             osi_name = osi.Name(version + "|linux|" + arch)
@@ -112,7 +121,7 @@ def get_osi_info(kernel, arch, version):
                             per_cpu_offset_0_addr = -1,
                             current_task_addr = -1,
                             init_addr = init_task_struct_addr,
-                            size = -1,
+                            size = task_struct_size,
                             tasks_offset = -1,
                             pid_offset = -1,
                             tgid_offset = -1,
