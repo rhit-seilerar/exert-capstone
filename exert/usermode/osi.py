@@ -74,23 +74,23 @@ class Task():
 
     def to_string(self):
         return f'''task.per_cpu_offsets_addr = {self.per_cpu_offsets_addr}
-        task.per_cpu_offset_0_addr = {self.per_cpu_offset_0_addr}
-        task.current_task_addr = {self.current_task_addr}
-        task.init_addr = {self.init_addr}
-        task.size = {self.size}\ntask.tasks_offset = {self.tasks_offset}
-        task.pid_offset = {self.pid_offset}task.tgid_offset = {self.tgid_offset}
-        task.group_leader_offset = {self.group_leader_offset}
-        task.thread_group_offset = {self.thread_group_offset}
-        task.real_parent_offset = {self.real_parent_offset}
-        task.parent_offset = {self.parent_offset}
-        task.mm_offset = {self.mm_offset}
-        task.stack_offset = {self.stack_offset}
-        task.real_cred_offset = {self.real_cred_offset}
-        task.cred_offset = {self.cred_offset}
-        task.comm_offset = {self.comm_offset}
-        task.comm_size = {self.comm_size}
-        task.files_offset = {self.files_offset}
-        task.start_time_offset = {self.start_time_offset}\n'''
+task.per_cpu_offset_0_addr = {self.per_cpu_offset_0_addr}
+task.current_task_addr = {self.current_task_addr}
+task.init_addr = {self.init_addr}
+task.size = {self.size}\ntask.tasks_offset = {self.tasks_offset}
+task.pid_offset = {self.pid_offset}task.tgid_offset = {self.tgid_offset}
+task.group_leader_offset = {self.group_leader_offset}
+task.thread_group_offset = {self.thread_group_offset}
+task.real_parent_offset = {self.real_parent_offset}
+task.parent_offset = {self.parent_offset}
+task.mm_offset = {self.mm_offset}
+task.stack_offset = {self.stack_offset}
+task.real_cred_offset = {self.real_cred_offset}
+task.cred_offset = {self.cred_offset}
+task.comm_offset = {self.comm_offset}
+task.comm_size = {self.comm_size}
+task.files_offset = {self.files_offset}
+task.start_time_offset = {self.start_time_offset}\n'''
 
 #cred
 class Cred():
@@ -102,9 +102,9 @@ class Cred():
 
     def to_string(self):
         return f'''cred.uid_offset = {self.uid_offset}
-        cred.gid_offset = {self.gid_offset}
-        cred.euid_offset = {self.euid_offset}
-        cred.egid_offset = {self.egid_offset}\n'''
+cred.gid_offset = {self.gid_offset}
+cred.euid_offset = {self.euid_offset}
+cred.egid_offset = {self.egid_offset}\n'''
 
 #mm
 class MM():
@@ -127,12 +127,12 @@ class MM():
 
     def to_string(self):
         return f'''mm.size = {self.size}
-        mm.mmap_offset = {self.mmap_offset}
-        mm.pgd_offset = {self.pgd_offset}
-        mm.arg_start_offset = {self.arg_start_offset}
-        mm.start_brk_offset = {self.start_brk_offset}
-        mm.brk_offset = {self.brk_offset}
-        mm.start_stack_offset = {self.start_stack_offset}\n'''
+mm.mmap_offset = {self.mmap_offset}
+mm.pgd_offset = {self.pgd_offset}
+mm.arg_start_offset = {self.arg_start_offset}
+mm.start_brk_offset = {self.start_brk_offset}
+mm.brk_offset = {self.brk_offset}
+mm.start_stack_offset = {self.start_stack_offset}\n'''
 
 #vma
 class VMA():
@@ -155,12 +155,12 @@ class VMA():
 
     def to_string(self):
         return f'''vma.size = {self.size}
-        vma.vm_mm_offset = {self.vm_mm_offset}
-        vma.vm_start_offset = {self.vm_start_offset}
-        vma.vm_end_offset = {self.vm_end_offset}
-        vma.vm_next_offset = {self.vm_next_offset}
-        vma.vm_flags_offset = {self.vm_flags_offset}
-        vma.vm_file_offset = {self.vm_file_offset}\n'''
+vma.vm_mm_offset = {self.vm_mm_offset}
+vma.vm_start_offset = {self.vm_start_offset}
+vma.vm_end_offset = {self.vm_end_offset}
+vma.vm_next_offset = {self.vm_next_offset}
+vma.vm_flags_offset = {self.vm_flags_offset}
+vma.vm_file_offset = {self.vm_file_offset}\n'''
 
 #fs
 class FS():
@@ -181,12 +181,12 @@ class FS():
 
     def to_string(self):
         return f'''fs.f_path_dentry_offset = {self.f_path_dentry_offset}
-        fs.f_path_mnt_offset = {self.f_path_mnt_offset}
-        fs.f_pos_offset = {self.f_pos_offset}
-        fs.fdt_offset = {self.fdt_offset}
-        fs.fdtab_offset = {self.fdtab_offset}
-        fs.fdtab_offset = {self.fdtab_offset}
-        fs.fd_offset = {self.fd_offset}\n'''
+fs.f_path_mnt_offset = {self.f_path_mnt_offset}
+fs.f_pos_offset = {self.f_pos_offset}
+fs.fdt_offset = {self.fdt_offset}
+fs.fdtab_offset = {self.fdtab_offset}
+fs.fdtab_offset = {self.fdtab_offset}
+fs.fd_offset = {self.fd_offset}\n'''
 
 #qstr
 class QSTR():
@@ -220,13 +220,13 @@ class Path():
 
     def to_string(self):
         return f'''path.d_name_offset = {self.d_name_offset}
-        path.d_iname_offset = {self.d_iname_offset}
-        path.d_parent_offset = {self.d_parent_offset}
-        path.d_op_offset = {self.d_op_offset}
-        path.d_dname_offset = {self.d_dname_offset}
-        path.mnt_root_offset = {self.mnt_root_offset}
-        path.mnt_parent_offset = {self.mnt_parent_offset}
-        path.mnt_mountpoint_offset = {self.mnt_mountpoint_offset}\n'''
+path.d_iname_offset = {self.d_iname_offset}
+path.d_parent_offset = {self.d_parent_offset}
+path.d_op_offset = {self.d_op_offset}
+path.d_dname_offset = {self.d_dname_offset}
+path.mnt_root_offset = {self.mnt_root_offset}
+path.mnt_parent_offset = {self.mnt_parent_offset}
+path.mnt_mountpoint_offset = {self.mnt_mountpoint_offset}\n'''
 
 def main(*, header_line, osi_name, osi_version, task, cred, mm, vma, fs, qstr, osi_path, demo_path):
     with open(demo_path, "w", encoding='utf-8') as f:

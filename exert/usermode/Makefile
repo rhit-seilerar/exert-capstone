@@ -1,4 +1,4 @@
-all: setup file_reader-x86_64 file_reader-armv5l file_reader-i386 file_reader-aarch64 dmesg-i386 dmesg-x86_64 dmesg-armv5l dmesg-aarch64
+all: setup file_reader-x86_64 file_reader-armv5l file_reader-i386 file_reader-aarch64 osi-i386 osi-x86_64 osi-armv5l osi-aarch64
 
 CC_i386 = /opt/cross/i686-linux-musl-cross/bin/i686-linux-musl-cc
 
@@ -24,16 +24,16 @@ file_reader-armv5l: file_reader.c
 file_reader-aarch64: file_reader.c
 	${CC_AARCH64} ${CFLAGS} -o build/$@ $^
 
-dmesg-i386: dmesg.c
+osi-i386: osi.c
 	${CC_i386} ${CFLAGS} -o build/$@ $^
 
-dmesg-x86_64: dmesg.c
+osi-x86_64: osi.c
 	${CC_X86_64} ${CFLAGS} -o build/$@ $^
 
-dmesg-armv5l: dmesg.c
+osi-armv5l: osi.c
 	${CC_ARM} ${CFLAGS} -o build/$@ $^
 
-dmesg-aarch64: dmesg.c
+osi-aarch64: osi.c
 	${CC_AARCH64} ${CFLAGS} -o build/$@ $^
 
 setup:
