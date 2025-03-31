@@ -72,7 +72,7 @@ def test_plugin_kernel_supported():
     if not RUN_PLUGIN_TESTS:
         return
     subprocess.run(['python', '-u', '-m', 'exert.usermode.plugin', './kernels/vmlinuz-arm-3.2.51-1',
-                    'armv5l', '3.2.0-4-versatile'], check = True)
+                    'armv5l', '3.2.51-1-versatile'], check = True)
 
 def test_plugin_kernel_unsupported():
     if not RUN_PLUGIN_TESTS:
