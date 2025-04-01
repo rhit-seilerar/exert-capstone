@@ -1,4 +1,5 @@
 from exert.parser.parser import Parser
+from exert.parser.definitions import DefOption
 
 class DummyParser(Parser):
     def dfail(self, p, f):
@@ -90,3 +91,15 @@ def test_pand():
 
     assert p.unwrap((p.pand(p.dpass, p.dpass, p.dpass), True, False))
     assert p.index == 30
+
+def test_any():
+    p = DummyParser()
+    assert p.unwrap((p.check_for_any, True, False))
+    p.tokens = [('any', '', {
+        DefOption([]),
+        DefOption([('identifier', 'abc')])
+    })]
+    p.len = 1
+    assert not p.unwrap((p.tok(('identifier', 'def')), True, False))
+    assert p.index == 0
+    assert p.unwrap((p.tok(('identifier', 'abc')), True, False))

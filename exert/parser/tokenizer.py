@@ -120,9 +120,10 @@ class Tokenizer:
         if (op3 := self.peek(3)) in ['||=', '&&=', '<<=', '>>=', '...']:
             self.bump(3)
             return ('operator', op3)
+        #TODO Alternative operators (<:, :>, etc)
         if (op2 := self.peek(2)) in ['++', '--', '+=', '-=', '*=', '/=',
                 '%=', '&=', '|=', '^=', '||', '&&', '//', '/*', '*/', '##',
-                '<<', '>>', '<=', '>=', '!=', '==', '->']:
+                '<<', '>>', '<=', '>=', '!=', '==', '->', '::']:
             self.bump(2)
             return ('operator', op2)
         if (op1 := self.peek(1)) in '-=[]\\;,./~!#%^&*()+{}|:<>?':
