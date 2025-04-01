@@ -7,7 +7,7 @@ class Version:
     z: int
 
 def version_from_string(entry):
-    number_string = input.split('-')[0]
+    number_string = entry.split('-')[0]
     nums = number_string.split('.')
     v = Version(int(nums[0]), int(nums[1]), int(nums[2]))
     return v
@@ -15,8 +15,6 @@ def version_from_string(entry):
 def compare_version(entry, target):
     if entry.x > target.x:
         return True
-    if entry.x == target.x:
-        if entry.y > target.y:
     if entry.x == target.x:
         if entry.y > target.y:
             return True

@@ -1,7 +1,7 @@
 import itertools
 
 from exert.parser import expressions
-from exert.parser.tokenmanager import tok_seq, mk_ident, mk_op, mk_int
+from exert.parser.tokenmanager import tok_seq, mk_id, mk_op, mk_int
 from exert.utilities.debug import dprint
 
 class DefOption:
@@ -84,16 +84,18 @@ class Def:
 
     def get_replacements(self, sym):
         """
-        [ initial,   {}      ]: [[sym]]
+        [ initial,   {}      ]: [[{}]]
         [ undefined, {}      ]: [[sym]]
         [ defined,   options ]: [options]
+        [ defined,   {}      ]: [[{}]]
         [ uncertain, options ]: [[sym], options]
+        [ uncertain, {}      ]: [[sym], [{}]]
         """
         replacements = self.options.copy()
-        if self.defined and len(replacements) == 0:
-            replacements = {DefOption([])}
-        if not self.is_defined():
+        if self.undefined:
             replacements.add(DefOption([sym]))
+        elif len(self.options) == 0:
+            replacements.add(DefOption([('any', sym[1], set())]))
         return replacements
 
     def combine(self, other, replace):
@@ -267,7 +269,7 @@ class DefEvaluator(expressions.Evaluator):
         nex = []
         i = 0
         while i < len(tokens):
-            if tokens[i] == mk_ident('defined'):
+            if tokens[i] == mk_id('defined'):
                 if i+1 < len(tokens) and tokens[i+1][0] in identlike:
                     nex.append(('defined', tokens[i+1][1]))
                     keys.add(tokens[i+1])
@@ -292,7 +294,9 @@ class DefEvaluator(expressions.Evaluator):
         if keys:
             # Permute all multi-value macros into a chain of 'or's
             # TODO please improve this
-            # Note that this currently doesn't consider CLI definitions
+            # Note that this currently doesn't consider open-ended
+            # definitions correctly
+            # Also, wildcards could be improved in accuracy
             lists = []
             keylist = list(keys)
             for i, k in enumerate(keylist):
@@ -319,7 +323,7 @@ class DefEvaluator(expressions.Evaluator):
         def insert_permutation(lookup, tokens):
             nex = []
             for tok in tokens:
-                if tok[0] == 'any':
+                if tok[0] == 'any' and len(tok[2]) > 0:
                     repl = lookup[tok[1]].get_replacements(('identifier', tok[1]))
                     repl_toks = list(repl)[0].tokens
                     nex += insert_permutation(lookup, repl_toks)
@@ -331,8 +335,12 @@ class DefEvaluator(expressions.Evaluator):
             self.defines = {}
             self.lookup = lookup
             current = insert_permutation(lookup, tokens) if lookup else tokens
-            result = expressions.parse_expression(current).evaluate(self).evaluate(self)
-            if result.value == 0:
+            parsed = expressions.parse_expression(current)
+            result = parsed.evaluate(self).evaluate(self)
+            if isinstance(result, expressions.Wildcard):
+                self.any_match = True
+                self.all_match = False
+            elif result.value == 0:
                 self.all_match = False
             else:
                 for k, v in self.defines.items():
@@ -365,6 +373,7 @@ class DefLayer:
     """
 
     def __init__(self, parent, bitsize, skip_all):
+        self.depth = 0
         self.evaluator = DefEvaluator(bitsize, parent)
         self.cond_acc = []
         self.cond = []
@@ -379,6 +388,7 @@ class DefLayer:
             self.current = None
 
     def add_map(self, cond_tokens, closing = False):
+        self.depth += 1
         if self.skip_rest:
             self.apply()
             self.current = DefMap(None, skipping = True)
@@ -386,6 +396,8 @@ class DefLayer:
 
         wrapped = [mk_op('(')] + cond_tokens + [mk_op(')')]
         if len(self.cond_acc) > 0:
+            _, _, matches = self.evaluator.evaluate(self.cond_acc)
+            self.evaluator.defs = matches
             self.cond_acc.append(mk_op('&&'))
         self.cond = self.cond_acc + wrapped
         any_match, all_match, matches = self.evaluator.evaluate(self.cond)
@@ -418,6 +430,9 @@ class DefState:
 
     def is_skipping(self):
         return self.layers[-1].current.skipping
+
+    def is_guaranteed(self):
+        return not self.is_skipping() and self.layers[-1].skip_rest
 
     def flat_defines(self):
         result = {}
@@ -453,20 +468,20 @@ class DefState:
         self.layers[-1].add_map(cond_tokens)
 
     def on_ifdef(self, sym):
-        self.on_if([ mk_ident('defined'), mk_ident(sym) ])
+        self.on_if([ mk_id('defined'), mk_id(sym) ])
 
     def on_ifndef(self, sym):
-        self.on_if([ mk_op('!'), mk_ident('defined'), mk_ident(sym) ])
+        self.on_if([ mk_op('!'), mk_id('defined'), mk_id(sym) ])
 
     def on_elif(self, cond_tokens):
         dprint(2, '  ' * self.depth() + f'#elif {tok_seq(cond_tokens)}')
         self.layers[-1].add_map(cond_tokens)
 
     def on_elifdef(self, sym):
-        self.on_elif([ mk_ident('defined'), mk_ident(sym) ])
+        self.on_elif([ mk_id('defined'), mk_id(sym) ])
 
     def on_elifndef(self, sym):
-        self.on_elif([ mk_op('!'), mk_ident('defined'), mk_ident(sym) ])
+        self.on_elif([ mk_op('!'), mk_id('defined'), mk_id(sym) ])
 
     def on_else(self):
         dprint(2, '  ' * self.depth() + '#else')

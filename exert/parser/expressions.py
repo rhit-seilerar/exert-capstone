@@ -5,7 +5,7 @@ class Expression:
         assert False
 
     def __str__(self):
-        return ''
+        return '<err>'
 
 class Integer(Expression):
     def __init__(self, value, unsigned):
@@ -22,12 +22,16 @@ class Integer(Expression):
     def __str__(self):
         return str(self.value) + ('u' if self.unsigned else '')
 
-class Identifier(Expression):
+class Identifier(Integer):
     def __init__(self, a):
-        self.a = a
+        super().__init__(1 if a == 'true' else 0, False)
 
+class Wildcard(Expression):
     def evaluate(self, evaluator):
-        return Integer(1 if self.a == 'true' else 0, False)
+        return self
+
+    def __str__(self):
+        return '<wildcard>'
 
 class Group(Expression):
     def __init__(self, expression):
@@ -44,6 +48,7 @@ class Operator(Expression):
 
 class UnaryOperator(Operator):
     def __init__(self, a, opname, op, signop = None):
+        assert isinstance(a, (Expression, str))
         self.opname = opname
         self.op = op
         self.a = a
@@ -51,6 +56,9 @@ class UnaryOperator(Operator):
 
     def evaluate(self, evaluator):
         aint = self.a.evaluate(evaluator)
+        if isinstance(aint, Wildcard):
+            aint.options = set()
+            return aint
         unsigned = self.signop(aint.unsigned)
         return Integer(self.op(aint.value), unsigned)
 
@@ -59,6 +67,8 @@ class UnaryOperator(Operator):
 
 class BinaryOperator(Operator):
     def __init__(self, a, b, opname, op, signop = None):
+        assert isinstance(a, Expression)
+        assert isinstance(b, Expression)
         self.opname = opname
         self.op = op
         self.a = a
@@ -68,6 +78,12 @@ class BinaryOperator(Operator):
     def evaluate(self, evaluator):
         aint = self.a.evaluate(evaluator)
         bint = self.b.evaluate(evaluator)
+        if isinstance(aint, Wildcard):
+            aint.options = set()
+            return aint
+        if isinstance(bint, Wildcard):
+            bint.options = set()
+            return bint
         unsigned = self.signop(aint.unsigned, bint.unsigned)
         return Integer(self.op(aint.value, bint.value), unsigned)
 
@@ -139,6 +155,12 @@ class LeftShift(BinaryOperator):
     def evaluate(self, evaluator):
         aint = self.a.evaluate(evaluator)
         bint = self.b.evaluate(evaluator)
+        if isinstance(aint, Wildcard):
+            aint.options = set()
+            return aint
+        if isinstance(bint, Wildcard):
+            bint.options = set()
+            return bint
         unsigned = aint.unsigned
         return Integer(0 if bint.value < 0 or bint.value >= evaluator.bitsize
             else aint.value << bint.value, unsigned)
@@ -150,6 +172,12 @@ class RightShift(BinaryOperator):
     def evaluate(self, evaluator):
         aint = self.a.evaluate(evaluator)
         bint = self.b.evaluate(evaluator)
+        if isinstance(aint, Wildcard):
+            aint.options = set()
+            return aint
+        if isinstance(bint, Wildcard):
+            bint.options = set()
+            return bint
         unsigned = aint.unsigned
         return Integer(0 if bint.value < 0
             else -1 if bint.value >= evaluator.bitsize and aint.value < 0
@@ -202,6 +230,15 @@ class Conditional(Operator):
         aint = self.a.evaluate(evaluator)
         bint = self.b.evaluate(evaluator)
         cint = self.c.evaluate(evaluator)
+        if isinstance(aint, Wildcard):
+            aint.options = set()
+            return aint
+        if isinstance(bint, Wildcard):
+            bint.options = set()
+            return bint
+        if isinstance(cint, Wildcard):
+            cint.options = set()
+            return cint
         unsigned = bint.unsigned or cint.unsigned
         return Integer(bint.value if aint.value else cint.value, unsigned)
 
@@ -287,6 +324,8 @@ def parse_expression(tokens):
                 nex.append(Identifier(token[1]))
             elif token[0] == 'operator':
                 nex.append(token[1])
+            elif token[0] == 'any' and len(token[2]) == 0:
+                nex.append(Wildcard())
         i += 1
     assert gstart is None
     cur = nex
@@ -340,4 +379,6 @@ class Evaluator:
     def evaluate(self, tokens):
         parsed = parse_expression(tokens)
         result = parsed.evaluate(self).evaluate(self)
+        if isinstance(result, Wildcard):
+            return result
         return result.value, result.unsigned

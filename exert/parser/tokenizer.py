@@ -3,16 +3,15 @@ import exert.parser.tokenmanager as tm
 class Tokenizer:
     def __init__(self):
         self.keywords = [
-            'void', 'char', 'int', 'float', 'double',
-            'signed', 'unsigned', 'short', 'long',
-            'enum', 'struct', 'union',
-            'if', 'else', 'switch', 'case', 'default', 'goto',
-            'for', 'while', 'do', 'continue', 'break',
-            'const', 'volatile', 'auto', 'static', 'extern', 'register',
-            'inline', 'return', 'restrict',
-            'typedef', 'sizeof',
-            '_Alignas', '_Alignof', '_Atomic', '_Bool', '_Complex', '_Generic',
-            '_Imaginary', '_Noreturn', '_Static_assert', '_Thread_local',
+            'alignas', 'alignof', 'auto', 'bool', 'break', 'case', 'char',
+            'const', 'constexpr', 'continue', 'default', 'do', 'double',
+            'else', 'enum', 'extern', 'false', 'float', 'for', 'goto', 'if',
+            'inline', 'int', 'long', 'nullptr', 'register', 'restrict',
+            'return', 'short', 'signed', 'sizeof', 'static', 'static_assert',
+            'struct', 'switch', 'thread_local', 'true', 'typedef', 'typeof',
+            'typeof_unqual', 'union', 'unsigned', 'void', 'volatile', 'while',
+            '_Atomic', '_BitInt', '_Complex', '_Decimal128', '_Decimal32',
+            '_Decimal64', '_Generic', '_Imaginary', '_Noreturn'
         ]
 
     def has_next(self):
@@ -36,7 +35,8 @@ class Tokenizer:
 
     def consume_comment(self):
         if self.consume('//'):
-            while self.has_next() and not self.consume('\r\n', '\n'):
+            while self.has_next() and not self.peek() == '\n' \
+                and not self.peek(2) == '\r\n':
                 if not self.consume('\\\r\n', '\\\n'):
                     self.bump()
             return True
@@ -58,7 +58,7 @@ class Tokenizer:
             if value in self.keywords:
                 return ('keyword', value)
             if len(self.tokens) > 0 and self.in_directive \
-                and self.tokens[-1] == tm.mk_ident('define') and self.peek() == '(':
+                and self.tokens[-1] == tm.mk_id('define') and self.peek() == '(':
                 self.next_parenthesis_is_directive = True
             return ('identifier', value)
         return None

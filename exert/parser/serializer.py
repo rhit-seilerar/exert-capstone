@@ -2,7 +2,7 @@ from exert.parser.definitions import DefOption
 
 TOK_TYPES = [
     'string', 'integer', 'identifier', 'keyword',
-    'operator', 'directive', 'optional', 'any'
+    'operator', 'directive', 'any'
 ]
 
 def write_number(file, number, length = 8, signed = False):
@@ -43,11 +43,6 @@ def read_token(file):
             return (tok_type, read_string(file, sizelength = 1))
         if tok_type == 'directive':
             return (tok_type, read_string(file, sizelength = 1))
-        if tok_type == 'optional':
-            tokens = []
-            for _ in range(read_number(file)):
-                tokens.append(read_token(file))
-            return (tok_type, tokens)
         if tok_type == 'any':
             name = read_string(file)
             options = set()
@@ -87,9 +82,6 @@ def write_tokens(file, tokens):
             write_string(file, token[1], sizelength = 1)
         elif token[0] == 'directive':
             write_string(file, token[1], sizelength = 1)
-        elif token[0] == 'optional':
-            write_number(file, len(token[1]))
-            write_tokens(file, token[1])
         elif token[0] == 'any':
             write_string(file, token[1])
             write_number(file, len(token[2]))

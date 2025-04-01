@@ -1,3 +1,5 @@
+import pickle
+
 TASK_ADDRESS = None
 
 def read_mem(panda, cpu, addr, size):
@@ -24,6 +26,10 @@ def task_address_arm_callback(panda, cpu):
     global TASK_ADDRESS
     TASK_ADDRESS = task_addr
 
+    data = open("tmp_data", "wb")
+    data.write(pickle.dumps(task_addr))
+    data.close()
+
     return task_addr
 
 # aarch is also known as arm64
@@ -42,6 +48,10 @@ def task_address_aarch_callback(panda, cpu):
     global TASK_ADDRESS
     TASK_ADDRESS = task_addr
 
+    data = open("tmp_data", "wb")
+    data.write(pickle.dumps(task_addr))
+    data.close()
+
     return task_addr
 
 
@@ -58,6 +68,15 @@ def task_address_i386_callback(panda, cpu):
     task_stack = read_word(task, 4)
     assert task_stack == thread_info_addr
 
+    global TASK_ADDRESS
+    TASK_ADDRESS = task_addr
+
+    data = open("tmp_data", "wb")
+    data.write(pickle.dumps(task_addr))
+    data.close()
+
+    return task_addr
+
 def task_address_x86_64_callback(panda, cpu):
     sp0_offset = 4
     esp0_ptr = cpu.env_ptr.tr.base + sp0_offset
@@ -71,4 +90,12 @@ def task_address_x86_64_callback(panda, cpu):
 
     task_stack = read_long(task, 8)
     assert task_stack == thread_info_addr
+
+    global TASK_ADDRESS
+    TASK_ADDRESS = task_addr
+
+    data = open("tmp_data", "wb")
+    data.write(pickle.dumps(task_addr))
+    data.close()
+
     return task_addr

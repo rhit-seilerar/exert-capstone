@@ -21,16 +21,6 @@ class Exert(PyPlugin):
     def __init__(self, panda):
         self.called_back = False
 
-        #What we use to control the filereader.c program?
-        #write tests for hypercall, see if it returns correct fd or just True for now.
-        # def fd_finder(env):
-        #     x = run_command('./file_reader.c demo_osi.osi')
-        #     print(f'{x}')
-        #     return x
-        # @panda.cb_guest_hypercall
-        # def fd_reader():
-        #     print('Not an octopus.\n')
-
         @panda.ppp('syscalls2', 'on_sys_execve_enter')
         def hook_syscall(cpu, pc, filename, argv, envp):
             if self.called_back:
@@ -77,7 +67,7 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None,
         mem_use = "256M"
         hardware_args = ''
         console_ver = "ttyAMA0"
-        expect_prompt_entry = '/.*#'
+        expect_prompt_entry = '\/ # '
         os_ver_entry = 'linux-32-generic'
         if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
             hardware_args = '-machine versatilepb'

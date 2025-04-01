@@ -39,7 +39,7 @@ cat > $cachedir/rootfs/init <<EOF
 /busybox mount -t proc none /proc
 /busybox mount -t sysfs none /sys
 /busybox mount -t debugfs none /sys/kernel/debug
-/busybox mount /dev -t devtmpfs dev
+/busybox mount -t devtmpfs dev /dev
 
 /busybox echo -e "\nBoot took \$(/busybox cut -d' ' -f1 /proc/uptime) seconds\n"
 /busybox --install

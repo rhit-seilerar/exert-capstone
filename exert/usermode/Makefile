@@ -1,4 +1,4 @@
-all: setup file_reader-x86_64 file_reader-armv5l file_reader-i386 file_reader-aarch64
+all: setup file_reader-x86_64 file_reader-armv5l file_reader-i386 file_reader-aarch64 osi-i386 osi-x86_64 osi-armv5l osi-aarch64
 
 CC_i386 = /opt/cross/i686-linux-musl-cross/bin/i686-linux-musl-cc
 
@@ -12,16 +12,28 @@ CFLAGS += -ggdb -static-libgcc -static
 
 .PHONY: setup clean all
 
-file_reader-i386: file_reader-i386.c
+file_reader-i386: file_reader.c
 	${CC_i386} ${CFLAGS} -o build/$@ $^
 
-file_reader-x86_64: file_reader-x86_64.c
+file_reader-x86_64: file_reader.c
 	${CC_X86_64} ${CFLAGS} -o build/$@ $^
 
-file_reader-armv5l: file_reader-armv5l.c
+file_reader-armv5l: file_reader.c
 	${CC_ARM} ${CFLAGS} -o build/$@ $^
 
-file_reader-aarch64: file_reader-aarch64.c
+file_reader-aarch64: file_reader.c
+	${CC_AARCH64} ${CFLAGS} -o build/$@ $^
+
+osi-i386: osi.c
+	${CC_i386} ${CFLAGS} -o build/$@ $^
+
+osi-x86_64: osi.c
+	${CC_X86_64} ${CFLAGS} -o build/$@ $^
+
+osi-armv5l: osi.c
+	${CC_ARM} ${CFLAGS} -o build/$@ $^
+
+osi-aarch64: osi.c
 	${CC_AARCH64} ${CFLAGS} -o build/$@ $^
 
 setup:
