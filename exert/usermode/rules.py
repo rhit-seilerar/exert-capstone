@@ -137,23 +137,35 @@ class FieldGroup:
         for field in self.fields:
             assert isinstance(field, Field)
         self.condition = condition
+        self.fields_addresses = None
 
     def test_all(self, context, addresses):
+        self.fields_addresses = dict()
         passing = set()
         for field in self.fields:
-            passing |= field.test_all(context, addresses)
+            field_addresses = field.test_all(context, addresses)
+            self.fields_addresses.update({field._get_key(): field_addresses})
+            passing |= field_addresses
         return passing
 
     def __str__(self):
         fields_str = ', '.join(str(f) for f in self.fields)
         cond_str = 'None' if self.condition is None else f"'{self.condition}'"
         return f'FieldGroup([{fields_str}], {cond_str})'
+    
+    def get_field_addresses(self, context, address):
+        if (self.fields_addresses):
+            return self.fields_addresses
+        else:
+            self.test_all(context, {address})
+            return self.fields_addresses
 
 class Struct(Rule):
     def __init__(self, name, field_groups):
         super().__init__()
         self.name = name
         self.field_groups = field_groups
+        self.fields_addresses = None
 
     def _get_key(self):
         groups_str = ', '.join([str(g) for g in self.field_groups])
@@ -161,12 +173,22 @@ class Struct(Rule):
 
     def _test(self, context, address):
         passing = {address}
+        self.fields_addresses = dict()
         for group in self.field_groups:
             if group.condition:
                 passing |= group.test_all(context, passing)
+                self.fields_addresses.update(group.get_field_addresses(context, address))
             else:
                 passing = group.test_all(context, passing)
+                self.fields_addresses.update(group.get_field_addresses(context, address))
         return passing
+    
+    def get_field_addresses(self, context, address):
+        if (self.fields_addresses):
+            return self.fields_addresses
+        else:
+            self._test(context, address)
+            return self.fields_addresses
 
 class _Struct(Struct):
     def _get_key(self):
