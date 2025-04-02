@@ -748,3 +748,15 @@ class _TaskStruct(_Struct):
             ])
         ])
 TASK_STRUCT = _TaskStruct()
+
+def test_list_head(context, address, offset):
+    # Assumes that the address is a valid list head
+    prev_pointer = context.read_pointer(address)
+    prev_task = prev_pointer + offset
+
+    results = TASK_STRUCT.test(context, prev_task, True)
+
+    if (len(results) == 0):
+        return False
+
+    return True

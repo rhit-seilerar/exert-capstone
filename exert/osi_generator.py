@@ -71,7 +71,13 @@ def get_tasks_offset(panda, cpu):
 
     fields_offsets = set()
     for field in fields_addresses["Field('tasks', _ListHead)"]:
-        fields_offsets.add(field - task_address)
+        field_context = context.Context(panda)
+        offset = field - task_address
+        if rules.test_list_head(field_context, field, offset):
+            fields_offsets.add(offset)
+
+    if (len(fields_offsets) == 1):
+        fields_offsets = fields_offsets.pop()
 
     valid_offsets = pickle.dumps(fields_offsets)
     data = open("tmp_data", "wb")
@@ -113,14 +119,14 @@ def get_osi_info(kernel, arch, version):
             else:
                 bits = '64'
 
-            data_address_prefix = PANDA_PLUGIN_PREFIX.format(arch, False, kernel, osi_prog,
-                                                             './user_prog data_address',
-                                                             'osi.' + empty_callback.__name__,
-                                                             'osi.' + get_data_addresses.__name__)
-            subprocess.run(['python'], input = data_address_prefix, check = True, text = True)
-            data = open("tmp_data", "rb")
-            data_addresses = pickle.load(data)
-            data.close()
+            # data_address_prefix = PANDA_PLUGIN_PREFIX.format(arch, False, kernel, osi_prog,
+            #                                                  './user_prog data_address',
+            #                                                  'osi.' + empty_callback.__name__,
+            #                                                  'osi.' + get_data_addresses.__name__)
+            # subprocess.run(['python'], input = data_address_prefix, check = True, text = True)
+            # data = open("tmp_data", "rb")
+            # data_addresses = pickle.load(data)
+            # data.close()
             
             task_struct_prefix = PANDA_PLUGIN_PREFIX.format(arch, False, kernel, osi_prog,
                                                             './user_prog data_address',
@@ -165,7 +171,7 @@ def get_osi_info(kernel, arch, version):
                             current_task_addr = None,
                             init_addr = init_task_struct_addr,
                             size = task_struct_size,
-                            tasks_offset = None,
+                            tasks_offset = tasks_offsets,
                             pid_offset = None,
                             tgid_offset = None,
                             group_leader_offset = None,
@@ -214,7 +220,7 @@ def get_osi_info(kernel, arch, version):
                                 mnt_root_offset = None,
                                 mnt_parent_offset = None,
                                 mnt_mountpoint_offset = None)
-            demo_path = "./result_osi.osi"
+            demo_path = "./Linux-" + version + "-" + arch + ".osi"
             osi.main(header_line=header_line,
                     osi_name=osi_name,
                     osi_version=osi_version,
