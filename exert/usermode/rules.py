@@ -97,6 +97,30 @@ class Pointer(Rule):
         if pointer is None or (self.rule and not self.rule.test(context, pointer)):
             return set()
         return {address}
+    
+class Union(Rule):
+    def __init__(self, name, rules):
+        self.name = name
+        self.rules = rules
+        super().__init__()
+
+    def _test(self, context, address):
+        results = set()
+
+        for rule in self.rules:
+            results = results | rule.test(context, address)
+
+        return results
+    
+    def _get_key(self):
+        rule_string = '['
+
+        for rule in self.rules:
+            rule_string = rule_string + str(rule) + ', '
+
+        rule_string = rule_string + ']'
+
+        return f'Union({self.name}, [{rule_string}])'
 
 class Array(Rule):
     def __init__(self, rule, count_min, count_max):
@@ -191,6 +215,10 @@ class Struct(Rule):
             return self.fields_addresses
 
 class _Struct(Struct):
+    def _get_key(self):
+        return f'{self.__class__.__name__}'
+    
+class _Union(Union):
     def _get_key(self):
         return f'{self.__class__.__name__}'
 
@@ -587,10 +615,9 @@ SCHED_DL_ENTITY = _SchedDLEntity()
 class _CpuMask(_Struct):
     def __init__(self):
         super().__init__('cpumask_t', [FieldGroup([
-            # TODO What if there are more than 64?
-            # maybe we use some kind of callback to generate more?
-            # Or just make it a user parameter
-            Field('bits', Array(Int(size = None, signed = False), 1, 64))
+            # Might still be good as a user parameter.
+            # Even still, 8192 is the max
+            Field('bits', Array(Int(size = None, signed = False), 1, 8192))
         ])])
 CPUMASK = _CpuMask()
 
@@ -682,6 +709,21 @@ class _CFSRQ(_Struct):
         ])
 CFSRQ = _CFSRQ()
 
+class _RCU_SPECIAL(_Union):
+    def __init__(self, name):
+        super().__init__(name, [
+            _Struct('b', [
+                FieldGroup([
+                    Field('blocked', Int(size=1, signed=False)),
+                    Field('need_qs', Int(size=1, signed=False)),
+                    Field('exp_need_qs', Int(size=1, signed=False)),
+                    Field('pad', Int(size=1, signed=False))
+                ])
+            ]),
+            Int(size=4, signed=False)
+        ])
+RCU_READ_UNLOCK_SPECIAL=_RCU_SPECIAL('rcu_read_unlock_special')
+
 class _TaskStruct(_Struct):
     def __init__(self):
         super().__init__('task_struct', [
@@ -729,8 +771,7 @@ class _TaskStruct(_Struct):
             ]),
             FieldGroup([
                 Field('rcu_read_lock_nesting', Int()),
-                #TODO this should be 'union rcu_special'
-                Field('rcu_read_unlock_special', Int(signed = False)),
+                Field('rcu_read_unlock_special', RCU_READ_UNLOCK_SPECIAL),
                 Field('rcu_node_entry', LIST_HEAD),
                 Field('rcu_blocked_node', Pointer()) #struct rcu_node*
             ], 'CONFIG_PREEMPT_RCU'),
@@ -751,12 +792,12 @@ TASK_STRUCT = _TaskStruct()
 
 def test_list_head(context, address, offset):
     # Assumes that the address is a valid list head
-    prev_pointer = context.read_pointer(address)
-    prev_task = prev_pointer + offset
+    # prev_pointer = context.read_pointer(address)
+    # prev_task = prev_pointer + offset
 
-    results = TASK_STRUCT.test(context, prev_task, True)
+    # results = TASK_STRUCT.test(context, prev_task, True)
 
-    if (len(results) == 0):
-        return False
+    # if (len(results) == 0):
+    #     return False
 
     return True

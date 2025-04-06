@@ -17,3 +17,4 @@ cache/rootfs/dev/fd
 cache/rootfs/dev/stderr
 cache/rootfs/dev/stdin
 cache/rootfs/dev/stdout
+.vscode/
