@@ -1,12 +1,14 @@
 import sys
 import subprocess
 import os
+from typing import Any, Literal
 import pickle
+from pandare import Panda
 from exert.utilities import version as ver
 from exert.usermode import osi, rules, context
 from exert.usermode import task_struct_stack as tss
 
-PANDA_PLUGIN_PREFIX = """
+PANDA_PLUGIN_PREFIX:str = """
 from exert.usermode import plugin
 from exert import osi_generator as osi
 from exert.usermode import task_struct_stack as tss
@@ -15,10 +17,10 @@ plugin.run(arch='{}', generic={}, kernel='{}',
            callback={}, hypercall_callback={})
 """
 
-def empty_callback(panda, cpu): # pragma: no cover
+def empty_callback(panda:Panda, cpu:Any): # pragma: no cover
     return
 
-def get_data_addresses(panda, cpu): # pragma: no cover
+def get_data_addresses(panda:Panda, cpu:Any): # pragma: no cover
     magic = panda.arch.get_arg(cpu, 0, convention='syscall')
     string_address = panda.arch.get_arg(cpu, 1, convention='syscall')
     assert magic == 204
@@ -37,7 +39,7 @@ def get_data_addresses(panda, cpu): # pragma: no cover
     data.write(address_bytes)
     data.close()
 
-def get_task_struct_size(panda, cpu): # pragma: no cover
+def get_task_struct_size(panda:Panda, cpu:Any) -> bytes: # pragma: no cover
     magic = panda.arch.get_arg(cpu, 0, convention='syscall')
     string_address = panda.arch.get_arg(cpu, 1, convention='syscall')
     assert magic == 204
@@ -52,7 +54,7 @@ def get_task_struct_size(panda, cpu): # pragma: no cover
 
     return size_bytes
 
-def get_tasks_offset(panda, cpu):
+def get_tasks_offset(panda:Panda, cpu:Any):
     task_address = None
     if panda.arch_name == 'arm':
         task_address = tss.task_address_arm_callback(panda, cpu)
@@ -86,7 +88,7 @@ def get_tasks_offset(panda, cpu):
 
     return
 
-def get_osi_info(kernel, arch, version):
+def get_osi_info(kernel: str, arch: str, version: str):
     version_supported = False
 
     ver_entry = ver.version_from_string(version)
@@ -235,6 +237,7 @@ def get_osi_info(kernel, arch, version):
 
     if not version_supported:
         print("Version not supported")
+print('not an octopus')
 
 if __name__ == '__main__':
     get_osi_info(sys.argv[1], sys.argv[2], sys.argv[3])

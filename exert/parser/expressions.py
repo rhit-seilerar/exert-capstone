@@ -1,14 +1,15 @@
+from typing import Any, Literal
 import exert.parser.tokenmanager as tm
 
 class Expression:
     def evaluate(self, evaluator):
         assert False
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '<err>'
 
 class Integer(Expression):
-    def __init__(self, value, unsigned):
+    def __init__(self, value: int, unsigned: bool):
         self.value = value
         self.unsigned = unsigned
 
@@ -19,42 +20,42 @@ class Integer(Expression):
             value -= base
         return Integer(value, self.unsigned)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.value) + ('u' if self.unsigned else '')
 
 class Identifier(Integer):
-    def __init__(self, a):
+    def __init__(self, a: str):
         super().__init__(1 if a == 'true' else 0, False)
 
 class Wildcard(Expression):
     def evaluate(self, evaluator):
         return self
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '<wildcard>'
 
 class Group(Expression):
-    def __init__(self, expression):
+    def __init__(self, expression: Expression):
         self.expression = expression
 
     def evaluate(self, evaluator):
         return self.expression.evaluate(evaluator)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'({str(self.expression)})'
 
 class Operator(Expression):
     pass
 
 class UnaryOperator(Operator):
-    def __init__(self, a, opname, op, signop = None):
+    def __init__(self, a: tuple[Expression, str], opname: str, op: Operator, signop: Operator|None = None):
         assert isinstance(a, (Expression, str))
         self.opname = opname
         self.op = op
         self.a = a
         self.signop = (lambda asig: asig) if signop is None else signop
 
-    def evaluate(self, evaluator):
+    def evaluate(self, evaluator) -> (Wildcard|Integer):
         aint = self.a.evaluate(evaluator)
         if isinstance(aint, Wildcard):
             aint.options = set()
@@ -66,7 +67,7 @@ class UnaryOperator(Operator):
         return self.opname + str(self.a)
 
 class BinaryOperator(Operator):
-    def __init__(self, a, b, opname, op, signop = None):
+    def __init__(self, a: Expression, b: Expression, opname: str, op: Operator, signop: Operator|None = None):
         assert isinstance(a, Expression)
         assert isinstance(b, Expression)
         self.opname = opname
@@ -87,69 +88,69 @@ class BinaryOperator(Operator):
         unsigned = self.signop(aint.unsigned, bint.unsigned)
         return Integer(self.op(aint.value, bint.value), unsigned)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.a) + f' {self.opname} ' + str(self.b)
 
 class UnaryDefined(UnaryOperator):
-    def __init__(self, a):
+    def __init__(self, a: tuple[Expression, str]):
         super().__init__(a, 'defined', lambda a: a)
 
-    def evaluate(self, evaluator):
+    def evaluate(self, evaluator) -> Integer:
         if self.a in evaluator.lookup and evaluator.lookup[self.a].defined:
             evaluator.defines[self.a] = True
             return Integer(1, False)
         evaluator.defines[self.a] = False
         return Integer(0, False)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'defined({self.a})'
 
 class UnaryPlus(UnaryOperator):
-    def __init__(self, a):
+    def __init__(self, a: tuple[Expression, str]):
         super().__init__(a, '+', lambda a: a)
 
 class UnaryMinus(UnaryOperator):
-    def __init__(self, a):
+    def __init__(self, a: tuple[Expression, str]):
         super().__init__(a, '-', lambda a: -a, lambda asig: False)
 
 class Add(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '+', lambda a, b: a + b)
 
 class Subtract(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '-', lambda a, b: a - b)
 
 class Multiply(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '*', lambda a, b: a * b)
 
 class Divide(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '/', lambda a, b: a // b)
 
 class Remainder(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '%', lambda a, b: abs(a) % abs(b) * (1 - 2 * (a < 0)))
 
 class BitwiseNot(UnaryOperator):
-    def __init__(self, a):
+    def __init__(self, a: tuple[Expression, str]):
         super().__init__(a, '~', lambda a: ~a)
 
 class BitwiseAnd(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '&', lambda a, b: a & b)
 
 class BitwiseOr(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '|', lambda a, b: a | b)
 
 class BitwiseXor(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '^', lambda a, b: a ^ b)
 
 class LeftShift(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '<<', None)
 
     def evaluate(self, evaluator):
@@ -166,7 +167,7 @@ class LeftShift(BinaryOperator):
             else aint.value << bint.value, unsigned)
 
 class RightShift(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '>>', None)
 
     def evaluate(self, evaluator):
@@ -185,43 +186,43 @@ class RightShift(BinaryOperator):
             else aint.value >> bint.value, unsigned)
 
 class LogicalNot(UnaryOperator):
-    def __init__(self, a):
+    def __init__(self, a: tuple[Expression, str]):
         super().__init__(a, '!', lambda a: 1 if not a else 0)
 
 class LogicalAnd(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '&&', lambda a, b: 1 if a and b else 0)
 
 class LogicalOr(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '||', lambda a, b: 1 if a or b else 0)
 
 class Equal(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '==', lambda a, b: 1 if a == b else 0, lambda asig, bsig: False)
 
 class NotEqual(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '!=', lambda a, b: 1 if a != b else 0, lambda asig, bsig: False)
 
 class LessThan(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '<', lambda a, b: 1 if a < b else 0, lambda asig, bsig: False)
 
 class GreaterThan(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '>', lambda a, b: 1 if a > b else 0, lambda asig, bsig: False)
 
 class LessThanOrEqual(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '<=', lambda a, b: 1 if a <= b else 0, lambda asig, bsig: False)
 
 class GreaterThanOrEqual(BinaryOperator):
-    def __init__(self, a, b):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '>=', lambda a, b: 1 if a >= b else 0, lambda asig, bsig: False)
 
 class Conditional(Operator):
-    def __init__(self, a, b, c):
+    def __init__(self, a: Expression, b: Expression, c: Expression):
         self.a = a
         self.b = b
         self.c = c
@@ -242,10 +243,10 @@ class Conditional(Operator):
         unsigned = bint.unsigned or cint.unsigned
         return Integer(bint.value if aint.value else cint.value, unsigned)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{str(self.a)} ? {str(self.b)} : {str(self.c)}'
 
-PRECEDENCE_MAP = [
+PRECEDENCE_MAP: list = [
     {
         '+': (2, UnaryPlus),
         '-': (2, UnaryMinus),
@@ -295,7 +296,7 @@ PRECEDENCE_MAP = [
     }
 ]
 
-def parse_expression(tokens):
+def parse_expression(tokens: list) -> Expression:
     assert len(tokens) > 0
 
     # Handle groups, identifiers, defined(), and terminals
@@ -373,10 +374,10 @@ def parse_expression(tokens):
     return cur[0]
 
 class Evaluator:
-    def __init__(self, bitsize):
+    def __init__(self, bitsize: int):
         self.bitsize = bitsize
 
-    def evaluate(self, tokens):
+    def evaluate(self, tokens: list):
         parsed = parse_expression(tokens)
         result = parsed.evaluate(self).evaluate(self)
         if isinstance(result, Wildcard):

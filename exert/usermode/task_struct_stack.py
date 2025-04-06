@@ -1,17 +1,19 @@
+from typing import Any
+from pandare import Panda
 import pickle
 
 TASK_ADDRESS = None
 
-def read_mem(panda, cpu, addr, size):
+def read_mem(panda: Panda, cpu: Any, addr: int, size: int)-> Any:
     return panda.virtual_memory_read(cpu, addr, size)
 
-def read_word(mem, offset):
+def read_word(mem:bytes, offset:int) -> int:
     return int.from_bytes(mem[offset:offset+4], byteorder='little', signed=False)
 
-def read_long(mem, offset):
+def read_long(mem:bytes, offset:int) -> int:
     return int.from_bytes(mem[offset:offset+8], byteorder='little', signed=False)
 
-def task_address_arm_callback(panda, cpu):
+def task_address_arm_callback(panda: Panda, cpu: Any) -> int:
     sp = panda.arch.get_reg(cpu, 'SP')
 
     thread_info_addr = sp & ~(8192 - 1)
@@ -33,7 +35,7 @@ def task_address_arm_callback(panda, cpu):
     return task_addr
 
 # aarch is also known as arm64
-def task_address_aarch_callback(panda, cpu):
+def task_address_aarch_callback(panda: Panda, cpu:Any) -> int:
     sp = panda.arch.get_reg(cpu, 'SP')
 
     thread_info_addr = sp & ~(16384 - 1)
@@ -55,7 +57,7 @@ def task_address_aarch_callback(panda, cpu):
     return task_addr
 
 
-def task_address_i386_callback(panda, cpu):
+def task_address_i386_callback(panda:Panda, cpu:Any) -> int:
     assert panda.in_kernel(cpu)
     sp = panda.current_sp(cpu)
 
@@ -77,7 +79,7 @@ def task_address_i386_callback(panda, cpu):
 
     return task_addr
 
-def task_address_x86_64_callback(panda, cpu):
+def task_address_x86_64_callback(panda:Panda, cpu:Any) -> int:
     sp0_offset = 4
     esp0_ptr = cpu.env_ptr.tr.base + sp0_offset
     esp0_bytes = read_mem(panda, cpu, esp0_ptr, 8)

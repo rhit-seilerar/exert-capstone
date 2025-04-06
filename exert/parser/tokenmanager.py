@@ -1,4 +1,6 @@
-def tok_str(token, newlines = False):
+from typing import Any, Literal
+
+def tok_str(token: tuple, newlines: bool = False) -> (Any|str):
     n = token
     string = '<NONE> ' if n is None \
         else n[1] if n[0] == 'directive' \
@@ -14,23 +16,23 @@ def tok_str(token, newlines = False):
         return string
     return string.replace('\n', ' ')
 
-def tok_seq(tokens, newlines = False):
+def tok_seq(tokens: list, newlines: bool = False) -> str:
     return ''.join(tok_str(n, newlines) for n in tokens).strip() \
         if isinstance(tokens, list) else tokens
 
-def mk_int(num, suffix = ''):
+def mk_int(num: int, suffix: str = '')-> tuple[str, int, str]:
     return ('integer', num, suffix)
 
-def mk_id(sym):
+def mk_id(sym: any)-> tuple[str, Any]:
     return ('identifier', sym)
 
-def mk_kw(sym):
+def mk_kw(sym: any)-> tuple[str, Any]:
     return ('keyword', sym)
 
-def mk_op(op):
+def mk_op(op: any)-> tuple[str, Any]:
     return ('operator', op)
 
-def mk_str(string, suffix = '"'):
+def mk_str(string:str, suffix: str = '"')-> tuple[str, str, str]:
     return ('string', string, suffix)
 
 class TokenManager:
@@ -46,58 +48,58 @@ class TokenManager:
         self.tokens_added = 0
         self.progress_counter = 0
 
-    def has_next(self):
+    def has_next(self) -> bool:
         return self.index < self.len
 
     def bump(self):
         self.tokens_consumed += 1
         self.index += 1
 
-    def peek(self, offset = 0):
+    def peek(self, offset: int = 0) -> (tuple| None):
         if 0 <= self.index + offset and self.index + offset < self.len:
             return self.tokens[self.index+offset]
         return None
 
-    def peek_type(self, offset = 0):
+    def peek_type(self, offset: int = 0) -> (tuple| None):
         return tok[0] if (tok := self.peek(offset)) else None
 
-    def next(self, offset = 0):
+    def next(self, offset: int = 0) -> (tuple| None):
         if (token := self.peek(offset)):
             self.bump()
             return token
         return None
 
-    def consume_type(self, typ):
+    def consume_type(self, typ: Any) -> (tuple| None):
         return self.next() if (token := self.peek()) and token[0] == typ else None
 
-    def consume(self, token):
+    def consume(self, token: tuple) -> (tuple| None):
         if self.peek() == token:
             return self.next()
         return None
 
-    def consume_directive(self, name):
+    def consume_directive(self, name: str) -> (tuple| None):
         return self.consume(('directive', name))
 
-    def consume_operator(self, name):
+    def consume_operator(self, name: str) -> (tuple| None):
         return self.consume(('operator', name))
 
-    def consume_keyword(self, name):
+    def consume_keyword(self, name: str) -> (tuple| None):
         return self.consume(('keyword', name))
 
-    def consume_identifier(self, name):
+    def consume_identifier(self, name: str) -> (tuple| None):
         return self.consume(('identifier', name))
 
-    def parse_identifier(self):
+    def parse_identifier(self) -> (Any|Literal['']):
         if (token := self.consume_type('identifier')):
             return token[1]
         return ''
 
-    def parse_ident_or_keyword(self):
+    def parse_ident_or_keyword(self) -> (Any|Literal['']):
         if (self.peek_type() in ['identifier', 'keyword']):
             return self.next()[1]
         return ''
 
-    def print_current(self, width = 5, fancy_print = True):
+    def print_current(self, width: int = 5, fancy_print: bool = True) -> (Any|str):
         low = max(self.index - width, 0)
         high = min(self.index + width + 1, self.len + 1)
         context = self.tokens[low:high]
@@ -119,7 +121,7 @@ class TokenManager:
         print(out)
         return out
 
-    def print_progress(self):
+    def print_progress(self) -> str:
         self.progress_counter += 1
         if self.progress_counter % 2000 == 0:
             out = f'Processed {self.tokens_consumed} of {self.tokens_added} tokens ' \
@@ -130,7 +132,7 @@ class TokenManager:
             return out
         return ''
 
-    def err(self, *message):
+    def err(self, *message: tuple):
         print(*message)
         self.print_current()
         assert False

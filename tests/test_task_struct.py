@@ -1,27 +1,28 @@
 import subprocess
+from typing import Any
 from exert.usermode import plugin
 import exert.usermode.task_struct_stack as tss
 from exert.utilities.debug import RUN_PLUGIN_TESTS
 
-CALLED_BACK = False
-def set_called_back(called_back):
+CALLED_BACK: bool = False
+def set_called_back(called_back: bool):
     global CALLED_BACK
     CALLED_BACK = called_back
 
-TEST_PREFIX = """
+TEST_PREFIX: str = """
 import tests.test_task_struct
 import exert.usermode.task_struct_stack as tss
 tests.test_task_struct.run_test('{}', {}, '{}', tss.{})
 """
 
-def do_test(test, arch, generic = True, kernel = None):
+def do_test(test: bool, arch: str, generic: bool = True, kernel:str|None = None):
     if not RUN_PLUGIN_TESTS:
         return
     formatted = TEST_PREFIX.format(arch, generic, kernel, test.__name__)
     print(formatted)
     subprocess.run(['python'], input = formatted, check = True, text = True)
 
-def run_test(arch, generic, kernel, test):
+def run_test(arch: str, generic: bool, kernel: str, test: Any):
     set_called_back(False)
     def callback(panda, cpu):
         set_called_back(True)

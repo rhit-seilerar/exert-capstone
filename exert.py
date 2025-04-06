@@ -10,7 +10,7 @@ from exert.utilities.command import run_command, get_stdout
 
 PANDA_CONTAINER = 'pandare/panda'
 XMAKE_CONTAINER = 'ghcr.io/panda-re/embedded-toolchains'
-def command_dict(command, capture_output = False, check = True):
+def command_dict(command: str, capture_output: bool = False, check: bool = True) -> dict[str, str]:
     cd = {'comm' : command, 'cap': capture_output, 'chk' : check}
     return cd
 
@@ -29,8 +29,9 @@ def main():
 
     osi_parser = subparsers.add_parser('osi',
         help = 'Generate OSI information for the given kernel image')
-    osi_parser.add_argument('image', nargs = '+',
-        help = 'The kernel image to generate OSI information for.')
+    osi_parser.add_argument('image_path')
+    osi_parser.add_argument('image_arch')
+    osi_parser.add_argument('image_version')
     osi_parser.set_defaults(func = osi)
 
     task_addr_parser = subparsers.add_parser('task_address',
@@ -92,7 +93,7 @@ def dev_reset():
 
 # Rules, Tests, Attach. 0,1,2 to determine if its a rules, tests, or attach.
 # true if test, false if rules
-def dev_rta(in_docker, reset, version=None, arch=None, container = None, rta_mode = 1):
+def dev_rta(in_docker: bool, reset: bool, version: str=None, arch: str=None, container:str = None, rta_mode: int = 1):
     command = ''
     name = 'pandare'
 
@@ -130,7 +131,7 @@ def dev_rta(in_docker, reset, version=None, arch=None, container = None, rta_mod
         volume_srd(1)
 
 # pylint: disable=unused-argument
-def init(parsed):
+def init(parsed:argparse.ArgumentParser):
     if parsed.docker:
         run_command('cd /mount; chmod +x ./setup.sh; ./setup.sh')
         return
@@ -159,7 +160,7 @@ def init(parsed):
     print('EXERT successfully initialized!')
 
 # srd = Sync Reverse Delete. 0 = sync, 1 = reverse, 2 = delete
-def volume_srd(srd=0):
+def volume_srd(srd: int =0):
     local_mount = f'-v "{os.path.dirname(os.path.realpath(__file__))}:/local"'
     exclude = '--exclude .git'
 
@@ -185,17 +186,13 @@ def volume_srd(srd=0):
     run_docker(name = 'pandare-init', command = command,
                capture_output=False, extra_args=extra_args)
 
-def osi(parsed):
+def osi(parsed:argparse.ArgumentParser):
     """Validate the provided image, and then generate its OSI information"""
-    validate_initialized()
-    for image in parsed.image:
-        validate_iso(image)
-        make_usermode()
+    # init(parsed)
+    run_docker(command=f'python -m exert.osi_generator {parsed.image_path} {parsed.image_arch} {parsed.image_version}')
 
-    print('OSI not implemented.')
-
-def run_docker(container = PANDA_CONTAINER, *, name = 'pandare', command = '',
-    interactive = False, in_docker = False, extra_args = '', capture_output = False):
+def run_docker(container:str = PANDA_CONTAINER, *, name: str = 'pandare', command: str = '',
+    interactive: bool = False, in_docker: bool = False, extra_args: str = '', capture_output: bool = False):
     commands = []
     try:
         validate_initialized()
@@ -230,7 +227,7 @@ def run_docker(container = PANDA_CONTAINER, *, name = 'pandare', command = '',
         print("Commands failed! Exiting.")
         sys.exit(-1)
 
-def container_is_running(name):
+def container_is_running(name: str) -> bool:
     names = get_stdout(run_command('docker ps --format {{.Names}}', True)).splitlines()
     try:
         names.index(name)
@@ -246,7 +243,7 @@ def make_usermode():
     # TODO: Compile usermode for specific version
     run_docker(XMAKE_CONTAINER, name = None, command='make -C /mount/exert/usermode')
 
-def validate_iso(image):
+def validate_iso(image: str):
     try:
         with open(image,'rb') as fo:
             cursor = 0x8000
@@ -274,7 +271,7 @@ def validate_iso(image):
         print(f'The file {image} is not a valid kernel image.')
         sys.exit(1)
 
-def get_task_address(kernel_path, kernel_arch, kernel_version, in_docker):
+def get_task_address(kernel_path: str, kernel_arch: str, kernel_version: str, in_docker: bool):
     command = f'python -u -m exert.usermode.plugin {kernel_path} {kernel_arch} {kernel_version}'
     #file needs to initiate a hypercall, but before that, plugin needs to intercept a hypercall
     if in_docker:
