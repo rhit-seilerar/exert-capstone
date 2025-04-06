@@ -35,7 +35,7 @@ def test_defoption_str():
     assert str(DefOption([])) == ''
     assert str(DefOption([('identifier', 'a'), ('identifier', 'b')])) == 'a b'
 
-def make_def_variants():
+def make_def_variants() -> list[Def]:
     option1 = DefOption([('number', 1)])
     option2 = DefOption([('number', 2)])
     return [

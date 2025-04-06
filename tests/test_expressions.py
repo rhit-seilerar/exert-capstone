@@ -2,16 +2,16 @@ from tests import utils
 from exert.parser import definitions
 from exert.parser import expressions
 import exert.parser.tokenmanager as tm
-from exert.parser.expressions import Evaluator, parse_expression
+from exert.parser.expressions import Evaluator, Expression, parse_expression
 from exert.parser.tokenizer import Tokenizer
 
 TOKENIZER = Tokenizer()
 
-def expect_error(expr, bitsize, exception = AssertionError):
+def expect_error(expr:Expression, bitsize:int, exception: type[AssertionError] = AssertionError):
     utils.expect_error(lambda: \
         parse_expression(TOKENIZER.tokenize(expr)), exception)
 
-def roundtrip(expr, bitsize, expected = None):
+def roundtrip(expr:Expression, bitsize:int, expected:Expression = None):
     if expected is None:
         expected = expr
     tokens = TOKENIZER.tokenize(expr)
@@ -45,7 +45,7 @@ def test_parse():
     roundtrip('+-!~1 * 2 / 3 % 4 + 5 - 6 << 7 >> 8 < 9 <= 10' \
         ' > 11 >= 12 == 13 != 14 & 15 ^ 16 | 17 && 18 || 19 ? 20 : 21', 32)
 
-def evaluate(expr, bitsize, expected, expected_unsigned):
+def evaluate(expr:Expression, bitsize:int, expected:Expression, expected_unsigned:bool):
     tokens = TOKENIZER.tokenize(expr)
     value, unsigned = Evaluator(bitsize).evaluate(tokens)
     assert value == expected

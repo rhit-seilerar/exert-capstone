@@ -3,7 +3,7 @@ import exert.parser.tokenmanager as tm
 from exert.parser.tokenizer import Tokenizer
 from exert.parser.preprocessor import Preprocessor, read_file
 
-FILES = {
+FILES: dict[str, str] = {
     'base.h': """
         #ifndef _BASE_H
         #define _BASE_H
@@ -45,7 +45,7 @@ FILES = {
     """
 }
 
-def dummy_reader(path):
+def dummy_reader(path) -> (str|None):
     return FILES.get(path)
 
 def test_read_file():

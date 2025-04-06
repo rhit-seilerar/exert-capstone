@@ -1,12 +1,15 @@
 import os
 import subprocess
+from typing import Any
+
+from pandare import Panda
 
 import exert.utilities.command as cmd
 from exert.utilities.debug import RUN_PLUGIN_TESTS
 from exert.usermode import plugin
 
-CALLED_BACK = False
-def set_called_back(called_back):
+CALLED_BACK: bool = False
+def set_called_back(called_back: bool):
     global CALLED_BACK
     CALLED_BACK = called_back
 
@@ -15,20 +18,20 @@ import tests.test_usermode as ttu
 ttu.run_test('{}', {}, '{}', ttu.{})
 """
 
-def do_test(test, arch, generic = True, kernel = None):
+def do_test(test: Any, arch:str, generic: bool = True, kernel:str = None):
     if not RUN_PLUGIN_TESTS:
         return
     formatted = TEST_PREFIX.format(arch, generic, kernel, test.__name__)
     print(formatted)
     subprocess.run(['python'], input = formatted, check = True, text = True)
 
-def run_test(arch, generic, kernel, test):
+def run_test(arch: str, generic: bool, kernel: str, test: Any):
     set_called_back(False)
 
-    def callback(panda, cpu):
+    def callback(panda: Panda, cpu: Any):
         return
 
-    def hypervisor_callback(panda, cpu):
+    def hypervisor_callback(panda: Panda, cpu: Any):
         set_called_back(True)
         test(panda, cpu)
 
@@ -37,7 +40,7 @@ def run_test(arch, generic, kernel, test):
                command = './user_prog /init', hypercall_callback = hypervisor_callback)
     assert CALLED_BACK
 
-def file_reader_callback(panda, cpu):
+def file_reader_callback(panda:Panda, cpu:Any):
     magic = panda.arch.get_arg(cpu, 0, convention='syscall')
     typ = panda.arch.get_arg(cpu, 1, convention='syscall')
     assert magic == 0
