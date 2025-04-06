@@ -28,9 +28,8 @@ def task_address_arm_callback(panda: Panda, cpu: Any) -> int:
     global TASK_ADDRESS
     TASK_ADDRESS = task_addr
 
-    data = open("tmp_data", "wb")
-    data.write(pickle.dumps(task_addr))
-    data.close()
+    with open("tmp_data", "wb") as data:
+        data.write(pickle.dumps(task_addr))
 
     return task_addr
 
@@ -50,9 +49,8 @@ def task_address_aarch_callback(panda: Panda, cpu:Any) -> int:
     global TASK_ADDRESS
     TASK_ADDRESS = task_addr
 
-    data = open("tmp_data", "wb")
-    data.write(pickle.dumps(task_addr))
-    data.close()
+    with open("tmp_data", "wb") as data:
+        data.write(pickle.dumps(task_addr))
 
     return task_addr
 
@@ -73,9 +71,8 @@ def task_address_i386_callback(panda:Panda, cpu:Any) -> int:
     global TASK_ADDRESS
     TASK_ADDRESS = task_addr
 
-    data = open("tmp_data", "wb")
-    data.write(pickle.dumps(task_addr))
-    data.close()
+    with open("tmp_data", "wb") as data:
+        data.write(pickle.dumps(task_addr))
 
     return task_addr
 
@@ -96,8 +93,7 @@ def task_address_x86_64_callback(panda:Panda, cpu:Any) -> int:
     global TASK_ADDRESS
     TASK_ADDRESS = task_addr
 
-    data = open("tmp_data", "wb")
-    data.write(pickle.dumps(task_addr))
-    data.close()
+    with open("tmp_data", "wb") as data:
+        data.write(pickle.dumps(task_addr))
 
     return task_addr
