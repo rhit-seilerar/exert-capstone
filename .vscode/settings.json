@@ -1,9 +1,0 @@
-{
-	"editor.insertSpaces": true,
-	"editor.tabSize": 4,
-	"editor.indentSize": "tabSize",
-    "files.exclude": {
-        "**/.git": false
-    },
-    "files.eol": "\n"
-}
