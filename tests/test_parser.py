@@ -1,6 +1,5 @@
 from typing import Any
 from exert.parser.parser import Parser
-from exert.parser.definitions import DefOption
 
 class DummyParser(Parser):
     def dfail(self, p:Any, f:Any)->Any:

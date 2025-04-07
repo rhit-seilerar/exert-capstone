@@ -93,7 +93,8 @@ def dev_reset():
 
 # Rules, Tests, Attach. 0,1,2 to determine if its a rules, tests, or attach.
 # true if test, false if rules
-def dev_rta(in_docker: bool, reset: bool, version: str=None, arch: str=None, container:str = None, rta_mode: int = 1):
+def dev_rta(in_docker: bool, reset: bool, version: str=None,
+            arch: str=None, container:str = None, rta_mode: int = 1):
     command = ''
     name = 'pandare'
 
@@ -189,10 +190,14 @@ def volume_srd(srd: int =0):
 def osi(parsed:argparse.ArgumentParser):
     """Validate the provided image, and then generate its OSI information"""
     # init(parsed)
-    run_docker(command=f'python -m exert.osi_generator {parsed.image_path} {parsed.image_arch} {parsed.image_version}')
+    path:str = parsed.image_path
+    arch:str = parsed.image_arch
+    version:str = parsed.image_version
+    run_docker(command=f'python -m exert.osi_generator {path} {arch} {version}')
 
 def run_docker(container:str = PANDA_CONTAINER, *, name: str = 'pandare', command: str = '',
-    interactive: bool = False, in_docker: bool = False, extra_args: str = '', capture_output: bool = False):
+    interactive: bool = False, in_docker: bool = False, extra_args: str = '',
+    capture_output: bool = False):
     commands = []
     try:
         validate_initialized()

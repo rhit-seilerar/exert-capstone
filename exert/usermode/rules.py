@@ -56,7 +56,8 @@ class Any(Rule):
         return {address}
 
 class Int(Rule):
-    def __init__(self, size: int = 4, signed: bool = True, min_value: int = None, max_value: int = None):
+    def __init__(self, size: int = 4, signed: bool = True,
+                 min_value: int = None, max_value: int = None):
         super().__init__()
         self.size = size
         self.signed = signed
