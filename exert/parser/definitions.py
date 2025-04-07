@@ -229,7 +229,8 @@ class DefMap:
         return f'DefMap(parent = {self.parent}, skipping = {self.skipping}, ' \
             f'defs = {{{", ".join(defs_strs)}}})'
 
-def substitute(defmap: list, tok: Any, keys: set = None) -> (list[Any] | list | list[tuple[str, Any, set]] | Any):
+def substitute(defmap: list, tok: Any, keys: set = None) \
+    -> (list[Any] | list | list[tuple[str, Any, set]] | Any):
     expansion_stack = []
     def subst(token: tuple) -> (list | list[tuple[str, Any, set]] | Any | None):
         if token[0] not in ['identifier', 'keyword']:

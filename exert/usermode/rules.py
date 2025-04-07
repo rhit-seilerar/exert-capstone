@@ -98,7 +98,7 @@ class Pointer(Rule):
         if pointer is None or (self.rule and not self.rule.test(context, pointer)):
             return set()
         return {address}
-    
+
 class Union(Rule):
     def __init__(self, name, rules):
         self.name = name
@@ -112,7 +112,7 @@ class Union(Rule):
             results = results | rule.test(context, address)
 
         return results
-    
+
     def _get_key(self):
         rule_string = '['
 
@@ -165,11 +165,11 @@ class FieldGroup:
         self.fields_addresses = None
 
     def test_all(self, context: Context, addresses: list)-> (set|Any):
-        self.fields_addresses = dict()
+        self.fields_addresses = {}
         passing = set()
         for field in self.fields:
             field_addresses = field.test_all(context, addresses)
-            self.fields_addresses.update({field._get_key(): field_addresses})
+            self.fields_addresses.update({str(field): field_addresses})
             passing |= field_addresses
         return passing
 
@@ -177,13 +177,13 @@ class FieldGroup:
         fields_str = ', '.join(str(f) for f in self.fields)
         cond_str = 'None' if self.condition is None else f"'{self.condition}'"
         return f'FieldGroup([{fields_str}], {cond_str})'
-    
+
     def get_field_addresses(self, context: Context, address: int) -> (dict|None):
-        if (self.fields_addresses):
+        if self.fields_addresses:
             return self.fields_addresses
-        else:
-            self.test_all(context, {address})
-            return self.fields_addresses
+
+        self.test_all(context, {address})
+        return self.fields_addresses
 
 class Struct(Rule):
     def __init__(self, name: str, field_groups: list):
@@ -198,7 +198,7 @@ class Struct(Rule):
 
     def _test(self, context:Context, address:int) -> (set[int]|Any):
         passing = {address}
-        self.fields_addresses = dict()
+        self.fields_addresses = {}
         for group in self.field_groups:
             if group.condition:
                 passing |= group.test_all(context, passing)
@@ -207,18 +207,18 @@ class Struct(Rule):
                 passing = group.test_all(context, passing)
                 self.fields_addresses.update(group.get_field_addresses(context, address))
         return passing
-    
+
     def get_field_addresses(self, context:Context, address:int)-> (dict|None):
-        if (self.fields_addresses):
+        if self.fields_addresses:
             return self.fields_addresses
-        else:
-            self._test(context, address)
-            return self.fields_addresses
+
+        self._test(context, address)
+        return self.fields_addresses
 
 class _Struct(Struct):
     def _get_key(self) -> str:
         return f'{self.__class__.__name__}'
-    
+
 class _Union(Union):
     def _get_key(self):
         return f'{self.__class__.__name__}'
@@ -710,7 +710,7 @@ class _CFSRQ(_Struct):
         ])
 CFSRQ = _CFSRQ()
 
-class _RCU_SPECIAL(_Union):
+class _RcuSpecial(_Union):
     def __init__(self, name):
         super().__init__(name, [
             _Struct('b', [
@@ -723,7 +723,7 @@ class _RCU_SPECIAL(_Union):
             ]),
             Int(size=4, signed=False)
         ])
-RCU_READ_UNLOCK_SPECIAL=_RCU_SPECIAL('rcu_read_unlock_special')
+RCU_READ_UNLOCK_SPECIAL=_RcuSpecial('rcu_read_unlock_special')
 
 class _TaskStruct(_Struct):
     def __init__(self):

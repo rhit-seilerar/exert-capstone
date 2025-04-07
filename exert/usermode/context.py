@@ -1,4 +1,3 @@
-from typing import Any, Literal
 from pandare import Panda
 class Context:
     def __init__(self, panda: Panda):

@@ -1,6 +1,6 @@
+import pickle
 from typing import Any
 from pandare import Panda
-import pickle
 
 TASK_ADDRESS = None
 

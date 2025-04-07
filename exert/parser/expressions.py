@@ -1,4 +1,3 @@
-from typing import Any, Literal
 import exert.parser.tokenmanager as tm
 
 class Expression:
@@ -48,7 +47,8 @@ class Operator(Expression):
     pass
 
 class UnaryOperator(Operator):
-    def __init__(self, a: tuple[Expression, str], opname: str, op: Operator, signop: Operator|None = None):
+    def __init__(self, a: tuple[Expression, str], opname: str,
+                 op: Operator, signop: Operator|None = None):
         assert isinstance(a, (Expression, str))
         self.opname = opname
         self.op = op
@@ -67,7 +67,8 @@ class UnaryOperator(Operator):
         return self.opname + str(self.a)
 
 class BinaryOperator(Operator):
-    def __init__(self, a: Expression, b: Expression, opname: str, op: Operator, signop: Operator|None = None):
+    def __init__(self, a: Expression, b: Expression, opname: str,
+                 op: Operator, signop: Operator|None = None):
         assert isinstance(a, Expression)
         assert isinstance(b, Expression)
         self.opname = opname

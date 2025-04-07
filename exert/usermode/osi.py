@@ -11,7 +11,7 @@ class HeaderLine():
 #name
 class Name():
     def __init__(self,
-                 name: str = '4.4.0-98-generic|#121-Ubuntu SMP Tue Oct 10 14:24:03 UTC 2017|x86_64'):
+            name: str = '4.4.0-98-generic|#121-Ubuntu SMP Tue Oct 10 14:24:03 UTC 2017|x86_64'):
         self.name = name
 
     def to_string(self) -> str:
@@ -96,7 +96,8 @@ task.start_time_offset = {self.start_time_offset}\n'''
 
 #cred
 class Cred():
-    def __init__(self, uid_offset: int = 4, gid_offset: int = 8, euid_offset: int = 20, egid_offset: int = 24):
+    def __init__(self, uid_offset: int = 4, gid_offset: int = 8,
+                 euid_offset: int = 20, egid_offset: int = 24):
         self.uid_offset = uid_offset
         self.gid_offset = gid_offset
         self.euid_offset = euid_offset
@@ -230,7 +231,8 @@ path.mnt_root_offset = {self.mnt_root_offset}
 path.mnt_parent_offset = {self.mnt_parent_offset}
 path.mnt_mountpoint_offset = {self.mnt_mountpoint_offset}\n'''
 
-def main(*, header_line: str, osi_name: str, osi_version: str, task: Task, cred: Cred, mm: MM, vma: VMA, fs: FS, qstr: QSTR, osi_path: Path, demo_path: str):
+def main(*, header_line: str, osi_name: str, osi_version: str, task: Task, cred: Cred, mm: MM,
+         vma: VMA, fs: FS, qstr: QSTR, osi_path: Path, demo_path: str):
     with open(demo_path, "w", encoding='utf-8') as f:
         f.write(header_line.to_string())
         f.write(osi_name.to_string())

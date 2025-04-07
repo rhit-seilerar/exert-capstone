@@ -6,7 +6,7 @@ from typing import Any, Literal
 from exert.parser.tokenizer import Tokenizer
 from exert.parser.tokenmanager import tok_seq, mk_kw, mk_op, mk_id, TokenManager
 from exert.parser.preprocessor import Preprocessor
-from exert.usermode import rules
+# from exert.usermode import rules
 from exert.utilities.debug import dprint
 from exert.utilities.command import run_command
 
