@@ -1,6 +1,6 @@
-from typing import Any, Literal
+from typing import Any, Tuple, Optional
 
-def tok_str(token: tuple, newlines: bool = False) -> (Any|str):
+def tok_str(token: tuple, newlines: bool = False) -> any:
     n = token
     string = '<NONE> ' if n is None \
         else n[1] if n[0] == 'directive' \
@@ -20,19 +20,19 @@ def tok_seq(tokens: list, newlines: bool = False) -> str:
     return ''.join(tok_str(n, newlines) for n in tokens).strip() \
         if isinstance(tokens, list) else tokens
 
-def mk_int(num: int, suffix: str = '')-> tuple[str, int, str]:
+def mk_int(num: int, suffix: str = '')-> Tuple[str, int, str]:
     return ('integer', num, suffix)
 
-def mk_id(sym: any)-> tuple[str, Any]:
+def mk_id(sym: any)-> Tuple[str, Any]:
     return ('identifier', sym)
 
-def mk_kw(sym: any)-> tuple[str, Any]:
+def mk_kw(sym: any)-> Tuple[str, Any]:
     return ('keyword', sym)
 
-def mk_op(op: any)-> tuple[str, Any]:
+def mk_op(op: any)-> Tuple[str, Any]:
     return ('operator', op)
 
-def mk_str(string:str, suffix: str = '"')-> tuple[str, str, str]:
+def mk_str(string:str, suffix: str = '"')-> Tuple[str, str, str]:
     return ('string', string, suffix)
 
 class TokenManager:
@@ -55,51 +55,51 @@ class TokenManager:
         self.tokens_consumed += 1
         self.index += 1
 
-    def peek(self, offset: int = 0) -> (tuple| None):
+    def peek(self, offset: int = 0) -> Optional[tuple]:
         if 0 <= self.index + offset and self.index + offset < self.len:
             return self.tokens[self.index+offset]
         return None
 
-    def peek_type(self, offset: int = 0) -> (tuple| None):
+    def peek_type(self, offset: int = 0) -> Optional[tuple]:
         return tok[0] if (tok := self.peek(offset)) else None
 
-    def next(self, offset: int = 0) -> (tuple| None):
+    def next(self, offset: int = 0) -> Optional[tuple]:
         if (token := self.peek(offset)):
             self.bump()
             return token
         return None
 
-    def consume_type(self, typ: Any) -> (tuple| None):
+    def consume_type(self, typ: Any) -> Optional[tuple]:
         return self.next() if (token := self.peek()) and token[0] == typ else None
 
-    def consume(self, token: tuple) -> (tuple| None):
+    def consume(self, token: tuple) -> Optional[tuple]:
         if self.peek() == token:
             return self.next()
         return None
 
-    def consume_directive(self, name: str) -> (tuple| None):
+    def consume_directive(self, name: str) -> Optional[tuple]:
         return self.consume(('directive', name))
 
-    def consume_operator(self, name: str) -> (tuple| None):
+    def consume_operator(self, name: str) -> Optional[tuple]:
         return self.consume(('operator', name))
 
-    def consume_keyword(self, name: str) -> (tuple| None):
+    def consume_keyword(self, name: str) -> Optional[tuple]:
         return self.consume(('keyword', name))
 
-    def consume_identifier(self, name: str) -> (tuple| None):
+    def consume_identifier(self, name: str) -> Optional[tuple]:
         return self.consume(('identifier', name))
 
-    def parse_identifier(self) -> (Any|Literal['']):
+    def parse_identifier(self) -> Any:
         if (token := self.consume_type('identifier')):
             return token[1]
         return ''
 
-    def parse_ident_or_keyword(self) -> (Any|Literal['']):
+    def parse_ident_or_keyword(self) -> Any:
         if (self.peek_type() in ['identifier', 'keyword']):
             return self.next()[1]
         return ''
 
-    def print_current(self, width: int = 5, fancy_print: bool = True) -> (Any|str):
+    def print_current(self, width: int = 5, fancy_print: bool = True) -> Any:
         low = max(self.index - width, 0)
         high = min(self.index + width + 1, self.len + 1)
         context = self.tokens[low:high]

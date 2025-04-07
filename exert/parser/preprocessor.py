@@ -10,13 +10,13 @@ TODO There are still a number of optimizations that can be done for better resul
 
 import os
 import types
-
+from typing import Optional, Union
 from exert.parser.tokenmanager import tok_seq, TokenManager
 from exert.parser.definitions import DefState, Def, DefOption
 from exert.parser.serializer import write_tokens, read_tokens
 from exert.utilities.debug import dprint
 
-def read_file(path: str) -> (str|None):
+def read_file(path: str) -> Optional[str]:
     try:
         with open(path, 'r', encoding = 'utf-8') as file:
             return file.read()
@@ -25,7 +25,7 @@ def read_file(path: str) -> (str|None):
 
 class Preprocessor(TokenManager):
     def __init__(self, tokenizer: types.FunctionType, bitsize: int, includes: types.FunctionType,
-                 defns: list, filereader: str | None = read_file):
+                 defns: list, filereader: Optional[str] = read_file):
         super().__init__()
         self.tokenizer = tokenizer
         self.includes = includes
@@ -256,7 +256,7 @@ class Preprocessor(TokenManager):
             dprint(2, '  ' * self.defs.depth() + '#pragma')
         return self.skip_to_newline()
 
-    def parse_directive(self) -> (bool|list):
+    def parse_directive(self) -> Union[bool, list]:
         result = None
         if self.consume(('identifier', 'line')):
             result = self.handle_line()
@@ -292,7 +292,7 @@ class Preprocessor(TokenManager):
             return self.err(f'Unknown preprocessor directive #{self.next()[1]}')
         return result
 
-    def insert(self, tokens: str|tuple):
+    def insert(self, tokens: Union[str, tuple]):
         if isinstance(tokens, str):
             tokens = self.tokenizer.tokenize(tokens)
         if isinstance(tokens, tuple):
@@ -316,7 +316,7 @@ class Preprocessor(TokenManager):
         if not self.defs.is_skipping():
             self.defs.layers[-1].emitted += tokens
 
-    def preprocess(self, data: str|tuple, cache: str, reset_cache: bool = False):
+    def preprocess(self, data: Union[str, tuple], cache: str, reset_cache: bool = False):
         super().reset()
         self.conditions = []
         self.file = ''

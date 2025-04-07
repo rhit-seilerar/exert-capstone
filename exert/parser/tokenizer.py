@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 import exert.parser.tokenmanager as tm
 
 class Tokenizer:
@@ -26,7 +26,7 @@ class Tokenizer:
     def bump(self, dist: int = 1):
         self.index += dist
 
-    def consume(self, *strings: tuple) -> (tuple|None):
+    def consume(self, *strings: tuple) -> Optional[tuple]:
         for string in strings:
             dist = len(string)
             if self.peek(dist) == string:
@@ -49,7 +49,7 @@ class Tokenizer:
             return True
         return False
 
-    def parse_identifier(self) -> (tuple|None):
+    def parse_identifier(self) -> Optional[tuple]:
         start = self.index
         if self.peek().isalpha() or self.peek() == '_':
             self.bump()
@@ -64,7 +64,7 @@ class Tokenizer:
             return ('identifier', value)
         return None
 
-    def parse_integer(self) -> (tuple|None):
+    def parse_integer(self) -> Optional[tuple]:
         start = self.index
 
         digits = '0123456789'
@@ -99,7 +99,7 @@ class Tokenizer:
 
         return ('integer', num, '')
 
-    def parse_string(self) -> (tuple|None):
+    def parse_string(self) -> Optional[tuple]:
         old = self.index
         modifier = self.consume('u8', 'u', 'U', 'L') or ''
         delim = self.consume('"')
@@ -117,7 +117,7 @@ class Tokenizer:
         self.index = old
         return None
 
-    def parse_operator(self) -> (tuple|None):
+    def parse_operator(self) -> Optional[tuple]:
         if (op3 := self.peek(3)) in ['||=', '&&=', '<<=', '>>=', '...']:
             self.bump(3)
             return ('operator', op3)
@@ -141,7 +141,7 @@ class Tokenizer:
             return ('operator', op1)
         return None
 
-    def parse_token(self) -> (tuple|None):
+    def parse_token(self) -> Optional[tuple]:
         token = None
         token = token or self.parse_identifier()
         # token = token or self.parse_character()

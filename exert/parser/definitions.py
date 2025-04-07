@@ -1,6 +1,6 @@
 import itertools
 
-from typing import Any
+from typing import Any, Optional, Tuple
 
 from exert.parser import expressions
 from exert.parser.tokenmanager import tok_seq, mk_id, mk_op, mk_int
@@ -156,7 +156,7 @@ class DefMap:
     mappings between symbols to their definitions.
     """
 
-    def __init__(self, parent, skipping: bool = False, initial: dict | None = None):
+    def __init__(self, parent, skipping: bool = False, initial: Optional[dict] = None):
         assert parent is None or isinstance(parent, DefMap)
         assert initial is None or isinstance(initial, dict)
         self.skipping = skipping
@@ -169,7 +169,7 @@ class DefMap:
             self.defs[key] = Def()
         return self.defs[key]
 
-    def __getitem__(self, key: Any) -> (Def | dict | Any):
+    def __getitem__(self, key: Any) -> Any:
         if key in self.defs:
             defn = self.getlocal(key)
             if defn.is_empty_def() and self.parent is not None:
@@ -187,7 +187,7 @@ class DefMap:
             raise TypeError(item)
         self.defs[key] = item
 
-    def get_replacements(self, sym_tok: Any) -> (set|Any):
+    def get_replacements(self, sym_tok: Any) -> Any:
         return self[sym_tok[1]].get_replacements(sym_tok)
 
     def validate(self):
@@ -229,10 +229,9 @@ class DefMap:
         return f'DefMap(parent = {self.parent}, skipping = {self.skipping}, ' \
             f'defs = {{{", ".join(defs_strs)}}})'
 
-def substitute(defmap: list, tok: Any, keys: set = None) \
-    -> (list[Any] | list | list[tuple[str, Any, set]] | Any):
+def substitute(defmap: list, tok: Any, keys: set = None) -> Any:
     expansion_stack = []
-    def subst(token: tuple) -> (list | list[tuple[str, Any, set]] | Any | None):
+    def subst(token: tuple) -> Any:
         if token[0] not in ['identifier', 'keyword']:
             return None
         if token[1] in expansion_stack:
@@ -266,7 +265,7 @@ class DefEvaluator(expressions.Evaluator):
         super().__init__(bitsize)
         self.defs = defmap
 
-    def evaluate(self, tokens: list) -> tuple[bool, bool, DefMap]:
+    def evaluate(self, tokens: list) -> Tuple[bool, bool, DefMap]:
         self.matches = DefMap(self.defs)
 
         keys = set()
@@ -422,7 +421,7 @@ class DefState:
     of symbols.
     """
 
-    def __init__(self, bitsize: int, initial: Any|None = None):
+    def __init__(self, bitsize: int, initial: Any = None):
         self.bitsize = bitsize
         self.keys = set()
         self.layers = [DefLayer(DefMap(None, initial = initial), bitsize, False)]
@@ -498,10 +497,10 @@ class DefState:
         layer = self.layers.pop()
         self.layers[-1].current.combine(layer.accumulator.defs, replace = layer.closed)
 
-    def get_replacements(self, tok) -> (set|Any):
+    def get_replacements(self, tok) -> Any:
         return self.layers[-1].current.get_replacements(tok)
 
-    def substitute(self, tok: Any)-> (list[Any] | list | list[tuple[str, Any, set]] | Any):
+    def substitute(self, tok: Any)-> Any:
         return substitute(self.layers[-1].current, tok)
 
     def get_cond_tokens(self) -> list:

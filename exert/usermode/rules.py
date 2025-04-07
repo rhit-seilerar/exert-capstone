@@ -1,3 +1,4 @@
+from typing import Optional
 from exert.usermode.context import Context
 
 class Rule:
@@ -86,7 +87,7 @@ class Bool(Int):
         return 'Bool'
 
 class Pointer(Rule):
-    def __init__(self, rule: Rule|None = None):
+    def __init__(self, rule: Optional[Rule] = None):
         super().__init__()
         self.rule = rule
 
@@ -133,7 +134,7 @@ class Array(Rule):
     def _get_key(self) -> str:
         return f'Array({str(self.rule)}, {self.count_min}, {self.count_max})'
 
-    def _test(self, context, address)-> (set[int] | set | Any):
+    def _test(self, context, address)-> Any:
         passing = {address}
         for _ in range(0, self.count_min):
             passing = self.rule.test_all(context, passing)
@@ -157,14 +158,14 @@ class Field(Rule):
         return self.rule.test(context, address)
 
 class FieldGroup:
-    def __init__(self, fields: list, condition: Any|None =None):
+    def __init__(self, fields: list, condition: Any = None):
         self.fields = fields
         for field in self.fields:
             assert isinstance(field, Field)
         self.condition = condition
         self.fields_addresses = None
 
-    def test_all(self, context: Context, addresses: list)-> (set|Any):
+    def test_all(self, context: Context, addresses: list)-> Any:
         self.fields_addresses = {}
         passing = set()
         for field in self.fields:
@@ -178,7 +179,7 @@ class FieldGroup:
         cond_str = 'None' if self.condition is None else f"'{self.condition}'"
         return f'FieldGroup([{fields_str}], {cond_str})'
 
-    def get_field_addresses(self, context: Context, address: int) -> (dict|None):
+    def get_field_addresses(self, context: Context, address: int) -> Optional[dict]:
         if self.fields_addresses:
             return self.fields_addresses
 
@@ -196,7 +197,7 @@ class Struct(Rule):
         groups_str = ', '.join([str(g) for g in self.field_groups])
         return f"Struct('{self.name}', [{groups_str}])"
 
-    def _test(self, context:Context, address:int) -> (set[int]|Any):
+    def _test(self, context:Context, address:int) -> Any:
         passing = {address}
         self.fields_addresses = {}
         for group in self.field_groups:
@@ -208,7 +209,7 @@ class Struct(Rule):
                 self.fields_addresses.update(group.get_field_addresses(context, address))
         return passing
 
-    def get_field_addresses(self, context:Context, address:int)-> (dict|None):
+    def get_field_addresses(self, context:Context, address:int)-> Optional[dict]:
         if self.fields_addresses:
             return self.fields_addresses
 

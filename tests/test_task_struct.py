@@ -1,5 +1,5 @@
 import subprocess
-from typing import Any
+from typing import Any, Optional
 from exert.usermode import plugin
 import exert.usermode.task_struct_stack as tss
 from exert.utilities.debug import RUN_PLUGIN_TESTS
@@ -15,7 +15,7 @@ import exert.usermode.task_struct_stack as tss
 tests.test_task_struct.run_test('{}', {}, '{}', tss.{})
 """
 
-def do_test(test: bool, arch: str, generic: bool = True, kernel:str|None = None):
+def do_test(test: bool, arch: str, generic: bool = True, kernel: Optional[str] = None):
     if not RUN_PLUGIN_TESTS:
         return
     formatted = TEST_PREFIX.format(arch, generic, kernel, test.__name__)

@@ -2,7 +2,7 @@ import os
 import sys
 import time
 import glob
-from typing import Any, Literal
+from typing import Any, Literal, Optional, List
 from exert.parser.tokenizer import Tokenizer
 from exert.parser.tokenmanager import tok_seq, mk_kw, mk_op, mk_id, TokenManager
 from exert.parser.preprocessor import Preprocessor
@@ -15,17 +15,17 @@ VERSION_PATH: str = './cache/linux-version.txt'
 SOURCE_PATH: str = './cache/linux'
 PARSE_CACHE: str = './cache/parsed'
 
-def generate(version: str | None, arch: str):
+def generate(version: Optional[str], arch: str):
     switch_to_version(version)
     print('Parsing files...')
     if not os.path.exists(PARSE_CACHE):
         os.mkdir(PARSE_CACHE)
     parse(f'{SOURCE_PATH}/include/linux/sched/prio.h', arch)
 
-def get_files() -> list[str]:
+def get_files() -> List[str]:
     return glob.glob(f'{SOURCE_PATH}/include/linux/**/*.h', recursive = True)
 
-def switch_to_version(version: str | None):
+def switch_to_version(version: Optional[str]):
     old_version = None
     try:
         with open(VERSION_PATH, 'r', encoding = 'utf-8') as file:
@@ -69,7 +69,7 @@ def parse(filename: str, arch: str):
     parser.parse(preprocessor.tokens)
 
 class Parser(TokenManager):
-    def __init__(self, types: dict|None = None):
+    def __init__(self, types: Optional[dict] = None):
         super().__init__()
         self.chkptid = 0
         self.anydepth = 0
@@ -94,7 +94,7 @@ class Parser(TokenManager):
 #     def has(self, values, key):
 #         return key in values
 
-    def unwrap(self, k: tuple) -> (tuple|Any):
+    def unwrap(self, k: tuple) -> Any:
         dprint(3, 'unwrap.start')
         while isinstance(k, tuple) and len(k) == 3:
             if self.time + 10 < time.time():
@@ -157,7 +157,7 @@ class Parser(TokenManager):
             return getnext(p, f, clauses)
         return self.chkpt(start)
 
-    def check_for_any(self, p:Any, f:Any) -> (bool|Any):
+    def check_for_any(self, p:Any, f:Any) -> Any:
         dprint(4, 'check_for_any')
         if self.peek_type() == 'any':
             dprint(2, f'  Entering({self.anydepth})')

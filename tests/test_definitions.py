@@ -1,3 +1,4 @@
+from typing import List
 from tests import utils
 from exert.parser.tokenizer import Tokenizer
 from exert.parser import tokenmanager as tm
@@ -35,7 +36,7 @@ def test_defoption_str():
     assert str(DefOption([])) == ''
     assert str(DefOption([('identifier', 'a'), ('identifier', 'b')])) == 'a b'
 
-def make_def_variants() -> list[Def]:
+def make_def_variants() -> List[Def]:
     option1 = DefOption([('number', 1)])
     option2 = DefOption([('number', 2)])
     return [

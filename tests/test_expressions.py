@@ -7,7 +7,7 @@ from exert.parser.tokenizer import Tokenizer
 
 TOKENIZER = Tokenizer()
 
-def expect_error(expr:Expression, bitsize:int, exception: type[AssertionError] = AssertionError):
+def expect_error(expr:Expression, bitsize:int, exception: AssertionError = AssertionError):
     utils.expect_error(lambda: \
         parse_expression(TOKENIZER.tokenize(expr)), exception)
 
