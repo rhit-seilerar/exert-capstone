@@ -302,12 +302,17 @@ def test_defmap_str():
 def test_substitute():
     defstate = DefState(64)
 
+    nosubst = TK.tokenize('static int a = b;')
+    tokmgr = tm.TokenManager(nosubst)
+    assert defstate.substitute(tokmgr) == [tm.mk_kw('static')]
+    assert tokmgr.index == 1
+
     defstate.on_define('STRING', [], [('string', '%d', '"')])
     defstate.on_define('DEFN', ['a'], [tm.mk_id('a'), tm.mk_op('*'), tm.mk_int(3)])
-    assert defstate.substitute(tm.mk_id('STRING')) == \
-        [('string', '%d', '"')]
-    assert defstate.substitute(tm.mk_id('DEFN')) == \
-        [tm.mk_id('a'), tm.mk_op('*'), tm.mk_int(3)]
+    assert defstate.substitute(tm.mk_id('STRING')) == [('string', '%d', '"')]
+    # assert defstate.substitute(tokmgr) == TK.tokenize('1 * 3')
+    assert defstate.substitute(tm.TokenManager(TK.tokenize('DEFN(1)'))) == \
+        TK.tokenize('a * 3')
 
     defstate.on_undef('STRING')
     assert defstate.substitute(tm.mk_id('STRING')) == [tm.mk_id('STRING')]

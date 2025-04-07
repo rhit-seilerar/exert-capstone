@@ -1,7 +1,7 @@
 import itertools
 
 from exert.parser import expressions
-from exert.parser.tokenmanager import tok_seq, mk_id, mk_op, mk_int
+from exert.parser.tokenmanager import TokenManager, tok_seq, mk_id, mk_op, mk_int
 from exert.utilities.debug import dprint
 
 class DefOption:
@@ -82,7 +82,7 @@ class Def:
         self.options.add(option)
         self.defined = True
 
-    def get_replacements(self, sym):
+    def get_replacements(self, sym, params = None):
         """
         [ initial,   {}      ]: [[{}]]
         [ undefined, {}      ]: [[sym]]
@@ -183,8 +183,8 @@ class DefMap:
             raise TypeError(item)
         self.defs[key] = item
 
-    def get_replacements(self, sym_tok):
-        return self[sym_tok[1]].get_replacements(sym_tok)
+    def get_replacements(self, sym_tok, params = None):
+        return self[sym_tok[1]].get_replacements(sym_tok, params)
 
     def validate(self):
         for key in self.defs:
@@ -225,36 +225,71 @@ class DefMap:
         return f'DefMap(parent = {self.parent}, skipping = {self.skipping}, ' \
             f'defs = {{{", ".join(defs_strs)}}})'
 
-def substitute(defmap, tok, keys = None):
+def substitute(tokmgr, defmap, replmap = None, keys = None):
+    def parse_macro(tokmgr):
+        bindex = tokmgr.index
+        if tokmgr.peek_type() not in ['identifier', 'keyword']:
+            return None, []
+        name = tokmgr.next()
+        if not defmap[name[1]].defined:
+            tokmgr.index = bindex
+            return None, []
+        params = []
+        if tokmgr.consume_operator('('):
+            depth = 1
+            pindex = tokmgr.index
+            while tokmgr.has_next() and depth > 0:
+                if tokmgr.consume_operator('('):
+                    depth += 1
+                elif tokmgr.consume_operator(')'):
+                    depth -= 1
+                elif tokmgr.consume_operator(',') and depth == 1:
+                    params.append(tokmgr.tokens[pindex:tokmgr.index])
+                    pindex = tokmgr.index + 1
+                else:
+                    tokmgr.bump()
+            if depth > 0:
+                tokmgr.index = bindex
+                return None, []
+            params.append(tokmgr.tokens[pindex:tokmgr.index])
+        return name, params
+
     expansion_stack = []
-    def subst(token):
-        if token[0] not in ['identifier', 'keyword']:
-            return None
-        if token[1] in expansion_stack:
-            return None
-        if defmap[token[1]].is_initial():
+    def subst(tokmgr):
+        index = tokmgr.index
+        name, params = parse_macro(tokmgr)
+        if name is None or name[1] in expansion_stack or defmap[name[1]].is_initial():
+            tokmgr.index = index
             return None
         substitutions = set()
         if isinstance(keys, set):
-            keys.add(token)
-        opts = defmap.get_replacements(token)
-        if opts == {DefOption([token])}:
+            keys.add(name)
+        opts = defmap.get_replacements(name, params)
+        if opts == {DefOption([name])}:
+            tokmgr.index = index
             return None
         if opts == {DefOption([])}:
             return []
-        expansion_stack.append(token[1])
+        expansion_stack.append(name[1])
         for opt in opts:
             tokens = []
-            for opt_token in opt.tokens:
-                tokens += subst(opt_token) or [opt_token]
+            optmgr = TokenManager(opt.tokens)
+            while optmgr.has_next():
+                tokens += subst(optmgr) or [optmgr.next()]
             if tokens:
                 substitutions.add(DefOption(tokens))
         expansion_stack.pop()
+        macroname = name[1]
+        if len(params) > 0:
+            macroname += '(' + ', '.join(tok_seq(p) for p in params) + ')'
+        if replmap is not None:
+            replmap[macroname] = substitutions
         if len(substitutions) > 1:
-            return [('any', token[1], substitutions)]
+            return [('any', macroname, substitutions)]
         return list(substitutions)[0].tokens
-    result = subst(tok)
-    return [tok] if result is None else result
+
+    result = subst(tokmgr)
+    return [tokmgr.next()] if result is None else result
 
 class DefEvaluator(expressions.Evaluator):
     def __init__(self, bitsize, defmap):
@@ -286,16 +321,14 @@ class DefEvaluator(expressions.Evaluator):
         tokens = nex
 
         nex = []
-        for tok in tokens:
-            nex += substitute(self.defs, tok, keys)
+        tokmgr = TokenManager(tokens)
+        while tokmgr.has_next():
+            nex += substitute(tokmgr, self.defs, keys = keys)
         tokens = nex
 
         lookups = []
         if keys:
-            # Permute all multi-value macros into a chain of 'or's
-            # TODO please improve this
-            # Note that this currently doesn't consider open-ended
-            # definitions correctly
+            # Note that this currently doesn't consider open-ended definitions correctly
             # Also, wildcards could be improved in accuracy
             lists = []
             keylist = list(keys)
@@ -493,11 +526,14 @@ class DefState:
         layer = self.layers.pop()
         self.layers[-1].current.combine(layer.accumulator.defs, replace = layer.closed)
 
-    def get_replacements(self, tok):
-        return self.layers[-1].current.get_replacements(tok)
+    def get_replacements(self, tok, params = None):
+        return self.layers[-1].current.get_replacements(tok, params)
 
-    def substitute(self, tok):
-        return substitute(self.layers[-1].current, tok)
+    def substitute(self, tokmgr):
+        if isinstance(tokmgr, tuple):
+            tok = tokmgr
+            tokmgr = TokenManager([tok])
+        return substitute(tokmgr, self.layers[-1].current)
 
     def get_cond_tokens(self):
         return self.layers[-1].cond

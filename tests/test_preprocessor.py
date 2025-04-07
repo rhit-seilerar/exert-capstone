@@ -59,6 +59,11 @@ def check(incls, defns, str_in, str_out):
     pp = Preprocessor(TK, 32, incls, defns, filereader = dummy_reader)
     pp.preprocess(str_in, CACHE, reset_cache = True)
     pp.load(CACHE)
+    print()
+    print(pp.tokens)
+    print("VERSUS")
+    print(TK.tokenize(str_out))
+    print()
     assert pp.tokens == TK.tokenize(str_out)
 
 def test_standard():

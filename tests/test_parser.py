@@ -1,7 +1,12 @@
+import time
 from exert.parser.parser import Parser
 from exert.parser.definitions import DefOption
 
 class DummyParser(Parser):
+    def __init__(self):
+        super().__init__()
+        self.time = time.time()
+
     def dfail(self, p, f):
         return f
 

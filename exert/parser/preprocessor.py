@@ -305,8 +305,8 @@ class Preprocessor(TokenManager):
         self.tokens_added += size
 
     def substitute(self):
-        tok = self.next()
-        result = self.defs.substitute(tok)
+        tok = self.peek()
+        result = self.defs.substitute(self)
         if result != [tok]:
             dprint(3, f"::Substituting {tok[0]} '{tok[1]}': {tok_seq(result)}")
         self.emit_tokens(result)
