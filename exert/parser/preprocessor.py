@@ -357,6 +357,18 @@ class Preprocessor(TokenManager):
                     self.substitute()
                     continue
 
+                if self.peek_type(-1) == 'string' and self.peek_type() == 'string':
+                    prev = self.peek(-1)
+                    if prev[2] != '<':
+                        curr = self.next()
+                        if curr[2] and prev[2] and curr[2] != prev[2]:
+                            self.err(f'String concatenation of different encodings! \
+                                ({prev[2]} and {curr[2]})')
+                            continue
+                        newstr = ('string', prev[1] + curr[1], prev[2] or curr[2])
+                        self.defs.layers[-1].emitted[-1] = newstr
+                        continue
+
                 self.emit_tokens([self.next()])
 
             write_tokens(file, self.defs.layers[-1].emitted)

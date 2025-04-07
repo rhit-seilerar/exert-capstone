@@ -66,6 +66,16 @@ def check(incls, defns, str_in, str_out):
     print()
     assert pp.tokens == TK.tokenize(str_out)
 
+def test_string_concat():
+    check([], {}, '"Hello " "there!\n"', '"Hello there!\n"')
+    check([], {}, 'L"Hello " "there!\n"', 'L"Hello there!\n"')
+    check([], {}, '"Hello " u"there!\n"', 'u"Hello there!\n"')
+    try:
+        check([], {}, 'L"Hello " u"there!\n"', 'u"Hello there!\n"')
+        raise ValueError
+    except AssertionError:
+        pass
+
 def test_standard():
     check([], {}, """
         typedef int dummy;
@@ -80,7 +90,6 @@ def test_standard():
             return 0;
         }
     """)
-    #TODO string concat
 
 def test_defines():
     check([], {}, """

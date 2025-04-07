@@ -142,11 +142,11 @@ class Tokenizer:
 
     def parse_token(self):
         token = None
+        token = token or self.parse_string()
         token = token or self.parse_identifier()
         # token = token or self.parse_character()
         token = token or self.parse_integer()
         # token = token or self.parse_float()
-        token = token or self.parse_string()
         token = token or self.parse_operator()
         return token
 
