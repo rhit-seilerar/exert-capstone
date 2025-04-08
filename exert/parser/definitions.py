@@ -7,23 +7,23 @@ from exert.parser.tokenmanager import tok_seq, mk_id, mk_op, mk_int
 from exert.utilities.debug import dprint
 
 class DefOption:
-    def __init__(self, tokens: list):
+    def __init__(self, tokens: Any):
         assert isinstance(tokens, list)
         self.tokens = tokens
         self.key = tok_seq(tokens)
         self.len = len(tokens)
         self.hash = hash(self.key)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: Any):
         return isinstance(other, DefOption) and other.key == self.key
 
-    def __hash__(self) -> int:
+    def __hash__(self):
         return self.hash
 
-    def __len__(self) -> int:
+    def __len__(self):
         return self.len
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.key
 
 class Def:
@@ -36,8 +36,8 @@ class Def:
     [  defined,  undefined, options ]: This was defined in one sub-scope and undefined in another
     """
 
-    def __init__(self, *options: DefOption, defined: bool = False, undefined: bool = False):
-        self.options: set = set()
+    def __init__(self, *options: Any, defined: Any = False, undefined: Any = False):
+        self.options: Any = set()
         self.undefined = undefined
         self.defined = defined
         if len(options) > 0:
@@ -52,22 +52,22 @@ class Def:
     def copy(self):
         return Def(*self.options, defined = self.defined, undefined = self.undefined)
 
-    def is_invalid(self) -> bool:
+    def is_invalid(self):
         return not self.defined and len(self.options) > 0
 
-    def is_initial(self) -> bool:
+    def is_initial(self):
         return not self.undefined and not self.defined
 
-    def is_undefined(self) -> bool:
+    def is_undefined(self):
         return self.undefined and not self.defined
 
-    def is_defined(self) -> bool:
+    def is_defined(self):
         return not self.undefined and self.defined
 
-    def is_empty_def(self) -> bool:
+    def is_empty_def(self):
         return self.defined and len(self.options) == 0
 
-    def is_uncertain(self) -> bool:
+    def is_uncertain(self):
         return self.undefined and self.defined
 
     def undefine(self, keep: bool = True):
@@ -84,7 +84,7 @@ class Def:
         self.options.add(option)
         self.defined = True
 
-    def get_replacements(self, sym: Any) -> set:
+    def get_replacements(self, sym: Any):
         """
         [ initial,   {}      ]: [[{}]]
         [ undefined, {}      ]: [[sym]]
@@ -114,7 +114,7 @@ class Def:
             self.options |= other.options
         return self
 
-    def matches(self, other) -> bool:
+    def matches(self, other):
         if not isinstance(other, Def):
             raise TypeError(other)
         if other.is_initial() or self.is_initial():
@@ -128,16 +128,16 @@ class Def:
             return True
         return False
 
-    def __len__(self) -> int:
+    def __len__(self):
         return len(self.options)
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other):
         return isinstance(other, Def) \
             and self.defined == other.defined \
             and self.undefined == other.undefined \
             and self.options == other.options
 
-    def __str__(self) -> str:
+    def __str__(self):
         if self.is_invalid():
             return '<invalid>'
         if self.is_initial():
@@ -167,7 +167,7 @@ class DefMap:
             self.defs[key] = Def()
         return self.defs[key]
 
-    def __getitem__(self, key: Any) -> Any:
+    def __getitem__(self, key: Any):
         if key in self.defs:
             defn = self.getlocal(key)
             if defn.is_empty_def() and self.parent is not None:
@@ -185,7 +185,7 @@ class DefMap:
             raise TypeError(item)
         self.defs[key] = item
 
-    def get_replacements(self, sym_tok: Any) -> Any:
+    def get_replacements(self, sym_tok: Any):
         return self[sym_tok[1]].get_replacements(sym_tok)
 
     def validate(self):
@@ -200,7 +200,7 @@ class DefMap:
         if not self.skipping:
             self.getlocal(key).define(option, keep = True)
 
-    def combine(self, other: dict, replace: Any):
+    def combine(self, other: Any, replace: Any):
         if not isinstance(other, dict):
             raise TypeError(other)
         if not self.skipping:
@@ -208,7 +208,7 @@ class DefMap:
                 self[key] = self[key].copy().combine(other[key], replace = replace)
         return self
 
-    def matches(self, conditions: object) -> bool:
+    def matches(self, conditions: object):
         if not isinstance(conditions, DefMap):
             raise TypeError(conditions)
         for key in conditions.defs:
@@ -216,20 +216,20 @@ class DefMap:
                 return False
         return True
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other: object):
         return isinstance(other, DefMap) \
             and self.parent == other.parent \
             and self.skipping == other.skipping \
             and self.defs == other.defs
 
-    def __str__(self) -> str:
+    def __str__(self):
         defs_strs = [f"'{key}': {str(self.defs[key])}" for key in self.defs]
         return f'DefMap(parent = {self.parent}, skipping = {self.skipping}, ' \
             f'defs = {{{", ".join(defs_strs)}}})'
 
-def substitute(defmap: DefMap, tok: Any, keys: Optional[set] = None) -> Any:
+def substitute(defmap: Any, tok: Any, keys: Optional[set] = None):
     expansion_stack = []
-    def subst(token: tuple) -> Any:
+    def subst(token: tuple):
         if token[0] not in ['identifier', 'keyword']:
             return None
         if token[1] in expansion_stack:
@@ -246,7 +246,7 @@ def substitute(defmap: DefMap, tok: Any, keys: Optional[set] = None) -> Any:
             return []
         expansion_stack.append(token[1])
         for opt in opts:
-            tokens = []
+            tokens: Any = []
             for opt_token in opt.tokens:
                 tokens += subst(opt_token) or [opt_token]
             if tokens:
@@ -259,11 +259,11 @@ def substitute(defmap: DefMap, tok: Any, keys: Optional[set] = None) -> Any:
     return [tok] if result is None else result
 
 class DefEvaluator(expressions.Evaluator):
-    def __init__(self, bitsize: int, defmap: list):
+    def __init__(self, bitsize: int, defmap: Any):
         super().__init__(bitsize)
         self.defs = defmap
 
-    def evaluate(self, tokens: list) -> Tuple[bool, bool, DefMap]:
+    def evaluate(self, tokens: list):
         self.matches = DefMap(self.defs)
 
         keys = set()
@@ -292,14 +292,14 @@ class DefEvaluator(expressions.Evaluator):
             nex += substitute(self.defs, tok, keys)
         tokens = nex
 
-        lookups = []
+        lookups: Any = []
         if keys:
             # Permute all multi-value macros into a chain of 'or's
             # TODO please improve this
             # Note that this currently doesn't consider open-ended
             # definitions correctly
             # Also, wildcards could be improved in accuracy
-            lists = []
+            lists: Any = []
             keylist = list(keys)
             for i, k in enumerate(keylist):
                 lists.append([])
@@ -322,7 +322,7 @@ class DefEvaluator(expressions.Evaluator):
         self.any_match = False
         self.all_match = True
 
-        def insert_permutation(lookup: dict, tokens: list) -> list:
+        def insert_permutation(lookup: dict, tokens: list):
             nex = []
             for tok in tokens:
                 if tok[0] == 'any' and len(tok[2]) > 0:
@@ -334,7 +334,7 @@ class DefEvaluator(expressions.Evaluator):
             return nex
 
         for lookup in lookups:
-            self.defines = {}
+            self.defines: Any = {}
             self.lookup = lookup
             current = insert_permutation(lookup, tokens) if lookup else tokens
             parsed = expressions.parse_expression(current)
@@ -377,14 +377,14 @@ class DefLayer:
     def __init__(self, parent: DefMap, bitsize: int, skip_all):
         self.depth = 0
         self.evaluator = DefEvaluator(bitsize, parent)
-        self.cond_acc = []
-        self.cond = []
+        self.cond_acc: Any = []
+        self.cond: Any = []
         self.accumulator = DefMap(None)
         self.skip_rest = skip_all
-        self.current = None
+        self.current: Any = None
         self.closed = False
-        self.emitted = []
-        self.blocks = []
+        self.emitted: Any = []
+        self.blocks: Any = []
 
     def apply(self):
         if self.current is not None:
@@ -429,17 +429,17 @@ class DefState:
         if initial is not None:
             self.keys |= set(initial.keys())
 
-    def depth(self) -> int:
+    def depth(self):
         return len(self.layers) - 1
 
-    def is_skipping(self) -> bool:
+    def is_skipping(self):
         assert self.layers[-1].current is not None
         return self.layers[-1].current.skipping
 
-    def is_guaranteed(self) -> bool:
+    def is_guaranteed(self):
         return not self.is_skipping() and self.layers[-1].skip_rest
 
-    def flat_defines(self) -> dict:
+    def flat_defines(self):
         result: dict = {}
         for key in self.keys:
             assert self.layers[-1].current is not None
@@ -448,7 +448,7 @@ class DefState:
                 result[key] = defn
         return result
 
-    def flat_unknowns(self) -> set:
+    def flat_unknowns(self):
         result: set = set()
         assert self.layers[-1].current is not None
         for key in self.keys:
@@ -503,13 +503,13 @@ class DefState:
         layer = self.layers.pop()
         self.layers[-1].current.combine(layer.accumulator.defs, replace = layer.closed)
 
-    def get_replacements(self, tok) -> Any:
+    def get_replacements(self, tok):
         assert self.layers[-1].current is not None
         return self.layers[-1].current.get_replacements(tok)
 
-    def substitute(self, tok: Any)-> Any:
+    def substitute(self, tok: Any):
         assert self.layers[-1].current is not None
         return substitute(self.layers[-1].current, tok)
 
-    def get_cond_tokens(self) -> list:
+    def get_cond_tokens(self):
         return self.layers[-1].cond

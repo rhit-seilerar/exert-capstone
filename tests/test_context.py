@@ -12,7 +12,7 @@ class DummyPanda(Panda):
         return None
 
     def virtual_memory_read(self, cpu: Any, addr: int, length: int,
-                            fmt: str = 'bytearray') -> bytes:
+                            fmt: str = 'bytearray'):
         if addr is None or addr + length > len(self.buf):
             raise ValueError
         return self.buf[addr:addr+length]

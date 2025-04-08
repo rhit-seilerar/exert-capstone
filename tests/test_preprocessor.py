@@ -46,7 +46,7 @@ FILES: Dict[str, str] = {
     """
 }
 
-def dummy_reader(path) -> Optional[str]:
+def dummy_reader(path):
     return FILES.get(path)
 
 def test_read_file():

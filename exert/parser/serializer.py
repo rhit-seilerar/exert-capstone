@@ -14,14 +14,14 @@ def write_string(file: BufferedWriter, string: str, sizelength: int = 4):
     write_number(file, len(string), length = sizelength)
     file.write(string.encode('utf-8'))
 
-def read_number(file: BufferedReader, length: int = 8, signed: bool = False) -> int:
+def read_number(file: BufferedReader, length: int = 8, signed: bool = False):
     return int.from_bytes(file.read(length), byteorder = 'little', signed = signed)
 
-def read_string(file: BufferedReader, sizelength: int = 4) -> str:
+def read_string(file: BufferedReader, sizelength: int = 4):
     length = read_number(file, length = sizelength)
     return file.read(length).decode('utf-8')
 
-def read_token(file: BufferedReader) -> tuple:
+def read_token(file: BufferedReader):
     tok_id = read_number(file, length = 1)
     if tok_id < len(TOK_TYPES):
         tok_type = TOK_TYPES[tok_id]
@@ -56,7 +56,7 @@ def read_token(file: BufferedReader) -> tuple:
             return (tok_type, name, options)
     assert False
 
-def read_tokens(path: str) -> list:
+def read_tokens(path: str):
     tokens = []
     with open(path, 'rb') as file:
         file.seek(0, 2)

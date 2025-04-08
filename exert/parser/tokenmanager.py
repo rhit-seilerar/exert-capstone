@@ -1,6 +1,6 @@
 from typing import Any, Tuple, Optional
 
-def tok_str(token: tuple, newlines: bool = False) -> Any:
+def tok_str(token: tuple, newlines: bool = False):
     n = token
     string = '<NONE> ' if n is None \
         else n[1] if n[0] == 'directive' \
@@ -16,23 +16,23 @@ def tok_str(token: tuple, newlines: bool = False) -> Any:
         return string
     return string.replace('\n', ' ')
 
-def tok_seq(tokens: list, newlines: bool = False) -> str:
+def tok_seq(tokens: list, newlines: bool = False):
     return ''.join(tok_str(n, newlines) for n in tokens).strip() \
         if isinstance(tokens, list) else tokens
 
-def mk_int(num: int, suffix: str = '')-> Tuple[str, int, str]:
+def mk_int(num: int, suffix: str = ''):
     return ('integer', num, suffix)
 
-def mk_id(sym: Any)-> Tuple[str, Any]:
+def mk_id(sym: Any):
     return ('identifier', sym)
 
-def mk_kw(sym: Any)-> Tuple[str, Any]:
+def mk_kw(sym: Any):
     return ('keyword', sym)
 
-def mk_op(op: Any)-> Tuple[str, Any]:
+def mk_op(op: Any):
     return ('operator', op)
 
-def mk_str(string:str, suffix: str = '"')-> Tuple[str, str, str]:
+def mk_str(string:str, suffix: str = '"'):
     return ('string', string, suffix)
 
 class TokenManager:
@@ -40,68 +40,68 @@ class TokenManager:
         self.reset()
 
     def reset(self):
-        self.has_error = False
-        self.tokens = []
+        self.has_error: Any = False
+        self.tokens: Any = []
         self.index = 0
         self.len = 0
         self.tokens_consumed = 0
         self.tokens_added = 0
         self.progress_counter = 0
 
-    def has_next(self) -> bool:
+    def has_next(self):
         return self.index < self.len
 
     def bump(self):
         self.tokens_consumed += 1
         self.index += 1
 
-    def peek(self, offset: int = 0) -> Optional[tuple]:
+    def peek(self, offset: int = 0):
         if 0 <= self.index + offset and self.index + offset < self.len:
             return self.tokens[self.index+offset]
         return None
 
-    def peek_type(self, offset: int = 0) -> Optional[tuple]:
+    def peek_type(self, offset: int = 0):
         return tok[0] if (tok := self.peek(offset)) else None
 
-    def next(self, offset: int = 0) -> Optional[tuple]:
+    def next(self, offset: int = 0):
         if (token := self.peek(offset)):
             self.bump()
             return token
         return None
 
-    def consume_type(self, typ: Any) -> Optional[tuple]:
+    def consume_type(self, typ: Any):
         return self.next() if (token := self.peek()) and token[0] == typ else None
 
-    def consume(self, token: tuple) -> Optional[tuple]:
+    def consume(self, token: tuple):
         if self.peek() == token:
             return self.next()
         return None
 
-    def consume_directive(self, name: str) -> Optional[tuple]:
+    def consume_directive(self, name: str):
         return self.consume(('directive', name))
 
-    def consume_operator(self, name: str) -> Optional[tuple]:
+    def consume_operator(self, name: str):
         return self.consume(('operator', name))
 
-    def consume_keyword(self, name: str) -> Optional[tuple]:
+    def consume_keyword(self, name: str):
         return self.consume(('keyword', name))
 
-    def consume_identifier(self, name: str) -> Optional[tuple]:
+    def consume_identifier(self, name: str):
         return self.consume(('identifier', name))
 
-    def parse_identifier(self) -> Any:
+    def parse_identifier(self):
         if (token := self.consume_type('identifier')):
             return token[1]
         return ''
 
-    def parse_ident_or_keyword(self) -> Any:
+    def parse_ident_or_keyword(self):
         if (self.peek_type() in ['identifier', 'keyword']):
             res = self.next()
             assert res is not None
             return res[1]
         return ''
 
-    def print_current(self, width: int = 5, fancy_print: bool = True) -> Any:
+    def print_current(self, width: int = 5, fancy_print: bool = True):
         low = max(self.index - width, 0)
         high = min(self.index + width + 1, self.len + 1)
         context = self.tokens[low:high]
@@ -123,7 +123,7 @@ class TokenManager:
         print(out)
         return out
 
-    def print_progress(self) -> str:
+    def print_progress(self):
         self.progress_counter += 1
         if self.progress_counter % 2000 == 0:
             out = f'Processed {self.tokens_consumed} of {self.tokens_added} tokens ' \

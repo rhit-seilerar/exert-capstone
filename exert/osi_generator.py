@@ -38,7 +38,7 @@ def get_data_addresses(panda:Panda, cpu:Any): # pragma: no cover
     with open("tmp_data", "wb") as data:
         data.write(address_bytes)
 
-def get_task_struct_size(panda:Panda, cpu:Any) -> bytes: # pragma: no cover
+def get_task_struct_size(panda:Panda, cpu:Any): # pragma: no cover
     magic = panda.arch.get_arg(cpu, 0, convention='syscall')
     string_address = panda.arch.get_arg(cpu, 1, convention='syscall')
     assert magic == 204

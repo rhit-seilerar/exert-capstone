@@ -4,6 +4,7 @@ from exert.parser import expressions
 import exert.parser.tokenmanager as tm
 from exert.parser.expressions import Evaluator, Expression, parse_expression
 from exert.parser.tokenizer import Tokenizer
+from typing import Any
 
 TOKENIZER = Tokenizer()
 
@@ -45,7 +46,7 @@ def test_parse():
     roundtrip('+-!~1 * 2 / 3 % 4 + 5 - 6 << 7 >> 8 < 9 <= 10' \
         ' > 11 >= 12 == 13 != 14 & 15 ^ 16 | 17 && 18 || 19 ? 20 : 21', 32)
 
-def evaluate(expr:str, bitsize:int, expected:Expression, expected_unsigned:bool):
+def evaluate(expr:str, bitsize:int, expected:Any, expected_unsigned:bool):
     tokens = TOKENIZER.tokenize(expr)
     value, unsigned = Evaluator(bitsize).evaluate(tokens)
     assert value == expected

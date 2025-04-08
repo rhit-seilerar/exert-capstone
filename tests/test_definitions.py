@@ -4,6 +4,7 @@ from exert.parser.tokenizer import Tokenizer
 from exert.parser import tokenmanager as tm
 from exert.parser import definitions
 from exert.parser.definitions import DefOption, Def, DefMap, DefLayer, DefState
+from typing import Any
 
 def test_defoption_eq():
     empty = DefOption([])
@@ -36,7 +37,7 @@ def test_defoption_str():
     assert str(DefOption([])) == ''
     assert str(DefOption([('identifier', 'a'), ('identifier', 'b')])) == 'a b'
 
-def make_def_variants() -> List[Def]:
+def make_def_variants():
     option1 = DefOption([('number', 1)])
     option2 = DefOption([('number', 2)])
     return [
@@ -232,7 +233,8 @@ def test_defmap_lookup():
     assert defmap['ghi'] == abc
     assert parent['ghi'] == ghi
     try:
-        defmap['abc'] = 'abc'
+        defmap['abc'] = 'abc' # type: ignore
+        # As can clearly be seen below, this is an intentional type error
         assert False
     except TypeError:
         pass

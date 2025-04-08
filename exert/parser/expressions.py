@@ -6,7 +6,7 @@ class Expression:
     def evaluate(self, evaluator):
         assert False
 
-    def __str__(self) -> str:
+    def __str__(self):
         return '<err>'
 
 class Integer(Expression):
@@ -21,7 +21,7 @@ class Integer(Expression):
             value -= base
         return Integer(value, self.unsigned)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return str(self.value) + ('u' if self.unsigned else '')
 
 class Identifier(Integer):
@@ -34,7 +34,7 @@ class Wildcard(Expression):
     def evaluate(self, evaluator):
         return self
 
-    def __str__(self) -> str:
+    def __str__(self):
         return '<wildcard>'
 
 class Group(Expression):
@@ -44,7 +44,7 @@ class Group(Expression):
     def evaluate(self, evaluator):
         return self.expression.evaluate(evaluator)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f'({str(self.expression)})'
 
 class Operator(Expression):
@@ -59,7 +59,7 @@ class UnaryOperator(Operator):
         self.a: Expression = a
         self.signop = (lambda asig: asig) if signop is None else signop
 
-    def evaluate(self, evaluator) -> Union[Wildcard, Integer]:
+    def evaluate(self, evaluator):
         aint = self.a.evaluate(evaluator)
         if isinstance(aint, Wildcard):
             aint.options = set()
@@ -94,21 +94,21 @@ class BinaryOperator(Operator):
         assert self.op is not None
         return Integer(self.op(aint.value, bint.value), unsigned)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return str(self.a) + f' {self.opname} ' + str(self.b)
 
 class UnaryDefined(UnaryOperator):
     def __init__(self, a: Expression):
         super().__init__(a, 'defined', lambda a: a)
 
-    def evaluate(self, evaluator) -> Integer:
+    def evaluate(self, evaluator):
         if self.a in evaluator.lookup and evaluator.lookup[self.a].defined:
             evaluator.defines[self.a] = True
             return Integer(1, False)
         evaluator.defines[self.a] = False
         return Integer(0, False)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f'defined({self.a})'
 
 class UnaryPlus(UnaryOperator):
@@ -249,7 +249,7 @@ class Conditional(Operator):
         unsigned = bint.unsigned or cint.unsigned
         return Integer(bint.value if aint.value else cint.value, unsigned)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f'{str(self.a)} ? {str(self.b)} : {str(self.c)}'
 
 PRECEDENCE_MAP: list = [
@@ -302,7 +302,7 @@ PRECEDENCE_MAP: list = [
     }
 ]
 
-def parse_expression(tokens: list) -> Expression:
+def parse_expression(tokens: list):
     assert len(tokens) > 0
 
     # Handle groups, identifiers, defined(), and terminals
@@ -382,6 +382,8 @@ def parse_expression(tokens: list) -> Expression:
 class Evaluator:
     def __init__(self, bitsize: int):
         self.bitsize = bitsize
+        self.lookup: Any = None
+        self.defines: Any = None
 
     def evaluate(self, tokens: list):
         parsed = parse_expression(tokens)

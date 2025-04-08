@@ -5,7 +5,7 @@ class HeaderLine():
     def __init__(self, header_line: str = '[ubuntu:4.4.0-98-generic:64]'):
         self.header_line = header_line
 
-    def to_string(self) -> str:
+    def to_string(self):
         return f'{self.header_line}\n'
 
 #name
@@ -14,7 +14,7 @@ class Name():
             name: str = '4.4.0-98-generic|#121-Ubuntu SMP Tue Oct 10 14:24:03 UTC 2017|x86_64'):
         self.name = name
 
-    def to_string(self) -> str:
+    def to_string(self):
         return f'name = {self.name}\n'
 
 #version
@@ -24,7 +24,7 @@ class Version():
         self.b = b
         self.c = c
 
-    def to_string(self) -> str:
+    def to_string(self):
         return f'version.a = {self.a}\nversion.b = {self.b}\nversion.c = {self.c}\n'
 
 #task
@@ -72,7 +72,7 @@ class Task():
         self.files_offset = files_offset
         self.start_time_offset = start_time_offset
 
-    def to_string(self) -> str:
+    def to_string(self):
         return f'''task.per_cpu_offsets_addr = {self.per_cpu_offsets_addr}
 task.per_cpu_offset_0_addr = {self.per_cpu_offset_0_addr}
 task.current_task_addr = {self.current_task_addr}
@@ -106,7 +106,7 @@ class Cred():
         self.euid_offset = euid_offset
         self.egid_offset =egid_offset
 
-    def to_string(self) -> str:
+    def to_string(self):
         return f'''cred.uid_offset = {self.uid_offset}
 cred.gid_offset = {self.gid_offset}
 cred.euid_offset = {self.euid_offset}
@@ -131,7 +131,7 @@ class MM():
         self.brk_offset = brk_offset
         self.start_stack_offset = start_stack_offset
 
-    def to_string(self) -> str:
+    def to_string(self):
         return f'''mm.size = {self.size}
 mm.mmap_offset = {self.mmap_offset}
 mm.pgd_offset = {self.pgd_offset}
@@ -159,7 +159,7 @@ class VMA():
         self.vm_flags_offset = vm_flags_offset
         self.vm_file_offset = vm_file_offset
 
-    def to_string(self) -> str:
+    def to_string(self):
         return f'''vma.size = {self.size}
 vma.vm_mm_offset = {self.vm_mm_offset}
 vma.vm_start_offset = {self.vm_start_offset}
@@ -185,7 +185,7 @@ class FS():
         self.fdtab_offset = fdtab_offset
         self.fd_offset = fd_offset
 
-    def to_string(self) -> str:
+    def to_string(self):
         return f'''fs.f_path_dentry_offset = {self.f_path_dentry_offset}
 fs.f_path_mnt_offset = {self.f_path_mnt_offset}
 fs.f_pos_offset = {self.f_pos_offset}
@@ -202,7 +202,7 @@ class QSTR():
         self.size = size
         self.name_offset = name_offset
 
-    def to_string(self) -> str:
+    def to_string(self):
         return f'qstr.size = {self.size}\nqstr.name_offset = {self.name_offset}\n'
 
 #path
@@ -226,7 +226,7 @@ class Path():
         self.mnt_parent_offset = mnt_parent_offset
         self.mnt_mountpoint_offset = mnt_mountpoint_offset
 
-    def to_string(self) -> str:
+    def to_string(self):
         return f'''path.d_name_offset = {self.d_name_offset}
 path.d_iname_offset = {self.d_iname_offset}
 path.d_parent_offset = {self.d_parent_offset}

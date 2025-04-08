@@ -19,7 +19,7 @@ class Exert(PyPlugin):
         self.hypercall_callback = args['hypercall_callback'] \
             if 'hypercall_callback' in args else None
 
-    def __init__(self, panda: Panda):
+    def __init__(self, panda: Any):
         self.called_back = False
 
         @panda.ppp('syscalls2', 'on_sys_execve_enter')
@@ -70,7 +70,7 @@ def run(arch: str = 'i386', callback: Optional[Callable[[Panda, Any], Any]] = No
         mem_use = "256M"
         hardware_args = ''
         console_ver = "ttyAMA0"
-        expect_prompt_entry = '\/ # '
+        expect_prompt_entry = r'\/ # '
         os_ver_entry = 'linux-32-generic'
         if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
             hardware_args = '-machine versatilepb'

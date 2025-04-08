@@ -1,7 +1,8 @@
 from typing import Optional
 from pandare import Panda
+from typing import Any
 class Context:
-    def __init__(self, panda: Panda):
+    def __init__(self, panda: Any):
         self.panda = panda
         self.endianness = panda.endianness
         self.word_size = panda.bits // 8

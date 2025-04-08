@@ -1,5 +1,6 @@
 from typing import Optional
 from exert.usermode.context import Context
+import typing
 
 class Rule:
     _cache: dict[str, set[int]] = {}
@@ -33,31 +34,31 @@ class Rule:
 
         return results
 
-    def _test(self, context: Context, address: int) -> set:
+    def _test(self, context: Context, address: int):
         return {address}
 
-    def _get_key(self) -> str:
+    def _get_key(self):
         return 'Rule'
 
-    def __str__(self) -> str:
+    def __str__(self):
         if not self.key:
             self.key = self._get_key()
         return self.key
 
 class Any(Rule):
-    def __init__(self, *rules: tuple):
+    def __init__(self, *rules: typing.Any):
         super().__init__()
         self.rules = rules
 
-    def _get_key(self) -> str:
+    def _get_key(self):
         return f"Any({', '.join(str(r) for r in self.rules)})"
 
-    def _test(self, context: Context, address: int) -> set:
+    def _test(self, context: Context, address: int):
         #TODO
         return {address}
 
 class Int(Rule):
-    def __init__(self, size: int = 4, signed: bool = True,
+    def __init__(self, size: typing.Any = 4, signed: bool = True,
                  min_value: Optional[int] = None, max_value: Optional[int] = None):
         super().__init__()
         self.size = size
@@ -65,7 +66,7 @@ class Int(Rule):
         self.min_value = min_value
         self.max_value = max_value if max_value is not None else min_value
 
-    def _get_key(self) -> str:
+    def _get_key(self):
         return f'Int({self.size}, {self.signed}, {self.min_value}, {self.max_value})'
 
     def _test(self, context: Context, address: int):
@@ -91,10 +92,10 @@ class Pointer(Rule):
         super().__init__()
         self.rule = rule
 
-    def _get_key(self) -> str:
+    def _get_key(self):
         return f'Pointer({str(self.rule)})'
 
-    def _test(self, context: Context, address: int) -> set:
+    def _test(self, context: Context, address: int):
         pointer, address = context.next_pointer(address)
         if pointer is None or (self.rule and not self.rule.test(context, pointer)):
             return set()
@@ -107,7 +108,7 @@ class Union(Rule):
         super().__init__()
 
     def _test(self, context, address):
-        results = set()
+        results: typing.Any = set()
 
         for rule in self.rules:
             results = results | rule.test(context, address)
@@ -131,10 +132,10 @@ class Array(Rule):
         self.count_min = count_min
         self.count_max = count_max
 
-    def _get_key(self) -> str:
+    def _get_key(self):
         return f'Array({str(self.rule)}, {self.count_min}, {self.count_max})'
 
-    def _test(self, context, address) -> set[int]:
+    def _test(self, context, address):
         passing = {address}
         for _ in range(0, self.count_min):
             passing = self.rule.test_all(context, passing)
@@ -151,7 +152,7 @@ class Field(Rule):
         self.name = name
         self.rule = rule
 
-    def _get_key(self) -> str:
+    def _get_key(self):
         return f"Field('{self.name}', {str(self.rule)})"
 
     def _test(self, context: Context, address: int):
@@ -165,7 +166,7 @@ class FieldGroup:
         self.condition = condition
         self.fields_addresses: dict[str, set[int]] = {}
 
-    def test_all(self, context: Context, addresses: set[int]) -> set[int]:
+    def test_all(self, context: Context, addresses: set[int]):
         self.fields_addresses = {}
         passing = set()
         for field in self.fields:
@@ -174,12 +175,12 @@ class FieldGroup:
             passing |= field_addresses
         return passing
 
-    def __str__(self) -> str:
+    def __str__(self):
         fields_str = ', '.join(str(f) for f in self.fields)
         cond_str = 'None' if self.condition is None else f"'{self.condition}'"
         return f'FieldGroup([{fields_str}], {cond_str})'
 
-    def get_field_addresses(self, context: Context, address: int) -> Optional[dict]:
+    def get_field_addresses(self, context: Context, address: int):
         if self.fields_addresses:
             return self.fields_addresses
 
@@ -193,11 +194,11 @@ class Struct(Rule):
         self.field_groups = field_groups
         self.fields_addresses: dict[str, set[int]] = {}
 
-    def _get_key(self) -> str:
+    def _get_key(self):
         groups_str = ', '.join([str(g) for g in self.field_groups])
         return f"Struct('{self.name}', [{groups_str}])"
 
-    def _test(self, context:Context, address:int) -> set[int]:
+    def _test(self, context:Context, address:int):
         passing = {address}
         self.fields_addresses = {}
         for group in self.field_groups:
@@ -209,7 +210,7 @@ class Struct(Rule):
                 self.fields_addresses.update(group.get_field_addresses(context, address))
         return passing
 
-    def get_field_addresses(self, context:Context, address:int) -> dict:
+    def get_field_addresses(self, context:Context, address:int):
         if self.fields_addresses:
             return self.fields_addresses
 
@@ -218,7 +219,7 @@ class Struct(Rule):
         return self.fields_addresses
 
 class _Struct(Struct):
-    def _get_key(self) -> str:
+    def _get_key(self):
         return f'{self.__class__.__name__}'
 
 class _Union(Union):
@@ -275,7 +276,7 @@ class _ListHead(_Struct):
             Field('prev', Pointer(self))
         ])])
 
-    def _test(self, context:Context, address:int) -> set:
+    def _test(self, context:Context, address:int):
         original = address
         next_pointer, address = context.next_pointer(address)
         if next_pointer is None:
@@ -785,7 +786,7 @@ class _TaskStruct(_Struct):
         ])
 TASK_STRUCT = _TaskStruct()
 
-def test_list_head(context: Context, address: int, offset: int) -> bool:
+def test_list_head(context: Context, address: int, offset: int):
     # Assumes that the address is a valid list head
     # prev_pointer = context.read_pointer(address)
     # prev_task = prev_pointer + offset

@@ -15,10 +15,10 @@ class Tokenizer:
             '_Decimal64', '_Generic', '_Imaginary', '_Noreturn'
         ]
 
-    def has_next(self) -> bool:
+    def has_next(self):
         return self.index < self.len
 
-    def peek(self, size: int = 1, offset: int = 0) -> Any:
+    def peek(self, size: int = 1, offset: int = 0):
         if size == 1 and self.index + offset < self.len:
             return self.data[self.index + offset]
         return self.data[self.index+offset:self.index+offset+size]
@@ -26,7 +26,7 @@ class Tokenizer:
     def bump(self, dist: int = 1):
         self.index += dist
 
-    def consume(self, *strings: str) -> Optional[str]:
+    def consume(self, *strings: str):
         for string in strings:
             dist = len(string)
             if self.peek(dist) == string:
@@ -34,7 +34,7 @@ class Tokenizer:
                 return string
         return None
 
-    def consume_comment(self) -> bool:
+    def consume_comment(self):
         if self.consume('//'):
             while self.has_next() and not self.peek() == '\n' \
                 and not self.peek(2) == '\r\n':
@@ -49,7 +49,7 @@ class Tokenizer:
             return True
         return False
 
-    def parse_identifier(self) -> Optional[tuple]:
+    def parse_identifier(self):
         start = self.index
         if self.peek().isalpha() or self.peek() == '_':
             self.bump()
@@ -64,7 +64,7 @@ class Tokenizer:
             return ('identifier', value)
         return None
 
-    def parse_integer(self) -> Optional[tuple]:
+    def parse_integer(self):
         start = self.index
 
         digits = '0123456789'
@@ -99,7 +99,7 @@ class Tokenizer:
 
         return ('integer', num, '')
 
-    def parse_string(self) -> Optional[tuple]:
+    def parse_string(self):
         old = self.index
         modifier = self.consume('u8', 'u', 'U', 'L') or ''
         delim = self.consume('"')
@@ -117,7 +117,7 @@ class Tokenizer:
         self.index = old
         return None
 
-    def parse_operator(self) -> Optional[tuple]:
+    def parse_operator(self):
         if (op3 := self.peek(3)) in ['||=', '&&=', '<<=', '>>=', '...']:
             self.bump(3)
             return ('operator', op3)
@@ -141,7 +141,7 @@ class Tokenizer:
             return ('operator', op1)
         return None
 
-    def parse_token(self) -> Optional[tuple]:
+    def parse_token(self):
         token = None
         token = token or self.parse_identifier()
         # token = token or self.parse_character()
@@ -151,7 +151,7 @@ class Tokenizer:
         token = token or self.parse_operator()
         return token
 
-    def tokenize(self, data: str) -> list:
+    def tokenize(self, data: str):
         self.data = data
         self.len = len(data)
         self.index = 0
