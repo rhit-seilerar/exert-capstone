@@ -5,10 +5,14 @@ from exert.parser.tokenmanager import TokenManager, tok_seq, mk_id, mk_op, mk_in
 from exert.utilities.debug import dprint
 
 class DefOption:
-    def __init__(self, tokens):
+    def __init__(self, tokens, params = None):
         assert isinstance(tokens, list)
         self.tokens = tokens
+        self.params = params
+        self.paramstr = '' if params is None else ','.join(params)
         self.key = tok_seq(tokens)
+        if self.paramstr:
+            self.key = self.paramstr + '$' + self.key
         self.len = len(tokens)
         self.hash = hash(self.key)
 
@@ -482,11 +486,11 @@ class DefState:
                 result.add(key)
         return result
 
-    def on_define(self, sym, params, tokens):
+    def on_define(self, sym, tokens, params = None):
         if not self.is_skipping():
             dprint(3, '  ' * self.depth() + f'#define {sym} {tok_seq(tokens)}')
             self.keys.add(sym)
-            self.layers[-1].current.define(sym, DefOption(tokens))
+            self.layers[-1].current.define(sym, DefOption(tokens, params))
 
     def on_undef(self, sym):
         if not self.is_skipping():

@@ -150,9 +150,10 @@ class Preprocessor(TokenManager):
     def handle_define(self):
         if not (name := self.parse_ident_or_keyword()):
             return self.err('#define must be followed by an identifier')
-        params = []
+        params = None
         index = self.index
         if self.consume_directive('('):
+            params = []
             while True:
                 if (ident := self.parse_identifier()):
                     params.append(ident)
@@ -175,7 +176,7 @@ class Preprocessor(TokenManager):
         self.index = index
         if (tokens := self.skip_to_newline(1)) is None:
             return False
-        self.defs.on_define(name, params, tokens)
+        self.defs.on_define(name, tokens, params)
         return True
 
     def handle_undef(self):
