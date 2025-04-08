@@ -1,7 +1,7 @@
 """The core file for the plugin component of the EXERT system"""
 
 import sys
-from typing import Any, List
+from typing import Any, Callable, Optional, Dict
 import IPython
 from pandare import PyPlugin, Panda
 from exert.usermode import task_struct_stack
@@ -12,7 +12,7 @@ from exert.utilities import version as ver
 class Exert(PyPlugin):
     """The Exert plugin"""
     # pylint: disable=attribute-defined-outside-init
-    def __preinit__(self, pypluginmgr: Any, args: List[str]):
+    def __preinit__(self, pypluginmgr: Any, args: Dict[str, Callable[[Panda, Any], Any]]):
         self.pypluginmgr = pypluginmgr
         self.args = args
         self.callback = args['callback'] if 'callback' in args else None
@@ -52,8 +52,10 @@ class Exert(PyPlugin):
         panda.disable_callback('single_step')
         panda.disable_callback('hypercall')
 
-def run(arch: str = 'i386', callback: str = None, generic: bool = True, kernel: str = None,
-    usermode: bool = None, command: str = None, hypercall_callback: Any = None):
+def run(arch: str = 'i386', callback: Optional[Callable[[Panda, Any], Any]] = None,
+        generic: bool = True, kernel: Optional[str] = None, usermode: Optional[str] = None,
+        command: Optional[str] = None,
+        hypercall_callback: Optional[Callable[[Panda, Any], Any]] = None):
     panda = None
     if generic:
         panda = Panda(generic = arch)

@@ -1,4 +1,5 @@
-from typing import Tuple, Optional, Union
+from typing import Tuple, Optional, Union, Any
+from collections.abc import Callable
 import exert.parser.tokenmanager as tm
 
 class Expression:
@@ -28,6 +29,8 @@ class Identifier(Integer):
         super().__init__(1 if a == 'true' else 0, False)
 
 class Wildcard(Expression):
+    options: set = set()
+
     def evaluate(self, evaluator):
         return self
 
@@ -48,12 +51,12 @@ class Operator(Expression):
     pass
 
 class UnaryOperator(Operator):
-    def __init__(self, a: Tuple[Expression, str], opname: str,
-                 op: Operator, signop: Optional[Operator] = None):
+    def __init__(self, a: Expression, opname: str,
+                 op: Callable, signop: Optional[Callable[[Any], Any]] = None):
         assert isinstance(a, (Expression, str))
         self.opname = opname
         self.op = op
-        self.a = a
+        self.a: Expression = a
         self.signop = (lambda asig: asig) if signop is None else signop
 
     def evaluate(self, evaluator) -> Union[Wildcard, Integer]:
@@ -69,7 +72,7 @@ class UnaryOperator(Operator):
 
 class BinaryOperator(Operator):
     def __init__(self, a: Expression, b: Expression, opname: str,
-                 op: Operator, signop: Optional[Operator] = None):
+                 op: Optional[Callable], signop: Optional[Callable] = None):
         assert isinstance(a, Expression)
         assert isinstance(b, Expression)
         self.opname = opname
@@ -88,13 +91,14 @@ class BinaryOperator(Operator):
             bint.options = set()
             return bint
         unsigned = self.signop(aint.unsigned, bint.unsigned)
+        assert self.op is not None
         return Integer(self.op(aint.value, bint.value), unsigned)
 
     def __str__(self) -> str:
         return str(self.a) + f' {self.opname} ' + str(self.b)
 
 class UnaryDefined(UnaryOperator):
-    def __init__(self, a: Tuple[Expression, str]):
+    def __init__(self, a: Expression):
         super().__init__(a, 'defined', lambda a: a)
 
     def evaluate(self, evaluator) -> Integer:
@@ -108,11 +112,11 @@ class UnaryDefined(UnaryOperator):
         return f'defined({self.a})'
 
 class UnaryPlus(UnaryOperator):
-    def __init__(self, a: Tuple[Expression, str]):
+    def __init__(self, a: Expression):
         super().__init__(a, '+', lambda a: a)
 
 class UnaryMinus(UnaryOperator):
-    def __init__(self, a: Tuple[Expression, str]):
+    def __init__(self, a: Expression):
         super().__init__(a, '-', lambda a: -a, lambda asig: False)
 
 class Add(BinaryOperator):
@@ -136,7 +140,7 @@ class Remainder(BinaryOperator):
         super().__init__(a, b, '%', lambda a, b: abs(a) % abs(b) * (1 - 2 * (a < 0)))
 
 class BitwiseNot(UnaryOperator):
-    def __init__(self, a: Tuple[Expression, str]):
+    def __init__(self, a: Expression):
         super().__init__(a, '~', lambda a: ~a)
 
 class BitwiseAnd(BinaryOperator):
@@ -188,7 +192,7 @@ class RightShift(BinaryOperator):
             else aint.value >> bint.value, unsigned)
 
 class LogicalNot(UnaryOperator):
-    def __init__(self, a: Tuple[Expression, str]):
+    def __init__(self, a: Expression):
         super().__init__(a, '!', lambda a: 1 if not a else 0)
 
 class LogicalAnd(BinaryOperator):
@@ -302,7 +306,7 @@ def parse_expression(tokens: list) -> Expression:
     assert len(tokens) > 0
 
     # Handle groups, identifiers, defined(), and terminals
-    nex = []
+    nex: list[Any] = []
     gstart = None
     indent = 0
     i = 0
@@ -339,7 +343,7 @@ def parse_expression(tokens: list) -> Expression:
         opset = PRECEDENCE_MAP[precedence]
         merged_any = False
         nex = []
-        args = []
+        args: list = []
         op = None
 
         prev = None

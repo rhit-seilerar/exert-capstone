@@ -163,7 +163,7 @@ def init(parsed:argparse.ArgumentParser):
 # srd = Sync Reverse Delete. 0 = sync, 1 = reverse, 2 = delete
 def volume_srd(srd: int =0):
     local_mount = f'-v "{os.path.dirname(os.path.realpath(__file__))}:/local"'
-    exclude = '--exclude .git'
+    exclude = '--exclude .git --exclude .venv'
 
     ls_out = run_command('docker volume ls -q -f "name=pandare"', True, True)
     if 'pandare' not in get_stdout(ls_out).splitlines():

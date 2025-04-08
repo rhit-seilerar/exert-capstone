@@ -15,7 +15,7 @@ VERSION_PATH: str = './cache/linux-version.txt'
 SOURCE_PATH: str = './cache/linux'
 PARSE_CACHE: str = './cache/parsed'
 
-def generate(version: Optional[str], arch: str):
+def generate(version: str, arch: str):
     switch_to_version(version)
     print('Parsing files...')
     if not os.path.exists(PARSE_CACHE):
@@ -25,7 +25,7 @@ def generate(version: Optional[str], arch: str):
 def get_files() -> List[str]:
     return glob.glob(f'{SOURCE_PATH}/include/linux/**/*.h', recursive = True)
 
-def switch_to_version(version: Optional[str]):
+def switch_to_version(version: str):
     old_version = None
     try:
         with open(VERSION_PATH, 'r', encoding = 'utf-8') as file:
@@ -74,7 +74,7 @@ class Parser(TokenManager):
         self.chkptid = 0
         self.anydepth = 0
         self.in_typedef = False
-        self.staged_types = {}
+        self.staged_types: dict = {}
         self.types = types.copy() if types is not None else {}
 
 #     def add(self, values, key, value):
@@ -105,9 +105,9 @@ class Parser(TokenManager):
         dprint(3, 'unwrap.end')
         return k
 
-    def chkpt(self, clause: Any) -> tuple:
+    def chkpt(self, clause: Any) -> Any:
         dprint(5, 'chkpt', clause)
-        def env(p: Any, f: Any) -> tuple:
+        def env(p: Any, f: Any) -> Any:
             index = self.index
             idt = self.chkptid
             self.chkptid += 1
@@ -119,21 +119,21 @@ class Parser(TokenManager):
             return clause, p, (pop, p,f)
         return env
 
-    def opt(self, clause: Any) -> tuple:
+    def opt(self, clause: Any) -> Any:
         dprint(5, 'opt', clause)
         return lambda p, f: (clause, p, p)
 
-    def pnot(self, clause: Any) -> tuple:
+    def pnot(self, clause: Any) -> Any:
         dprint(5, 'pnot', clause)
         return lambda p, f: (clause, p,f)
 
-    def por(self, *clauses: tuple) -> tuple:
+    def por(self, *clauses: Any) -> Any:
         dprint(5, 'por')
-        def start(p: Any, f: Any)-> tuple:
+        def start(p: Any, f: Any) -> tuple:
             dprint(4, 'por.start')
             def getnext(p1: Any, f1: Any, rest: tuple) -> tuple:
                 dprint(5, 'por.getnext')
-                def nex(p2: Any, f2: Any)-> tuple:
+                def nex(p2: Any, f2: Any) -> tuple:
                     dprint(4, 'por.next')
                     return getnext(p2, f2, rest[1:])
                 if len(rest) == 0:
@@ -142,7 +142,7 @@ class Parser(TokenManager):
             return getnext(p, f, clauses)
         return start
 
-    def pand(self, *clauses: tuple) -> tuple:
+    def pand(self, *clauses: Any) -> Any:
         dprint(5, 'pand', clauses)
         def start(p: Any, f: Any)->tuple:
             dprint(4, 'pand.start')
@@ -165,6 +165,7 @@ class Parser(TokenManager):
             result = False
             # Parse the rest of the file with each option
             anytok = self.peek()
+            assert anytok is not None
             for opt in anytok[2]:
                 # Back up state and insert the option
                 index = self.index
@@ -191,20 +192,20 @@ class Parser(TokenManager):
         self.bump()
         return p
 
-    def ptok(self, tok: Any)-> tuple:
+    def ptok(self, tok: Any)-> Any:
         dprint(4, 'ptok')
-        def intl(p:Any, f:Any)->tuple:
+        def intl(p:Any, f:Any)->Any:
             dprint(3, 'tok.intl', tok, self.peek())
             if self.peek() == tok:
                 return p
             return f
         return lambda p, f: (self.check_for_any, (intl, p, f), f)
 
-    def tok(self, tok: Any)-> tuple:
+    def tok(self, tok: Any)-> Any:
         dprint(4, 'tok')
         return lambda p, f: (self.ptok(tok), (self.pbump, p, f), f)
 
-    def ptyp(self, typ: tuple)-> tuple:
+    def ptyp(self, typ: str)-> Any:
         dprint(4, 'ptyp')
         def intl(p:Any, f:Any)->Any:
             dprint(3, 'ptyp.intl', typ, self.peek())
@@ -213,7 +214,7 @@ class Parser(TokenManager):
             return f
         return lambda p, f: (self.check_for_any, (intl, p,f), f)
 
-    def typ(self, typ: tuple)-> tuple:
+    def typ(self, typ: str)-> Any:
         dprint(4, 'typ')
         return lambda p, f: (self.ptyp(typ), (self.pbump, p,f), f)
 
@@ -258,8 +259,10 @@ class Parser(TokenManager):
         dprint(3, 'maybe_typedef_name')
         def addname(p:Any, f:Any)->tuple:
             if self.in_typedef:
-                dprint(1.5, f'Staging: {self.peek()[1]}: {1}')
-                self.staged_types[self.peek()[1]] = 1
+                staged_types = self.peek()
+                assert staged_types is not None
+                dprint(1.5, f'Staging: {staged_types[1]}: {1}')
+                self.staged_types[staged_types[1]] = 1
             return p
         return self.ptyp('identifier'), (addname, (self.pbump, p,f), f), f
 

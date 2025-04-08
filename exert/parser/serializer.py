@@ -1,4 +1,4 @@
-from io import BufferedReader
+from io import BufferedReader, BufferedWriter
 from typing import List
 from exert.parser.definitions import DefOption
 
@@ -7,10 +7,10 @@ TOK_TYPES: List[str] = [
     'operator', 'directive', 'any'
 ]
 
-def write_number(file: BufferedReader, number: int, length: int = 8, signed: bool = False):
+def write_number(file: BufferedWriter, number: int, length: int = 8, signed: bool = False):
     file.write(number.to_bytes(length = length, byteorder = 'little', signed = signed))
 
-def write_string(file: BufferedReader, string: str, sizelength: int = 4):
+def write_string(file: BufferedWriter, string: str, sizelength: int = 4):
     write_number(file, len(string), length = sizelength)
     file.write(string.encode('utf-8'))
 
@@ -67,7 +67,7 @@ def read_tokens(path: str) -> list:
         file.close()
     return tokens
 
-def write_tokens(file: BufferedReader, tokens: list):
+def write_tokens(file: BufferedWriter, tokens: list):
     for token in tokens:
         write_number(file, TOK_TYPES.index(token[0]), length = 1)
         if token[0] == 'string':

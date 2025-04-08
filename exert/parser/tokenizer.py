@@ -26,7 +26,7 @@ class Tokenizer:
     def bump(self, dist: int = 1):
         self.index += dist
 
-    def consume(self, *strings: tuple) -> Optional[tuple]:
+    def consume(self, *strings: str) -> Optional[str]:
         for string in strings:
             dist = len(string)
             if self.peek(dist) == string:
@@ -81,7 +81,7 @@ class Tokenizer:
             radix = 8
 
         if not self.peek().lower() in digits:
-            self.index = start
+            self.index: int = start
             return None
 
         num = 0
@@ -135,7 +135,7 @@ class Tokenizer:
                 return ('directive', '(')
 
             if self.can_be_directive and op1 == '#':
-                self.in_directive = True
+                self.in_directive: bool = True
                 return ('directive', '#')
 
             return ('operator', op1)
@@ -158,7 +158,7 @@ class Tokenizer:
         self.in_directive = False
         self.can_be_directive = True
         self.next_parenthesis_is_directive = False
-        self.tokens = []
+        self.tokens: list = []
 
         while self.has_next():
             if self.consume(' ', '\t'):

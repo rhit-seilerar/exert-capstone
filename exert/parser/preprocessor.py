@@ -10,10 +10,11 @@ TODO There are still a number of optimizations that can be done for better resul
 
 import os
 import types
-from typing import Optional, Union
+from typing import Optional, Union, Callable, Any
 from exert.parser.tokenmanager import tok_seq, TokenManager
 from exert.parser.definitions import DefState, Def, DefOption
 from exert.parser.serializer import write_tokens, read_tokens
+from exert.parser.tokenizer import Tokenizer
 from exert.utilities.debug import dprint
 
 def read_file(path: str) -> Optional[str]:
@@ -24,15 +25,15 @@ def read_file(path: str) -> Optional[str]:
         return None
 
 class Preprocessor(TokenManager):
-    def __init__(self, tokenizer: types.FunctionType, bitsize: int, includes: types.FunctionType,
-                 defns: list, filereader: Optional[str] = read_file):
+    def __init__(self, tokenizer: Tokenizer, bitsize: int, includes: list[str | Callable[[Any], str | None]],
+                 defns: dict[str, str], filereader: Callable[[str], str | None] = read_file):
         super().__init__()
         self.tokenizer = tokenizer
         self.includes = includes
         self.filereader = filereader
-        self.invalid_paths = set()
-        self.tokenized_cache = {}
-        self.unresolved = []
+        self.invalid_paths: set[str] = set()
+        self.tokenized_cache: dict[str, str] = {}
+        self.unresolved: list[str] = []
         self.defs = DefState(bitsize, initial = {
             key: Def(DefOption(tokenizer.tokenize(defns[key]))) for key in defns
         })
@@ -51,21 +52,25 @@ class Preprocessor(TokenManager):
             if isinstance(include, types.FunctionType):
                 load_path = include(path)
             else:
+                assert isinstance(include, str)
                 load_path = os.path.join(include, path)
 
             if load_path is None:
                 continue
 
-            data = ''
+            data: str = ''
             if load_path in self.tokenized_cache:
-                data = self.tokenized_cache.get(load_path)
+                res = self.tokenized_cache.get(load_path)
+                assert res is not None
+                data = res
                 dprint(1.5, '  ' * self.defs.depth() + f'::Reusing {load_path}')
             else:
                 dprint(4, f'::Testing {load_path}')
-                data = self.filereader(load_path)
-                if data is None:
+                file_read = self.filereader(load_path)
+                if file_read is None:
                     continue
 
+                data = file_read
                 if not self.defs.is_skipping():
                     dprint(1, '  ' * self.defs.depth() + f'::Included {load_path}')
 
@@ -257,7 +262,7 @@ class Preprocessor(TokenManager):
         return self.skip_to_newline()
 
     def parse_directive(self) -> Union[bool, list]:
-        result = None
+        result: Union[bool, list] = False
         if self.consume(('identifier', 'line')):
             result = self.handle_line()
         elif self.consume_identifier('include'):
@@ -289,10 +294,15 @@ class Preprocessor(TokenManager):
         elif self.consume_identifier('pragma'):
             result = self.handle_pragma()
         else:
-            return self.err(f'Unknown preprocessor directive #{self.next()[1]}')
+            directives = self.next()
+            if isinstance(directives, tuple):
+                return self.err(f'Unknown preprocessor directive #{directives[1]}')
+
+            return self.err('Unknown preprocessor directive')
+
         return result
 
-    def insert(self, tokens: Union[str, tuple]):
+    def insert(self, tokens: Union[str, tuple, list[tuple]]):
         if isinstance(tokens, str):
             tokens = self.tokenizer.tokenize(tokens)
         if isinstance(tokens, tuple):
@@ -318,7 +328,7 @@ class Preprocessor(TokenManager):
 
     def preprocess(self, data: Union[str, tuple], cache: str, reset_cache: bool = False):
         super().reset()
-        self.conditions = []
+        self.conditions: list = []
         self.file = ''
         self.insert(data)
 

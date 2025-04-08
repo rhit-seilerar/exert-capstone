@@ -2,7 +2,7 @@ from typing import Optional
 from exert.usermode.context import Context
 
 class Rule:
-    _cache = {}
+    _cache: dict[str, set[int]] = {}
 
     def __init__(self):
         self.key = None
@@ -58,7 +58,7 @@ class Any(Rule):
 
 class Int(Rule):
     def __init__(self, size: int = 4, signed: bool = True,
-                 min_value: int = None, max_value: int = None):
+                 min_value: Optional[int] = None, max_value: Optional[int] = None):
         super().__init__()
         self.size = size
         self.signed = signed
@@ -134,7 +134,7 @@ class Array(Rule):
     def _get_key(self) -> str:
         return f'Array({str(self.rule)}, {self.count_min}, {self.count_max})'
 
-    def _test(self, context, address)-> Any:
+    def _test(self, context, address) -> set[int]:
         passing = {address}
         for _ in range(0, self.count_min):
             passing = self.rule.test_all(context, passing)
@@ -158,14 +158,14 @@ class Field(Rule):
         return self.rule.test(context, address)
 
 class FieldGroup:
-    def __init__(self, fields: list, condition: Any = None):
+    def __init__(self, fields: list, condition: Optional[str] = None):
         self.fields = fields
         for field in self.fields:
             assert isinstance(field, Field)
         self.condition = condition
-        self.fields_addresses = None
+        self.fields_addresses: dict[str, set[int]] = {}
 
-    def test_all(self, context: Context, addresses: list)-> Any:
+    def test_all(self, context: Context, addresses: set[int]) -> set[int]:
         self.fields_addresses = {}
         passing = set()
         for field in self.fields:
@@ -191,13 +191,13 @@ class Struct(Rule):
         super().__init__()
         self.name = name
         self.field_groups = field_groups
-        self.fields_addresses = None
+        self.fields_addresses: dict[str, set[int]] = {}
 
     def _get_key(self) -> str:
         groups_str = ', '.join([str(g) for g in self.field_groups])
         return f"Struct('{self.name}', [{groups_str}])"
 
-    def _test(self, context:Context, address:int) -> Any:
+    def _test(self, context:Context, address:int) -> set[int]:
         passing = {address}
         self.fields_addresses = {}
         for group in self.field_groups:
@@ -209,11 +209,12 @@ class Struct(Rule):
                 self.fields_addresses.update(group.get_field_addresses(context, address))
         return passing
 
-    def get_field_addresses(self, context:Context, address:int)-> Optional[dict]:
+    def get_field_addresses(self, context:Context, address:int) -> dict:
         if self.fields_addresses:
             return self.fields_addresses
 
         self._test(context, address)
+        assert self.fields_addresses is not None
         return self.fields_addresses
 
 class _Struct(Struct):
@@ -622,14 +623,6 @@ class _CpuMask(_Struct):
             Field('bits', Array(Int(size = None, signed = False), 1, 8192))
         ])])
 CPUMASK = _CpuMask()
-
-class _LoadWeight(_Struct):
-    def __init__(self):
-        super().__init__('load_weight', [FieldGroup([
-            Field('weight', Int(size = None, signed = False)),
-            Field('inv_weight', Int(size = 4, signed = False))
-        ])])
-LOAD_WEIGHT = _LoadWeight()
 
 class _RBRoot(_Struct):
     def __init__(self):

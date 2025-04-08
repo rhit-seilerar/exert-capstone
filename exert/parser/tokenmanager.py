@@ -1,6 +1,6 @@
 from typing import Any, Tuple, Optional
 
-def tok_str(token: tuple, newlines: bool = False) -> any:
+def tok_str(token: tuple, newlines: bool = False) -> Any:
     n = token
     string = '<NONE> ' if n is None \
         else n[1] if n[0] == 'directive' \
@@ -23,13 +23,13 @@ def tok_seq(tokens: list, newlines: bool = False) -> str:
 def mk_int(num: int, suffix: str = '')-> Tuple[str, int, str]:
     return ('integer', num, suffix)
 
-def mk_id(sym: any)-> Tuple[str, Any]:
+def mk_id(sym: Any)-> Tuple[str, Any]:
     return ('identifier', sym)
 
-def mk_kw(sym: any)-> Tuple[str, Any]:
+def mk_kw(sym: Any)-> Tuple[str, Any]:
     return ('keyword', sym)
 
-def mk_op(op: any)-> Tuple[str, Any]:
+def mk_op(op: Any)-> Tuple[str, Any]:
     return ('operator', op)
 
 def mk_str(string:str, suffix: str = '"')-> Tuple[str, str, str]:
@@ -96,7 +96,9 @@ class TokenManager:
 
     def parse_ident_or_keyword(self) -> Any:
         if (self.peek_type() in ['identifier', 'keyword']):
-            return self.next()[1]
+            res = self.next()
+            assert res is not None
+            return res[1]
         return ''
 
     def print_current(self, width: int = 5, fancy_print: bool = True) -> Any:
@@ -132,7 +134,7 @@ class TokenManager:
             return out
         return ''
 
-    def err(self, *message: tuple):
+    def err(self, *message: object):
         print(*message)
         self.print_current()
         assert False

@@ -95,11 +95,10 @@ def get_osi_info(kernel: str, arch: str, version: str):
             version_supported = True
 
             osi_prog = ''
-            task_struct_callback = None
+            task_struct_callback = tss.task_address_arm_callback
 
             if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
                 osi_prog = 'osi-armv5l'
-                task_struct_callback = tss.task_address_arm_callback
             else:
                 osi_prog = 'osi-' + arch
 

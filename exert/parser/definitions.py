@@ -5,8 +5,6 @@ from typing import Any, Optional, Tuple
 from exert.parser import expressions
 from exert.parser.tokenmanager import tok_seq, mk_id, mk_op, mk_int
 from exert.utilities.debug import dprint
-# from exert.parser import DefOption
-
 
 class DefOption:
     def __init__(self, tokens: list):
@@ -38,8 +36,8 @@ class Def:
     [  defined,  undefined, options ]: This was defined in one sub-scope and undefined in another
     """
 
-    def __init__(self, *options: set, defined: bool = False, undefined: bool = False):
-        self.options = set()
+    def __init__(self, *options: DefOption, defined: bool = False, undefined: bool = False):
+        self.options: set = set()
         self.undefined = undefined
         self.defined = defined
         if len(options) > 0:
@@ -164,7 +162,7 @@ class DefMap:
         self.defs = initial or {}
         self.validate()
 
-    def getlocal(self, key: Any) -> dict:
+    def getlocal(self, key: Any):
         if key not in self.defs:
             self.defs[key] = Def()
         return self.defs[key]
@@ -229,7 +227,7 @@ class DefMap:
         return f'DefMap(parent = {self.parent}, skipping = {self.skipping}, ' \
             f'defs = {{{", ".join(defs_strs)}}})'
 
-def substitute(defmap: list, tok: Any, keys: set = None) -> Any:
+def substitute(defmap: DefMap, tok: Any, keys: Optional[set] = None) -> Any:
     expansion_stack = []
     def subst(token: tuple) -> Any:
         if token[0] not in ['identifier', 'keyword']:
@@ -376,7 +374,7 @@ class DefLayer:
     child state.
     """
 
-    def __init__(self, parent: list, bitsize: int, skip_all):
+    def __init__(self, parent: DefMap, bitsize: int, skip_all):
         self.depth = 0
         self.evaluator = DefEvaluator(bitsize, parent)
         self.cond_acc = []
@@ -385,6 +383,8 @@ class DefLayer:
         self.skip_rest = skip_all
         self.current = None
         self.closed = False
+        self.emitted = []
+        self.blocks = []
 
     def apply(self):
         if self.current is not None:
@@ -433,41 +433,47 @@ class DefState:
         return len(self.layers) - 1
 
     def is_skipping(self) -> bool:
+        assert self.layers[-1].current is not None
         return self.layers[-1].current.skipping
 
     def is_guaranteed(self) -> bool:
         return not self.is_skipping() and self.layers[-1].skip_rest
 
     def flat_defines(self) -> dict:
-        result = {}
+        result: dict = {}
         for key in self.keys:
+            assert self.layers[-1].current is not None
             defn = self.layers[-1].current[key]
             if defn.is_defined():
                 result[key] = defn
         return result
 
     def flat_unknowns(self) -> set:
-        result = set()
+        result: set = set()
+        assert self.layers[-1].current is not None
         for key in self.keys:
             if self.layers[-1].current[key].is_uncertain():
                 result.add(key)
         return result
 
-    def on_define(self, sym: Any, params:list, tokens: tuple):
+    def on_define(self, sym: Any, params: list, tokens: list):
         if not self.is_skipping():
             dprint(3, '  ' * self.depth() + f'#define {sym} {tok_seq(tokens)}')
             self.keys.add(sym)
+            assert self.layers[-1].current is not None
             self.layers[-1].current.define(sym, DefOption(tokens))
 
     def on_undef(self, sym: Any):
         if not self.is_skipping():
             dprint(3, '  ' * self.depth() + f'#undef {sym}')
             self.keys.add(sym)
+            assert self.layers[-1].current is not None
             self.layers[-1].current.undefine(sym)
 
     def on_if(self, cond_tokens: list):
         dprint(2, '  ' * self.depth() + f'#if {tok_seq(cond_tokens)}')
         parent = self.layers[-1].current
+        assert parent is not None
         self.layers.append(DefLayer(parent, self.bitsize, self.is_skipping()))
         self.layers[-1].add_map(cond_tokens)
 
@@ -498,9 +504,11 @@ class DefState:
         self.layers[-1].current.combine(layer.accumulator.defs, replace = layer.closed)
 
     def get_replacements(self, tok) -> Any:
+        assert self.layers[-1].current is not None
         return self.layers[-1].current.get_replacements(tok)
 
     def substitute(self, tok: Any)-> Any:
+        assert self.layers[-1].current is not None
         return substitute(self.layers[-1].current, tok)
 
     def get_cond_tokens(self) -> list:

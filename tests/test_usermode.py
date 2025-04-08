@@ -1,6 +1,6 @@
 import os
 import subprocess
-from typing import Any
+from typing import Any, Optional
 
 from pandare import Panda
 
@@ -18,7 +18,7 @@ import tests.test_usermode as ttu
 ttu.run_test('{}', {}, '{}', ttu.{})
 """
 
-def do_test(test: Any, arch:str, generic: bool = True, kernel:str = None):
+def do_test(test: Any, arch:str, generic: bool = True, kernel:Optional[str] = None):
     if not RUN_PLUGIN_TESTS:
         return
     formatted = TEST_PREFIX.format(arch, generic, kernel, test.__name__)

@@ -2,7 +2,7 @@ import pickle
 from typing import Any
 from pandare import Panda
 
-TASK_ADDRESS = None
+TASK_ADDRESS = 0
 
 def read_mem(panda: Panda, cpu: Any, addr: int, size: int)-> Any:
     return panda.virtual_memory_read(cpu, addr, size)
