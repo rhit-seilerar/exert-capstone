@@ -10,7 +10,7 @@ from exert.utilities.command import run_command, get_stdout
 
 PANDA_CONTAINER = 'pandare/panda'
 XMAKE_CONTAINER = 'ghcr.io/panda-re/embedded-toolchains'
-def command_dict(command: str, capture_output: bool = False, check: bool = True) -> dict[str, str]:
+def command_dict(command: str, capture_output: bool = False, check: bool = True):
     cd = {'comm' : command, 'cap': capture_output, 'chk' : check}
     return cd
 
@@ -212,6 +212,11 @@ def run_docker(container:str = PANDA_CONTAINER, *, name: str = 'pandare', comman
         name_arg = '' if name is None else f'--name {name}'
         args = f'--rm -it {name_arg} {mount} {extra_args} {container}'
 
+        env = ''
+
+        if container == PANDA_CONTAINER:
+            env = 'source /mount/.venv/bin/activate && '
+
         if name is None:
             commands.append(command_dict(f'docker run {args} bash -c "cd /mount; {command}"',
                 capture_output, False))
@@ -221,7 +226,7 @@ def run_docker(container:str = PANDA_CONTAINER, *, name: str = 'pandare', comman
                 if name == 'pandare':
                     commands.append(command_dict(f'docker exec -t {name} bash -c '
                         '"cd /mount; chmod +x ./setup.sh; ./setup.sh"'))
-            commands.append(command_dict(f'docker exec -t {name} bash -c "cd /mount; {command}"',
+            commands.append(command_dict(f'docker exec -t {name} bash -c "{env}cd /mount; {command}"',
                 capture_output))
 
             if interactive:
@@ -232,7 +237,7 @@ def run_docker(container:str = PANDA_CONTAINER, *, name: str = 'pandare', comman
         print("Commands failed! Exiting.")
         sys.exit(-1)
 
-def container_is_running(name: str) -> bool:
+def container_is_running(name: str):
     names = get_stdout(run_command('docker ps --format {{.Names}}', True)).splitlines()
     try:
         names.index(name)
