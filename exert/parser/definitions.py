@@ -416,7 +416,7 @@ class DefLayer:
         self.closed = False
 
     def apply(self):
-        if self.current is not None:
+        if self.current is not None and not self.current.skipping:
             self.accumulator.combine(self.current.defs, replace = False)
             self.current = None
 

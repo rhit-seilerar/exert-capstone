@@ -1,17 +1,17 @@
 """
 TODO There are still a number of optimizations that can be done for better results:
  - #defines with a replacement with no #undef preceding them guarantee only no definition from cli
- - Guarantees from #if/#elif expressions
+ - Better guarantees from #if/#elif expressions
  - Guarantees from #if/#elif can be used in the rules system
- - #error should cancel the block
  - #pragma
- - String concatenation, token concatenation, token stringification
+ - Macro replacement, #, ##, __VA_ARGS__, __VA_OPT__
+ - __FILE__, __DATE__, __LINE__, __TIME__, __COUNT__, _Pragma
 """
 
 import os
 import types
 
-from exert.parser.tokenmanager import tok_seq, TokenManager
+from exert.parser.tokenmanager import mk_int, tok_seq, TokenManager
 from exert.parser.definitions import DefState, Def, DefOption
 from exert.parser.serializer import write_tokens, read_tokens
 from exert.utilities.debug import dprint
@@ -32,9 +32,19 @@ class Preprocessor(TokenManager):
         self.invalid_paths = set()
         self.tokenized_cache = {}
         self.unresolved = []
-        self.defs = DefState(bitsize, initial = {
+
+        initdefs = {
             key: Def(DefOption(tokenizer.tokenize(defns[key]))) for key in defns
-        })
+        }
+        initdefs['__STDC__'] = Def(DefOption([mk_int(1)]))
+        initdefs['__STDC_EMBED_NOT_FOUND__'] = Def(DefOption([mk_int(0)]))
+        initdefs['__STDC_EMBED_FOUND__'] = Def(DefOption([mk_int(1)]))
+        initdefs['__STDC_EMBED_EMPTY__'] = Def(DefOption([mk_int(2)]))
+        initdefs['__STDC_HOSTED__'] = Def(DefOption([mk_int(0)]))
+        initdefs['__STDC_UTF_16__'] = Def(DefOption([mk_int(1)]))
+        initdefs['__STDC_UTF_32__'] = Def(DefOption([mk_int(1)]))
+        initdefs['__STDC_VERSION__'] = Def(DefOption([mk_int(202311, 'L')]))
+        self.defs = DefState(bitsize, initial = initdefs)
 
     def load_file(self, path, is_relative):
         if self.defs.is_skipping():
@@ -243,6 +253,7 @@ class Preprocessor(TokenManager):
     def handle_error(self):
         if not self.defs.is_skipping():
             dprint(2, '  ' * self.defs.depth() + '#error')
+        self.defs.layers[-1].current.skipping = True
         return self.skip_to_newline()
 
     def handle_warning(self):
@@ -287,8 +298,8 @@ class Preprocessor(TokenManager):
             result = self.handle_warning()
         elif self.consume_identifier('pragma'):
             result = self.handle_pragma()
-        else:
-            return self.err(f'Unknown preprocessor directive #{self.next()[1]}')
+        elif not self.consume_type('newline'):
+            return self.err(f'Unexpected token after directive: {self.peek()}')
         return result
 
     def insert(self, tokens):
@@ -330,20 +341,13 @@ class Preprocessor(TokenManager):
         else:
             print('Cache file not found: Generating...')
 
-        # String combination not implemented
         # Stringification and concatenation not implemented
 
         with open(cache, mode = 'bw') as file:
-            # flush_size = 40000
             self.defs.layers[-1].emitted = []
 
             while self.has_next() and not self.has_error:
                 self.print_progress()
-
-                # if self.index > flush_size + 20:
-                #     del self.tokens[:flush_size]
-                #     self.index -= flush_size
-                #     self.len -= flush_size
 
                 if self.consume_directive('#'):
                     self.parse_directive()

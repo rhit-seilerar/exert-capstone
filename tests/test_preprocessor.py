@@ -59,11 +59,6 @@ def check(incls, defns, str_in, str_out):
     pp = Preprocessor(TK, 32, incls, defns, filereader = dummy_reader)
     pp.preprocess(str_in, CACHE, reset_cache = True)
     pp.load(CACHE)
-    print()
-    print(pp.tokens)
-    print("VERSUS")
-    print(TK.tokenize(str_out))
-    print()
     assert pp.tokens == TK.tokenize(str_out)
 
 def test_string_concat():
@@ -101,8 +96,6 @@ def test_defines():
         typedef int[3] vec3;
         ABC;
     """)
-    #TODO ident stringification
-    #TODO ident concat
 
 def test_blocks():
     pp = Preprocessor(TK, 32, [], {}, filereader = dummy_reader)
@@ -173,6 +166,7 @@ def test_blocks():
         #endif
         int C = 6;
     """, CACHE, True).load(CACHE)
+    print([str(p) for p in pp.tokens[0][2]])
     assert pp.tokens == [
         ('any', '', {
             dm.DefOption([
@@ -182,7 +176,6 @@ def test_blocks():
                 }),
                 *TK.tokenize('int B = 3;')
             ]),
-            dm.DefOption(TK.tokenize('int B = 4;')),
             dm.DefOption(TK.tokenize('int B = 1;')),
             dm.DefOption(TK.tokenize('int B = 7;'))
         }),
