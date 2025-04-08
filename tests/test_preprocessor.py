@@ -1,4 +1,4 @@
-from typing import Optional, Dict
+from typing import Dict
 import exert.parser.definitions as dm
 import exert.parser.tokenmanager as tm
 from exert.parser.tokenizer import Tokenizer

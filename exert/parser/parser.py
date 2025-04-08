@@ -2,7 +2,7 @@ import os
 import sys
 import time
 import glob
-from typing import Any, Literal, Optional, List
+from typing import Any, Literal, Optional
 from exert.parser.tokenizer import Tokenizer
 from exert.parser.tokenmanager import tok_seq, mk_kw, mk_op, mk_id, TokenManager
 from exert.parser.preprocessor import Preprocessor

@@ -1,4 +1,3 @@
-from typing import Any, Optional
 import exert.parser.tokenmanager as tm
 
 class Tokenizer:

@@ -1,6 +1,6 @@
 from typing import Optional
-from exert.usermode.context import Context
 import typing
+from exert.usermode.context import Context
 
 class Rule:
     _cache: dict[str, set[int]] = {}

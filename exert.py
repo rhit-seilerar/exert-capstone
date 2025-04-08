@@ -226,8 +226,10 @@ def run_docker(container:str = PANDA_CONTAINER, *, name: str = 'pandare', comman
                 if name == 'pandare':
                     commands.append(command_dict(f'docker exec -t {name} bash -c '
                         '"cd /mount; chmod +x ./setup.sh; ./setup.sh"'))
-            commands.append(command_dict(f'docker exec -t {name} bash -c "{env}cd /mount; {command}"',
-                capture_output))
+            commands.append(
+                command_dict(f'docker exec -t {name} bash -c "{env}cd /mount; {command}"',
+                capture_output)
+            )
 
             if interactive:
                 commands.append(command_dict(f'docker exec -it {name} bash"'))

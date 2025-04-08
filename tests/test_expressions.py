@@ -1,10 +1,10 @@
+from typing import Any
 from tests import utils
 from exert.parser import definitions
 from exert.parser import expressions
 import exert.parser.tokenmanager as tm
-from exert.parser.expressions import Evaluator, Expression, parse_expression
+from exert.parser.expressions import Evaluator, parse_expression
 from exert.parser.tokenizer import Tokenizer
-from typing import Any
 
 TOKENIZER = Tokenizer()
 

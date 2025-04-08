@@ -1,5 +1,4 @@
 """Some useful command utilities for the pyton scripts"""
-from subprocess import CompletedProcess
 from typing import Any
 import subprocess
 import re

@@ -1,4 +1,4 @@
-from typing import Tuple, Optional, Union, Any
+from typing import Optional, Any
 from collections.abc import Callable
 import exert.parser.tokenmanager as tm
 

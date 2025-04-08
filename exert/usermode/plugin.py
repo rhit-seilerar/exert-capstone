@@ -19,7 +19,7 @@ class Exert(PyPlugin):
         self.hypercall_callback = args['hypercall_callback'] \
             if 'hypercall_callback' in args else None
 
-    def __init__(self, panda: Any):
+    def __init__(self, panda: Panda):
         self.called_back = False
 
         @panda.ppp('syscalls2', 'on_sys_execve_enter')

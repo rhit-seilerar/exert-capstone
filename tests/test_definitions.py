@@ -1,10 +1,8 @@
-from typing import List
 from tests import utils
 from exert.parser.tokenizer import Tokenizer
 from exert.parser import tokenmanager as tm
 from exert.parser import definitions
 from exert.parser.definitions import DefOption, Def, DefMap, DefLayer, DefState
-from typing import Any
 
 def test_defoption_eq():
     empty = DefOption([])

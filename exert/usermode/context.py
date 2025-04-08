@@ -1,5 +1,4 @@
 from typing import Optional
-from pandare import Panda
 from typing import Any
 class Context:
     def __init__(self, panda: Any):

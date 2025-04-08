@@ -1,20 +1,20 @@
 import itertools
 
-from typing import Any, Optional, Tuple
+from typing import Any, Optional
 
 from exert.parser import expressions
 from exert.parser.tokenmanager import tok_seq, mk_id, mk_op, mk_int
 from exert.utilities.debug import dprint
 
 class DefOption:
-    def __init__(self, tokens: Any):
+    def __init__(self, tokens: list[tuple[str, str | int] | tuple[str, str | int, str | set]]):
         assert isinstance(tokens, list)
         self.tokens = tokens
         self.key = tok_seq(tokens)
         self.len = len(tokens)
         self.hash = hash(self.key)
 
-    def __eq__(self, other: Any):
+    def __eq__(self, other):
         return isinstance(other, DefOption) and other.key == self.key
 
     def __hash__(self):

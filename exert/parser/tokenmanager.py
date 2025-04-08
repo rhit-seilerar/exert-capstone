@@ -1,4 +1,4 @@
-from typing import Any, Tuple, Optional
+from typing import Any
 
 def tok_str(token: tuple, newlines: bool = False):
     n = token

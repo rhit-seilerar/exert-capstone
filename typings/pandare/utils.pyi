@@ -1,5 +1,6 @@
 from _typeshed import Incomplete
 from os import dup as dup, getenv as getenv, path as path
+from pandare.pyplugin import PyPlugin
 
 debug: bool
 
@@ -23,7 +24,7 @@ class GArrayIterator:
     def __next__(self): ...
     def __del__(self) -> None: ...
 
-class plugin_list(dict):
+class plugin_list(dict[str, PyPlugin]):
     def __init__(self, panda) -> None: ...
     def __getitem__(self, plugin_name): ...
 

@@ -10,7 +10,7 @@ TODO There are still a number of optimizations that can be done for better resul
 
 import os
 import types
-from typing import Optional, Union, Callable, Any
+from typing import Union, Callable, Any
 from exert.parser.tokenmanager import tok_seq, TokenManager
 from exert.parser.definitions import DefState, Def, DefOption
 from exert.parser.serializer import write_tokens, read_tokens
@@ -25,8 +25,9 @@ def read_file(path: str):
         return None
 
 class Preprocessor(TokenManager):
-    def __init__(self, tokenizer: Tokenizer, bitsize: int, includes: list[str | Callable[[Any], str | None]],
-                 defns: dict[str, str], filereader: Callable[[str], str | None] = read_file):
+    def __init__(self, tokenizer: Tokenizer, bitsize: int,
+                 includes: list[str | Callable[[Any], str | None]], defns: dict[str, str],
+                 filereader: Callable[[str], str | None] = read_file):
         super().__init__()
         self.tokenizer = tokenizer
         self.includes = includes
