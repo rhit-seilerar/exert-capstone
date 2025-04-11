@@ -1,6 +1,6 @@
 [MAIN]
 
-ignore=cache,typings
+ignore=cache,typings,types
 
 disable=
     unused-argument,

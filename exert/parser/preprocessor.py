@@ -10,7 +10,7 @@ TODO There are still a number of optimizations that can be done for better resul
 
 import os
 import types
-from typing import Union, Callable, Any
+from collections.abc import Callable
 from exert.parser.tokenmanager import tok_seq, TokenManager
 from exert.parser.definitions import DefState, Def, DefOption
 from exert.parser.serializer import write_tokens, read_tokens
@@ -26,7 +26,7 @@ def read_file(path: str):
 
 class Preprocessor(TokenManager):
     def __init__(self, tokenizer: Tokenizer, bitsize: int,
-                 includes: list[str | Callable[[Any], str | None]], defns: dict[str, str],
+                 includes: list[str | Callable], defns: dict[str, str],
                  filereader: Callable[[str], str | None] = read_file):
         super().__init__()
         self.tokenizer = tokenizer
@@ -263,7 +263,7 @@ class Preprocessor(TokenManager):
         return self.skip_to_newline()
 
     def parse_directive(self):
-        result: Union[bool, list] = False
+        result: (bool | list) = False
         if self.consume(('identifier', 'line')):
             result = self.handle_line()
         elif self.consume_identifier('include'):
@@ -303,7 +303,7 @@ class Preprocessor(TokenManager):
 
         return result
 
-    def insert(self, tokens: Union[str, tuple, list[tuple]]):
+    def insert(self, tokens: (str | tuple | list[tuple])):
         if isinstance(tokens, str):
             tokens = self.tokenizer.tokenize(tokens)
         if isinstance(tokens, tuple):
@@ -312,6 +312,7 @@ class Preprocessor(TokenManager):
         prefix = self.tokens[:self.index]
         suffix = self.tokens[self.index:]
         size = len(tokens)
+        assert isinstance(tokens, list)
         self.tokens = prefix + tokens + suffix
         self.len += size
         self.tokens_added += size
@@ -327,7 +328,7 @@ class Preprocessor(TokenManager):
         if not self.defs.is_skipping():
             self.defs.layers[-1].emitted += tokens
 
-    def preprocess(self, data: Union[str, tuple], cache: str, reset_cache: bool = False):
+    def preprocess(self, data: (str | tuple), cache: str, reset_cache: bool = False):
         super().reset()
         self.conditions: list = []
         self.file = ''

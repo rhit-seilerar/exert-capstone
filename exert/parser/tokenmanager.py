@@ -1,7 +1,13 @@
-from typing import Any
-
-def tok_str(token: tuple, newlines: bool = False):
+def tok_str(token: (tuple[str, str | int, str | set] |
+                    tuple[str, str | int] |
+                    tuple[str, str, list]),
+            newlines: bool = False):
     n = token
+
+    if len(token) == 2:
+        n = token + ('',)
+
+    assert len(n) != 2
     string = '<NONE> ' if n is None \
         else n[1] if n[0] == 'directive' \
         else f'{n[1]}\n' if n[0] == 'operator' and n[1] in [';', '{', '}'] \
@@ -14,22 +20,25 @@ def tok_str(token: tuple, newlines: bool = False):
         else str(n[1])
     if newlines:
         return string
+
+    assert isinstance(string, str)
     return string.replace('\n', ' ')
 
-def tok_seq(tokens: list, newlines: bool = False):
+def tok_seq(tokens: list[tuple[str, str | int] | tuple[str, str | int, str | set]],
+            newlines: bool = False):
     return ''.join(tok_str(n, newlines) for n in tokens).strip() \
         if isinstance(tokens, list) else tokens
 
 def mk_int(num: int, suffix: str = ''):
     return ('integer', num, suffix)
 
-def mk_id(sym: Any):
+def mk_id(sym):
     return ('identifier', sym)
 
-def mk_kw(sym: Any):
+def mk_kw(sym):
     return ('keyword', sym)
 
-def mk_op(op: Any):
+def mk_op(op):
     return ('operator', op)
 
 def mk_str(string:str, suffix: str = '"'):
@@ -40,8 +49,8 @@ class TokenManager:
         self.reset()
 
     def reset(self):
-        self.has_error: Any = False
-        self.tokens: Any = []
+        self.has_error = False
+        self.tokens = []
         self.index = 0
         self.len = 0
         self.tokens_consumed = 0
@@ -69,7 +78,7 @@ class TokenManager:
             return token
         return None
 
-    def consume_type(self, typ: Any):
+    def consume_type(self, typ):
         return self.next() if (token := self.peek()) and token[0] == typ else None
 
     def consume(self, token: tuple):

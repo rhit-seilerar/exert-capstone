@@ -1,5 +1,4 @@
 """Some useful command utilities for the pyton scripts"""
-from typing import Any
 import subprocess
 import re
 
@@ -10,8 +9,8 @@ def run_command(command: str, capture_output: bool=False,
     args = [arg.replace('"', '') for arg in re.findall(pattern, command)]
     return subprocess.run(args, capture_output = capture_output, check = check, cwd = cwd)
 
-def get_stdout(result:Any):
+def get_stdout(result):
     return result.stdout.decode()
 
-def get_stderr(result:Any):
+def get_stderr(result):
     return result.stderr.decode()

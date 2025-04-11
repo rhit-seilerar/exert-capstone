@@ -1,7 +1,5 @@
-from typing import Optional
-from typing import Any
 class Context:
-    def __init__(self, panda: Any):
+    def __init__(self, panda):
         self.panda = panda
         self.endianness = panda.endianness
         self.word_size = panda.bits // 8
@@ -14,7 +12,7 @@ class Context:
 
 
 
-    def parse_int(self, buf: Optional[bytes], offset: int, size: int, signed):
+    def parse_int(self, buf: (bytes | None), offset: int, size: int, signed):
         if buf is None:
             return None
         return int.from_bytes(buf[offset:offset+size], byteorder=self.endianness, signed=signed)

@@ -1,10 +1,9 @@
-from typing import Optional
 import exert.parser.tokenmanager as tm
 from exert.parser.tokenizer import Tokenizer
 
 TK = Tokenizer()
 
-def roundtrip(string: str, out:Optional[str] = None):
+def roundtrip(string: str, out: (str | None) = None):
     assert tm.tok_seq(TK.tokenize(string)) == (string if out is None else out)
 
 def test():

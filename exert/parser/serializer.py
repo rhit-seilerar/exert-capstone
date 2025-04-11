@@ -1,8 +1,7 @@
 from io import BufferedReader, BufferedWriter
-from typing import List
 from exert.parser.definitions import DefOption
 
-TOK_TYPES: List[str] = [
+TOK_TYPES: list[str] = [
     'string', 'integer', 'identifier', 'keyword',
     'operator', 'directive', 'any'
 ]

@@ -1,5 +1,3 @@
-from typing import Optional
-import typing
 from exert.usermode.context import Context
 
 class Rule:
@@ -11,7 +9,7 @@ class Rule:
     def test(self, context: Context, address: int, clear_cache: bool = False):
         return self.test_all(context, {address}, clear_cache)
 
-    def test_all(self, context: Context, addresses: set, clear_cache: bool = False):
+    def test_all(self, context: Context, addresses: set[int], clear_cache: bool = False):
         assert isinstance(context, Context)
         assert isinstance(addresses, set)
 
@@ -46,7 +44,7 @@ class Rule:
         return self.key
 
 class Any(Rule):
-    def __init__(self, *rules: typing.Any):
+    def __init__(self, *rules):
         super().__init__()
         self.rules = rules
 
@@ -58,8 +56,8 @@ class Any(Rule):
         return {address}
 
 class Int(Rule):
-    def __init__(self, size: typing.Any = 4, signed: bool = True,
-                 min_value: Optional[int] = None, max_value: Optional[int] = None):
+    def __init__(self, size = 4, signed: bool = True,
+                 min_value: (int | None) = None, max_value: (int | None) = None):
         super().__init__()
         self.size = size
         self.signed = signed
@@ -88,7 +86,7 @@ class Bool(Int):
         return 'Bool'
 
 class Pointer(Rule):
-    def __init__(self, rule: Optional[Rule] = None):
+    def __init__(self, rule: (Rule | None) = None):
         super().__init__()
         self.rule = rule
 
@@ -108,7 +106,7 @@ class Union(Rule):
         super().__init__()
 
     def _test(self, context, address):
-        results: typing.Any = set()
+        results: set[int] = set()
 
         for rule in self.rules:
             results = results | rule.test(context, address)
@@ -159,7 +157,7 @@ class Field(Rule):
         return self.rule.test(context, address)
 
 class FieldGroup:
-    def __init__(self, fields: list, condition: Optional[str] = None):
+    def __init__(self, fields: list[Field], condition: (str | None) = None):
         self.fields = fields
         for field in self.fields:
             assert isinstance(field, Field)
@@ -188,7 +186,7 @@ class FieldGroup:
         return self.fields_addresses
 
 class Struct(Rule):
-    def __init__(self, name: str, field_groups: list):
+    def __init__(self, name: str, field_groups: list[FieldGroup]):
         super().__init__()
         self.name = name
         self.field_groups = field_groups

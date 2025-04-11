@@ -1,4 +1,3 @@
-from typing import Optional, Any
 from collections.abc import Callable
 import exert.parser.tokenmanager as tm
 
@@ -52,7 +51,7 @@ class Operator(Expression):
 
 class UnaryOperator(Operator):
     def __init__(self, a: Expression, opname: str,
-                 op: Callable, signop: Optional[Callable[[Any], Any]] = None):
+                 op: Callable, signop: (Callable | None) = None):
         assert isinstance(a, (Expression, str))
         self.opname = opname
         self.op = op
@@ -72,7 +71,7 @@ class UnaryOperator(Operator):
 
 class BinaryOperator(Operator):
     def __init__(self, a: Expression, b: Expression, opname: str,
-                 op: Optional[Callable], signop: Optional[Callable] = None):
+                 op: (Callable | None), signop: (Callable | None) = None):
         assert isinstance(a, Expression)
         assert isinstance(b, Expression)
         self.opname = opname
@@ -306,7 +305,7 @@ def parse_expression(tokens: list):
     assert len(tokens) > 0
 
     # Handle groups, identifiers, defined(), and terminals
-    nex: list[Any] = []
+    nex: list = []
     gstart = None
     indent = 0
     i = 0
@@ -382,8 +381,8 @@ def parse_expression(tokens: list):
 class Evaluator:
     def __init__(self, bitsize: int):
         self.bitsize = bitsize
-        self.lookup: Any = None
-        self.defines: Any = None
+        self.lookup: (dict | None) = None
+        self.defines: (dict | None) = None
 
     def evaluate(self, tokens: list):
         parsed = parse_expression(tokens)

@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Literal
 from pandare import Panda
 from exert.usermode.context import Context
 class DummyPanda(Panda):
@@ -11,7 +11,7 @@ class DummyPanda(Panda):
     def get_cpu(self):
         return None
 
-    def virtual_memory_read(self, cpu: Any, addr: int, length: int,
+    def virtual_memory_read(self, cpu, addr: int, length: int,
                             fmt: str = 'bytearray'):
         if addr is None or addr + length > len(self.buf):
             raise ValueError

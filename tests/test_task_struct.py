@@ -1,7 +1,5 @@
 import subprocess
-from typing import Any, Optional, Callable
-
-from pandare import Panda
+from collections.abc import Callable
 
 from exert.usermode import plugin
 import exert.usermode.task_struct_stack as tss
@@ -18,15 +16,15 @@ import exert.usermode.task_struct_stack as tss
 tests.test_task_struct.run_test('{}', {}, '{}', tss.{})
 """
 
-def do_test(test: Callable[[Panda, Any], Any], arch: str, generic: bool = True,
-            kernel: Optional[str] = None):
+def do_test(test: Callable, arch: str, generic: bool = True,
+            kernel: (str | None) = None):
     if not RUN_PLUGIN_TESTS:
         return
     formatted = TEST_PREFIX.format(arch, generic, kernel, test.__name__)
     print(formatted)
     subprocess.run(['python'], input = formatted, check = True, text = True)
 
-def run_test(arch: str, generic: bool, kernel: str, test: Any):
+def run_test(arch: str, generic: bool, kernel: str, test):
     set_called_back(False)
     def callback(panda, cpu):
         set_called_back(True)

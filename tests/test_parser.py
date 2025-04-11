@@ -1,11 +1,10 @@
-from typing import Any
 from exert.parser.parser import Parser
 
 class DummyParser(Parser):
-    def dfail(self, p:Any, f:Any):
+    def dfail(self, p, f):
         return f
 
-    def dpass(self, p:Any, f:Any):
+    def dpass(self, p, f):
         self.index += 10
         return p
 

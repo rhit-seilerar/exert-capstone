@@ -1,5 +1,4 @@
-from typing import Any
-def expect_error(func: Any, error: Any = AssertionError):
+def expect_error(func, error = AssertionError):
     try:
         func()
         assert False

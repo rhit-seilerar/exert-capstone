@@ -1,5 +1,4 @@
 import subprocess
-from typing import Any, Optional
 from pandare import Panda
 import exert.usermode.task_struct_stack as tss
 from exert.usermode import plugin
@@ -18,22 +17,22 @@ TEST_PREFIX: str = """
 import tests.test_plugin
 tests.test_plugin.run_test('{}', {}, '{}', tests.test_plugin.{})
 """
-def do_test(test: Any, arch: str, generic: bool = True, kernel: Optional[str] = None):
+def do_test(test, arch: str, generic: bool = True, kernel: (str | None) = None):
     if not RUN_PLUGIN_TESTS:
         return
     formatted = TEST_PREFIX.format(arch, generic, kernel, test.__name__)
     print(formatted)
     subprocess.run(['python'], input = formatted, check = True, text = True)
 
-def run_test(arch: str, generic: bool, kernel: str, test: Any):
+def run_test(arch: str, generic: bool, kernel: str, test):
     set_called_back(False)
-    def callback(panda: Panda, cpu: Any):
+    def callback(panda: Panda, cpu):
         set_called_back(True)
         test(panda, cpu)
     plugin.run(arch = arch, generic = generic, kernel = kernel, callback = callback)
     assert CALLED_BACK
 
-def callback_test_ground_truth_tasklist(panda: Panda, cpu: Any):
+def callback_test_ground_truth_tasklist(panda: Panda, cpu):
     init_addr = 0xc1b1da80
     parent_offset = 804
 
@@ -44,7 +43,7 @@ def callback_test_ground_truth_tasklist(panda: Panda, cpu: Any):
 def test_ground_truth_tasklist():
     do_test(callback_test_ground_truth_tasklist, 'i386')
 
-def callback_test_get_task_from_current(panda: Panda, cpu: Any):
+def callback_test_get_task_from_current(panda: Panda, cpu):
     task_addr = tss.task_address_arm_callback(panda, cpu)
     context = Context(panda)
     results = TASK_STRUCT.test(context, task_addr)
@@ -52,7 +51,7 @@ def callback_test_get_task_from_current(panda: Panda, cpu: Any):
 def test_get_task_from_current():
     do_test(callback_test_get_task_from_current, 'arm')
 
-def callback_test_nongeneric_kernel(panda: Panda, cpu: Any):
+def callback_test_nongeneric_kernel(panda: Panda, cpu):
     pass
 
     # assert context.read(0x4, 4) is None

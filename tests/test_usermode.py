@@ -1,6 +1,5 @@
 import os
 import subprocess
-from typing import Any, Optional
 
 from pandare import Panda
 
@@ -18,20 +17,20 @@ import tests.test_usermode as ttu
 ttu.run_test('{}', {}, '{}', ttu.{})
 """
 
-def do_test(test: Any, arch:str, generic: bool = True, kernel:Optional[str] = None):
+def do_test(test, arch:str, generic: bool = True, kernel: (str | None) = None):
     if not RUN_PLUGIN_TESTS:
         return
     formatted = TEST_PREFIX.format(arch, generic, kernel, test.__name__)
     print(formatted)
     subprocess.run(['python'], input = formatted, check = True, text = True)
 
-def run_test(arch: str, generic: bool, kernel: str, test: Any):
+def run_test(arch: str, generic: bool, kernel: str, test):
     set_called_back(False)
 
-    def callback(panda: Panda, cpu: Any):
+    def callback(panda: Panda, cpu):
         return
 
-    def hypervisor_callback(panda: Panda, cpu: Any):
+    def hypervisor_callback(panda: Panda, cpu):
         set_called_back(True)
         test(panda, cpu)
 
@@ -40,7 +39,7 @@ def run_test(arch: str, generic: bool, kernel: str, test: Any):
                command = './user_prog /init', hypercall_callback = hypervisor_callback)
     assert CALLED_BACK
 
-def file_reader_callback(panda:Panda, cpu:Any):
+def file_reader_callback(panda:Panda, cpu):
     magic = panda.arch.get_arg(cpu, 0, convention='syscall')
     typ = panda.arch.get_arg(cpu, 1, convention='syscall')
     assert magic == 0
