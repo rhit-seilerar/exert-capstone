@@ -53,12 +53,12 @@ def get_ffi_datatypes(panda: Panda):
                 else:
                     data_name = data_type.split()[1]
 
-                python_file_str += f'class {data_name}(IntEnum):\n'
+                python_file_str += f'{data_name}:ctypes.c_int\n'
 
-                for key in c_data_type.elements.keys():
-                    python_file_str += f'    {c_data_type.elements[key]} = {str(key)}\n'
+                # for key in c_data_type.elements.keys():
+                #     python_file_str += f'    {c_data_type.elements[key]} = {str(key)}\n'
 
-                python_file_str += '\n'
+                # python_file_str += '\n'
                 continue
 
             if c_data_type.kind == 'struct':
@@ -181,7 +181,8 @@ def get_python_type(c_data_type: CType, struct_type: (str | None) = None,
         return get_struct_type_name(c_data_type_name)
 
     if c_data_type_kind == 'enum':
-        return get_enum_type_name(c_data_type_name)
+        # return get_enum_type_name(c_data_type_name)
+        return 'ctypes.c_int'
 
     if c_data_type_kind == 'array':
         array_type = get_python_type(c_data_type.item, struct_type, field_name)
