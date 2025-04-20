@@ -1,4 +1,5 @@
-from cffi.backend_ctypes import CTypesBackend, CTypesType
+from cffi.backend_ctypes import CTypesBackend
+from _cffi_backend import CType
 from pandare import Panda
 
 def get_ffi_datatypes(panda: Panda):
@@ -7,15 +8,29 @@ def get_ffi_datatypes(panda: Panda):
     data_types_tuple[2].append("enum QemuOptType")
     data_types_tuple[2].append("enum kernel_mode")
 
+    declared_data_types: set[str] = set()
+
     python_file_str: str = 'from enum import IntEnum\n'
-    python_file_str += "from collections.abc import Callable\n"
+    # python_file_str += "from collections.abc import Callable\n"
     python_file_str += 'import ctypes\n\n'
+
+    python_file_str += "class CStructure(ctypes.Structure):\n"
+    python_file_str += "    def __init__(self):\n"
+    python_file_str += "        self.fields = []\n"
+    python_file_str += "        for key in self.__annotations__:\n"
+    python_file_str += "            self.fields.append((key, self.__annotations__[key]))\n\n"
+
+    python_file_str += "class CUnion(ctypes.Union):\n"
+    python_file_str += "    def __init__(self):\n"
+    python_file_str += "        self.fields = []\n"
+    python_file_str += "        for key in self.__annotations__:\n"
+    python_file_str += "            self.fields.append((key, self.__annotations__[key]))\n\n"
 
     for data_types_list in data_types_tuple:
 
         for data_type in data_types_list:
             try:
-                c_data_type: CTypesType = panda.ffi.typeof(panda.ffi.getctype(data_type))
+                c_data_type: CType = panda.ffi.typeof(panda.ffi.getctype(data_type))
             except Exception as e: # pylint: disable=broad-exception-caught
                 # The library throws a generic error, I have to be broad
                 error_str = str(e)
@@ -41,13 +56,26 @@ def get_ffi_datatypes(panda: Panda):
                 python_file_str += f'class {data_name}(IntEnum):\n'
 
                 for key in c_data_type.elements.keys():
-                    python_file_str += f'    {c_data_type.elements[key]}: int = {str(key)}\n'
+                    python_file_str += f'    {c_data_type.elements[key]} = {str(key)}\n'
 
                 python_file_str += '\n'
                 continue
 
             if c_data_type.kind == 'struct':
-                python_file_str += get_struct_union_definition(c_data_type, data_type, '')
+                data_type_slices = data_type.split()
+                struct_name:str = ''
+
+                if len(data_type_slices) == 1:
+                    struct_name = data_type
+                else:
+                    struct_name = data_type_slices[1]
+
+                if struct_name in declared_data_types:
+                    continue
+
+                declared_data_types.add(struct_name)
+
+                python_file_str += get_struct_union_definition(c_data_type, struct_name, '', False)
                 python_file_str += '\n'
                 continue
 
@@ -68,7 +96,19 @@ def get_ffi_datatypes(panda: Panda):
                 continue
 
             if c_data_type.kind == 'union':
-                python_file_str += get_struct_union_definition(c_data_type, data_type, '')
+                data_type_slices = data_type.split()
+                union_name:str = ''
+
+                if len(data_type_slices) == 1:
+                    union_name = data_type
+                else:
+                    union_name = data_type_slices[1]
+
+                if union_name in declared_data_types:
+                    continue
+
+                declared_data_types.add(union_name)
+                python_file_str += get_struct_union_definition(c_data_type, union_name, '', True)
                 python_file_str += '\n'
                 continue
 
@@ -81,8 +121,14 @@ def get_ffi_datatypes(panda: Panda):
 
     return python_file_str
 
-def get_struct_union_definition(struct_type: CTypesType, struct_name: str, prefix: str):
-    class_str = f'{prefix}class {struct_name}:\n'
+def get_struct_union_definition(struct_type: CType, struct_name: str, prefix: str, isUnion: bool):
+    class_str = ''
+
+    if isUnion:
+        class_str = f'{prefix}class {struct_name}(CUnion):\n'
+    else:
+        class_str = f'{prefix}class {struct_name}(CStructure):\n'
+
     reserved_attributes = []
 
     if (struct_type.fields is None or len(struct_type.fields) == 0):
@@ -102,7 +148,12 @@ def get_struct_union_definition(struct_type: CTypesType, struct_name: str, prefi
 
         if field_python_type.find('$') != -1:
             field_python_type = 'internal_' + field_python_type.replace('$', '')
-            class_str += get_struct_union_definition(field_type.type, field_python_type, '    ')
+
+            localIsUnion = False
+            if (field_type.type.kind == 'union'):
+                localIsUnion = True
+
+            class_str += get_struct_union_definition(field_type.type, field_python_type, '    ', localIsUnion)
             class_str += '\n'
 
         if field_reserved:
@@ -118,7 +169,7 @@ def get_struct_union_definition(struct_type: CTypesType, struct_name: str, prefi
     return class_str
 
 
-def get_python_type(c_data_type: CTypesType, struct_type: (str | None) = None,
+def get_python_type(c_data_type: CType, struct_type: (str | None) = None,
                     field_name: (str | None) = None):
     c_data_type_kind = c_data_type.kind
     c_data_type_name = c_data_type.cname
@@ -157,7 +208,7 @@ def get_python_type(c_data_type: CTypesType, struct_type: (str | None) = None,
             else:
                 args += python_arg_type + ', '
 
-        return f'Callable[[{args}], {restype}]'
+        return f'ctypes._CFunctionType'
 
     if c_data_type_kind == 'void':
         return 'None'
@@ -167,7 +218,7 @@ def get_python_type(c_data_type: CTypesType, struct_type: (str | None) = None,
     assert False, c_data_type_kind
 
 def get_primitive_type_name(prim_name: str):
-    for key, value in CTypesBackend.PRIMITIVE_TYPES:
+    for (key, value) in CTypesBackend.PRIMITIVE_TYPES.items():
         if key == prim_name:
             return "ctypes." + value.__name__
 
