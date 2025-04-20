@@ -121,10 +121,10 @@ def get_ffi_datatypes(panda: Panda):
 
     return python_file_str
 
-def get_struct_union_definition(struct_type: CType, struct_name: str, prefix: str, isUnion: bool):
+def get_struct_union_definition(struct_type: CType, struct_name: str, prefix: str, is_union: bool):
     class_str = ''
 
-    if isUnion:
+    if is_union:
         class_str = f'{prefix}class {struct_name}(CUnion):\n'
     else:
         class_str = f'{prefix}class {struct_name}(CStructure):\n'
@@ -149,11 +149,14 @@ def get_struct_union_definition(struct_type: CType, struct_name: str, prefix: st
         if field_python_type.find('$') != -1:
             field_python_type = 'internal_' + field_python_type.replace('$', '')
 
-            localIsUnion = False
-            if (field_type.type.kind == 'union'):
-                localIsUnion = True
+            local_is_union = False
+            if field_type.type.kind == 'union':
+                local_is_union = True
 
-            class_str += get_struct_union_definition(field_type.type, field_python_type, '    ', localIsUnion)
+            class_str += get_struct_union_definition(field_type.type,
+                                                     field_python_type,
+                                                     '    ',
+                                                     local_is_union)
             class_str += '\n'
 
         if field_reserved:
@@ -199,17 +202,17 @@ def get_python_type(c_data_type: CType, struct_type: (str | None) = None,
         return get_union_type_name(c_data_type_name)
 
     if c_data_type_kind == 'function':
-        restype = get_python_type(c_data_type.result, struct_type, field_name)
+        # restype = get_python_type(c_data_type.result, struct_type, field_name)
 
-        args = ''
-        for index, value in enumerate(c_data_type.args):
-            python_arg_type = get_python_type(value)
-            if index == (len(c_data_type.args) - 1):
-                args += python_arg_type
-            else:
-                args += python_arg_type + ', '
+        # args = ''
+        # for index, value in enumerate(c_data_type.args):
+        #     python_arg_type = get_python_type(value)
+        #     if index == (len(c_data_type.args) - 1):
+        #         args += python_arg_type
+        #     else:
+        #         args += python_arg_type + ', '
 
-        return f'ctypes._CFunctionType'
+        return 'ctypes._CFunctionType'
 
     if c_data_type_kind == 'void':
         return 'None'
