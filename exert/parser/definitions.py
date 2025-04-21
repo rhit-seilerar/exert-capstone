@@ -296,7 +296,7 @@ def substitute(tokmgr, defmap, replmap = None, keys = None):
         expansion_stack.append(name[1])
         # Recursively substitute each replacement
         for opt in opts:
-            tokens = []
+            tokens: list = []
             optmgr = TokenManager(opt.tokens)
             while optmgr.has_next():
                 tokens += subst(optmgr) or [optmgr.next()]
@@ -331,9 +331,9 @@ class DefEvaluator(expressions.Evaluator):
         # First we run through and replace all defined(MACRO) with a special
         # token so we don't substitute it later. This token will never be
         # serialized, but expressions.py knows how to handle it
-        keys = set()
+        keys: set = set()
         identlike = ['identifier', 'keyword']
-        replmap = {}
+        replmap: dict = {}
         nex = []
         i = 0
         while i < len(tokens):
@@ -369,7 +369,7 @@ class DefEvaluator(expressions.Evaluator):
             nex += substitute(tokmgr, self.defs, keys = keys, replmap = replmap)
         tokens = nex
 
-        lookups = []
+        lookups: list = []
         if replmap:
             # Note that this currently doesn't consider open-ended definitions correctly
             # Also, wildcards could be improved in accuracy
@@ -535,6 +535,7 @@ class DefState:
         if not self.is_skipping():
             dprint(3, '  ' * self.depth() + f'#define {sym} {tok_seq(tokens)}')
             self.keys.add(sym)
+            assert self.layers[-1].current is not None
             self.layers[-1].current.define(sym, DefOption(tokens, params))
 
     def on_undef(self, sym):
@@ -579,6 +580,7 @@ class DefState:
         self.layers[-1].current.combine(layer.accumulator.defs, replace = layer.closed)
 
     def get_replacements(self, tok, params = None):
+        assert self.layers[-1].current is not None
         return self.layers[-1].current.get_replacements(tok, params)
 
     def substitute(self, tokmgr):

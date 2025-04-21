@@ -260,6 +260,7 @@ class Preprocessor(TokenManager):
     def handle_error(self):
         if not self.defs.is_skipping():
             dprint(2, '  ' * self.defs.depth() + '#error')
+        assert self.defs.layers[-1].current is not None
         self.defs.layers[-1].current.skipping = True
         return self.skip_to_newline()
 
