@@ -396,9 +396,9 @@ class CPUWatchpoint(CStructure):
 CPUWriteMemoryFunc: None
 class CharBackend(CStructure):
     chr: 'ctypes._Pointer[Chardev]'
-    chr_event: 'ctypes._CFunctionType'
-    chr_can_read: 'ctypes._CFunctionType'
-    chr_read: 'ctypes._CFunctionType'
+    chr_event: 'ctypes._CFuncPtr'
+    chr_can_read: 'ctypes._CFuncPtr'
+    chr_read: 'ctypes._CFuncPtr'
     opaque: 'ctypes.c_void_p'
     tag: 'ctypes.c_int'
     fe_open: 'ctypes.c_int'
@@ -582,20 +582,20 @@ class MemTxAttrs(CStructure):
 
 MemTxResult: ctypes.c_ulong
 class MemoryListener(CStructure):
-    begin: 'ctypes._CFunctionType'
-    commit: 'ctypes._CFunctionType'
-    region_add: 'ctypes._CFunctionType'
-    region_del: 'ctypes._CFunctionType'
-    region_nop: 'ctypes._CFunctionType'
-    log_start: 'ctypes._CFunctionType'
-    log_stop: 'ctypes._CFunctionType'
-    log_sync: 'ctypes._CFunctionType'
-    log_global_start: 'ctypes._CFunctionType'
-    log_global_stop: 'ctypes._CFunctionType'
-    eventfd_add: 'ctypes._CFunctionType'
-    eventfd_del: 'ctypes._CFunctionType'
-    coalesced_mmio_add: 'ctypes._CFunctionType'
-    coalesced_mmio_del: 'ctypes._CFunctionType'
+    begin: 'ctypes._CFuncPtr'
+    commit: 'ctypes._CFuncPtr'
+    region_add: 'ctypes._CFuncPtr'
+    region_del: 'ctypes._CFuncPtr'
+    region_nop: 'ctypes._CFuncPtr'
+    log_start: 'ctypes._CFuncPtr'
+    log_stop: 'ctypes._CFuncPtr'
+    log_sync: 'ctypes._CFuncPtr'
+    log_global_start: 'ctypes._CFuncPtr'
+    log_global_stop: 'ctypes._CFuncPtr'
+    eventfd_add: 'ctypes._CFuncPtr'
+    eventfd_del: 'ctypes._CFuncPtr'
+    coalesced_mmio_add: 'ctypes._CFuncPtr'
+    coalesced_mmio_del: 'ctypes._CFuncPtr'
     priority: 'ctypes.c_uint'
     address_space: 'ctypes._Pointer[AddressSpace]'
     class internal_13(CStructure):
@@ -627,7 +627,7 @@ class MemoryRegion(CStructure):
     container: 'ctypes._Pointer[MemoryRegion]'
     size: 'ctypes.Array[ctypes.c_ubyte]'
     addr: 'ctypes.c_ulong'
-    destructor: 'ctypes._CFunctionType'
+    destructor: 'ctypes._CFuncPtr'
     align: 'ctypes.c_ulong'
     terminates: 'ctypes.c_bool'
     ram_device: 'ctypes.c_bool'
@@ -654,9 +654,9 @@ class MemoryRegion(CStructure):
     iommu_notify_flags: 'ctypes.c_int'
 
 class MemoryRegionIOMMUOps(CStructure):
-    translate: 'ctypes._CFunctionType'
-    get_min_page_size: 'ctypes._CFunctionType'
-    notify_flag_changed: 'ctypes._CFunctionType'
+    translate: 'ctypes._CFuncPtr'
+    get_min_page_size: 'ctypes._CFuncPtr'
+    notify_flag_changed: 'ctypes._CFuncPtr'
 
 class MemoryRegionIoeventfd(CStructure):
     addr: 'AddrRange'
@@ -665,20 +665,20 @@ class MemoryRegionIoeventfd(CStructure):
     e: 'ctypes._Pointer[EventNotifier]'
 
 class MemoryRegionMmio(CStructure):
-    read: 'ctypes.Array[ctypes._CFunctionType]'
-    write: 'ctypes.Array[ctypes._CFunctionType]'
+    read: 'ctypes.Array[ctypes._CFuncPtr]'
+    write: 'ctypes.Array[ctypes._CFuncPtr]'
 
 class MemoryRegionOps(CStructure):
-    read: 'ctypes._CFunctionType'
-    write: 'ctypes._CFunctionType'
-    read_with_attrs: 'ctypes._CFunctionType'
-    write_with_attrs: 'ctypes._CFunctionType'
+    read: 'ctypes._CFuncPtr'
+    write: 'ctypes._CFuncPtr'
+    read_with_attrs: 'ctypes._CFuncPtr'
+    write_with_attrs: 'ctypes._CFuncPtr'
     endianness: 'ctypes.c_int'
     class internal_9(CStructure):
         min_access_size: 'ctypes.c_uint'
         max_access_size: 'ctypes.c_uint'
         unaligned: 'ctypes.c_bool'
-        accepts: 'ctypes._CFunctionType'
+        accepts: 'ctypes._CFuncPtr'
 
     valid: 'internal_9'
     class internal_10(CStructure):
@@ -718,7 +718,7 @@ class Monitor(CStructure):
     rs: 'ctypes._Pointer[ReadLineState]'
     qmp: 'ctypes.Array[ctypes.c_ubyte]'
     mon_cpu: 'ctypes._Pointer[CPUState]'
-    password_completion_cb: 'ctypes._CFunctionType'
+    password_completion_cb: 'ctypes._CFuncPtr'
     password_opaque: 'ctypes.c_void_p'
     cmd_table: 'ctypes._Pointer[ctypes.Array[ctypes.c_ubyte]]'
     class internal_19(CStructure):
@@ -733,7 +733,7 @@ class Monitor(CStructure):
 
 MonitorQMP: ctypes.Array[ctypes.c_ubyte]
 class Notifier(CStructure):
-    notify: 'ctypes._CFunctionType'
+    notify: 'ctypes._CFuncPtr'
     class internal_3(CStructure):
         le_next: 'ctypes._Pointer[Notifier]'
         le_prev: 'ctypes._Pointer[ctypes._Pointer[Notifier]]'
@@ -859,7 +859,7 @@ class RAMBlock(CStructure):
     offset: 'ctypes.c_ulong'
     used_length: 'ctypes.c_ulong'
     max_length: 'ctypes.c_ulong'
-    resized: 'ctypes._CFunctionType'
+    resized: 'ctypes._CFuncPtr'
     flags: 'ctypes.c_uint'
     idstr: 'ctypes.Array[ctypes.c_char]'
     class internal_1(CStructure):
@@ -893,16 +893,16 @@ class ReadLineState(CStructure):
     esc_param: 'ctypes.c_int'
     history: 'ctypes.Array[ctypes._Pointer[ctypes.c_char]]'
     hist_entry: 'ctypes.c_int'
-    completion_finder: 'ctypes._CFunctionType'
+    completion_finder: 'ctypes._CFuncPtr'
     completions: 'ctypes.Array[ctypes._Pointer[ctypes.c_char]]'
     nb_completions: 'ctypes.c_int'
     completion_index: 'ctypes.c_int'
-    readline_func: 'ctypes._CFunctionType'
+    readline_func: 'ctypes._CFuncPtr'
     readline_opaque: 'ctypes.c_void_p'
     read_password: 'ctypes.c_int'
     prompt: 'ctypes.Array[ctypes.c_char]'
-    printf_func: 'ctypes._CFunctionType'
-    flush_func: 'ctypes._CFunctionType'
+    printf_func: 'ctypes._CFuncPtr'
+    flush_func: 'ctypes._CFuncPtr'
     opaque: 'ctypes.c_void_p'
 
 Ret: ctypes.c_ulong
@@ -995,9 +995,9 @@ __u16: ctypes.c_ushort
 __u32: ctypes.c_uint
 __u64: ctypes.c_ulong
 __u8: ctypes.c_ubyte
-_add_hooks2_t: ctypes._CFunctionType
-_disable_hooks2_t: ctypes._CFunctionType
-_enable_hooks2_t: ctypes._CFunctionType
+_add_hooks2_t: ctypes._CFuncPtr
+_disable_hooks2_t: ctypes._CFuncPtr
+_enable_hooks2_t: ctypes._CFuncPtr
 class breakpoints_head(CStructure):
     tqh_first: 'ctypes._Pointer[CPUBreakpoint]'
     tqh_last: 'ctypes._Pointer[ctypes._Pointer[CPUBreakpoint]]'
@@ -1006,10 +1006,10 @@ class coalesced_ranges(CStructure):
     tqh_first: 'ctypes._Pointer[CoalescedMemoryRange]'
     tqh_last: 'ctypes._Pointer[ctypes._Pointer[CoalescedMemoryRange]]'
 
-dcr_read_cb: ctypes._CFunctionType
-dcr_write_cb: ctypes._CFunctionType
-dynamic_hook_func_t: ctypes._CFunctionType
-dynamic_symbol_hook_func_t: ctypes._CFunctionType
+dcr_read_cb: ctypes._CFuncPtr
+dcr_write_cb: ctypes._CFuncPtr
+dynamic_hook_func_t: ctypes._CFuncPtr
+dynamic_symbol_hook_func_t: ctypes._CFuncPtr
 flag: ctypes.c_char
 float32: ctypes.c_uint
 float64: ctypes.c_ulong
@@ -1051,641 +1051,641 @@ class hook(CStructure):
     sym: 'symbol'
     context: 'ctypes.c_void_p'
 
-hook_func_t: ctypes._CFunctionType
-hooks2_func_t: ctypes._CFunctionType
+hook_func_t: ctypes._CFuncPtr
+hooks2_func_t: ctypes._CFuncPtr
 class hooks_panda_cb(CUnion):
-    before_tcg_codegen: 'ctypes._CFunctionType'
-    before_block_translate: 'ctypes._CFunctionType'
-    after_block_translate: 'ctypes._CFunctionType'
-    before_block_exec_invalidate_opt: 'ctypes._CFunctionType'
-    before_block_exec: 'ctypes._CFunctionType'
-    after_block_exec: 'ctypes._CFunctionType'
-    start_block_exec: 'ctypes._CFunctionType'
-    end_block_exec: 'ctypes._CFunctionType'
+    before_tcg_codegen: 'ctypes._CFuncPtr'
+    before_block_translate: 'ctypes._CFuncPtr'
+    after_block_translate: 'ctypes._CFuncPtr'
+    before_block_exec_invalidate_opt: 'ctypes._CFuncPtr'
+    before_block_exec: 'ctypes._CFuncPtr'
+    after_block_exec: 'ctypes._CFuncPtr'
+    start_block_exec: 'ctypes._CFuncPtr'
+    end_block_exec: 'ctypes._CFuncPtr'
 
 hwaddr: ctypes.c_ulong
-hypercall_t: ctypes._CFunctionType
+hypercall_t: ctypes._CFuncPtr
 class icount_decr_u16(CStructure):
     low: 'ctypes.c_ushort'
     high: 'ctypes.c_ushort'
 
-mem_hook_func_t: ctypes._CFunctionType
+mem_hook_func_t: ctypes._CFuncPtr
 class memory_listeners_as(CStructure):
     tqh_first: 'ctypes._Pointer[MemoryListener]'
     tqh_last: 'ctypes._Pointer[ctypes._Pointer[MemoryListener]]'
 
 mon_cmd_t: ctypes.Array[ctypes.c_ubyte]
-on_after_load_t: ctypes._CFunctionType
-on_after_store_t: ctypes._CFunctionType
-on_all_sys_enter2_t: ctypes._CFunctionType
-on_all_sys_enter_t: ctypes._CFunctionType
-on_all_sys_return2_t: ctypes._CFunctionType
-on_all_sys_return_t: ctypes._CFunctionType
-on_branch2_t: ctypes._CFunctionType
-on_branch_t: ctypes._CFunctionType
-on_call_match_num_t: ctypes._CFunctionType
-on_call_match_str_t: ctypes._CFunctionType
-on_call_t: ctypes._CFunctionType
-on_get_current_process_handle_t: ctypes._CFunctionType
-on_get_current_process_t: ctypes._CFunctionType
-on_get_current_thread_t: ctypes._CFunctionType
-on_get_file_mappings_t: ctypes._CFunctionType
-on_get_heap_mappings_t: ctypes._CFunctionType
-on_get_mapping_base_address_by_name_t: ctypes._CFunctionType
-on_get_mapping_by_addr_t: ctypes._CFunctionType
-on_get_mappings_t: ctypes._CFunctionType
-on_get_modules_t: ctypes._CFunctionType
-on_get_proc_mem_t: ctypes._CFunctionType
-on_get_process_handles_t: ctypes._CFunctionType
-on_get_process_pid_t: ctypes._CFunctionType
-on_get_process_ppid_t: ctypes._CFunctionType
-on_get_process_t: ctypes._CFunctionType
-on_get_processes_t: ctypes._CFunctionType
-on_get_stack_mappings_t: ctypes._CFunctionType
-on_get_unknown_mappings_t: ctypes._CFunctionType
-on_has_mapping_prefix_t: ctypes._CFunctionType
-on_indirect_jump_t: ctypes._CFunctionType
-on_mmap_updated_t: ctypes._CFunctionType
-on_process_end_t: ctypes._CFunctionType
-on_process_start_t: ctypes._CFunctionType
-on_ptr_load_t: ctypes._CFunctionType
-on_ptr_store_t: ctypes._CFunctionType
-on_rec_auxv_t: ctypes._CFunctionType
-on_ret_t: ctypes._CFunctionType
-on_ssm_t: ctypes._CFunctionType
-on_sys_accept4_enter_t: ctypes._CFunctionType
-on_sys_accept4_return_t: ctypes._CFunctionType
-on_sys_accept_enter_t: ctypes._CFunctionType
-on_sys_accept_return_t: ctypes._CFunctionType
-on_sys_acct_enter_t: ctypes._CFunctionType
-on_sys_acct_return_t: ctypes._CFunctionType
-on_sys_add_key_enter_t: ctypes._CFunctionType
-on_sys_add_key_return_t: ctypes._CFunctionType
-on_sys_adjtimex_enter_t: ctypes._CFunctionType
-on_sys_adjtimex_return_t: ctypes._CFunctionType
-on_sys_bind_enter_t: ctypes._CFunctionType
-on_sys_bind_return_t: ctypes._CFunctionType
-on_sys_bpf_enter_t: ctypes._CFunctionType
-on_sys_bpf_return_t: ctypes._CFunctionType
-on_sys_brk_enter_t: ctypes._CFunctionType
-on_sys_brk_return_t: ctypes._CFunctionType
-on_sys_capget_enter_t: ctypes._CFunctionType
-on_sys_capget_return_t: ctypes._CFunctionType
-on_sys_capset_enter_t: ctypes._CFunctionType
-on_sys_capset_return_t: ctypes._CFunctionType
-on_sys_chdir_enter_t: ctypes._CFunctionType
-on_sys_chdir_return_t: ctypes._CFunctionType
-on_sys_chroot_enter_t: ctypes._CFunctionType
-on_sys_chroot_return_t: ctypes._CFunctionType
-on_sys_clock_adjtime_enter_t: ctypes._CFunctionType
-on_sys_clock_adjtime_return_t: ctypes._CFunctionType
-on_sys_clock_getres_enter_t: ctypes._CFunctionType
-on_sys_clock_getres_return_t: ctypes._CFunctionType
-on_sys_clock_gettime_enter_t: ctypes._CFunctionType
-on_sys_clock_gettime_return_t: ctypes._CFunctionType
-on_sys_clock_nanosleep_enter_t: ctypes._CFunctionType
-on_sys_clock_nanosleep_return_t: ctypes._CFunctionType
-on_sys_clock_settime_enter_t: ctypes._CFunctionType
-on_sys_clock_settime_return_t: ctypes._CFunctionType
-on_sys_clone3_enter_t: ctypes._CFunctionType
-on_sys_clone3_return_t: ctypes._CFunctionType
-on_sys_clone_enter_t: ctypes._CFunctionType
-on_sys_clone_return_t: ctypes._CFunctionType
-on_sys_close_enter_t: ctypes._CFunctionType
-on_sys_close_return_t: ctypes._CFunctionType
-on_sys_connect_enter_t: ctypes._CFunctionType
-on_sys_connect_return_t: ctypes._CFunctionType
-on_sys_copy_file_range_enter_t: ctypes._CFunctionType
-on_sys_copy_file_range_return_t: ctypes._CFunctionType
-on_sys_delete_module_enter_t: ctypes._CFunctionType
-on_sys_delete_module_return_t: ctypes._CFunctionType
-on_sys_dup3_enter_t: ctypes._CFunctionType
-on_sys_dup3_return_t: ctypes._CFunctionType
-on_sys_dup_enter_t: ctypes._CFunctionType
-on_sys_dup_return_t: ctypes._CFunctionType
-on_sys_epoll_create1_enter_t: ctypes._CFunctionType
-on_sys_epoll_create1_return_t: ctypes._CFunctionType
-on_sys_epoll_ctl_enter_t: ctypes._CFunctionType
-on_sys_epoll_ctl_return_t: ctypes._CFunctionType
-on_sys_epoll_pwait_enter_t: ctypes._CFunctionType
-on_sys_epoll_pwait_return_t: ctypes._CFunctionType
-on_sys_eventfd2_enter_t: ctypes._CFunctionType
-on_sys_eventfd2_return_t: ctypes._CFunctionType
-on_sys_execve_enter_t: ctypes._CFunctionType
-on_sys_execve_return_t: ctypes._CFunctionType
-on_sys_execveat_enter_t: ctypes._CFunctionType
-on_sys_execveat_return_t: ctypes._CFunctionType
-on_sys_exit_enter_t: ctypes._CFunctionType
-on_sys_exit_group_enter_t: ctypes._CFunctionType
-on_sys_exit_group_return_t: ctypes._CFunctionType
-on_sys_exit_return_t: ctypes._CFunctionType
-on_sys_faccessat2_enter_t: ctypes._CFunctionType
-on_sys_faccessat2_return_t: ctypes._CFunctionType
-on_sys_faccessat_enter_t: ctypes._CFunctionType
-on_sys_faccessat_return_t: ctypes._CFunctionType
-on_sys_fadvise64_enter_t: ctypes._CFunctionType
-on_sys_fadvise64_return_t: ctypes._CFunctionType
-on_sys_fallocate_enter_t: ctypes._CFunctionType
-on_sys_fallocate_return_t: ctypes._CFunctionType
-on_sys_fanotify_init_enter_t: ctypes._CFunctionType
-on_sys_fanotify_init_return_t: ctypes._CFunctionType
-on_sys_fanotify_mark_enter_t: ctypes._CFunctionType
-on_sys_fanotify_mark_return_t: ctypes._CFunctionType
-on_sys_fchdir_enter_t: ctypes._CFunctionType
-on_sys_fchdir_return_t: ctypes._CFunctionType
-on_sys_fchmod_enter_t: ctypes._CFunctionType
-on_sys_fchmod_return_t: ctypes._CFunctionType
-on_sys_fchmodat_enter_t: ctypes._CFunctionType
-on_sys_fchmodat_return_t: ctypes._CFunctionType
-on_sys_fchown_enter_t: ctypes._CFunctionType
-on_sys_fchown_return_t: ctypes._CFunctionType
-on_sys_fchownat_enter_t: ctypes._CFunctionType
-on_sys_fchownat_return_t: ctypes._CFunctionType
-on_sys_fcntl_enter_t: ctypes._CFunctionType
-on_sys_fcntl_return_t: ctypes._CFunctionType
-on_sys_fdatasync_enter_t: ctypes._CFunctionType
-on_sys_fdatasync_return_t: ctypes._CFunctionType
-on_sys_fgetxattr_enter_t: ctypes._CFunctionType
-on_sys_fgetxattr_return_t: ctypes._CFunctionType
-on_sys_finit_module_enter_t: ctypes._CFunctionType
-on_sys_finit_module_return_t: ctypes._CFunctionType
-on_sys_flistxattr_enter_t: ctypes._CFunctionType
-on_sys_flistxattr_return_t: ctypes._CFunctionType
-on_sys_flock_enter_t: ctypes._CFunctionType
-on_sys_flock_return_t: ctypes._CFunctionType
-on_sys_fremovexattr_enter_t: ctypes._CFunctionType
-on_sys_fremovexattr_return_t: ctypes._CFunctionType
-on_sys_fsetxattr_enter_t: ctypes._CFunctionType
-on_sys_fsetxattr_return_t: ctypes._CFunctionType
-on_sys_fstat_enter_t: ctypes._CFunctionType
-on_sys_fstat_return_t: ctypes._CFunctionType
-on_sys_fstatfs_enter_t: ctypes._CFunctionType
-on_sys_fstatfs_return_t: ctypes._CFunctionType
-on_sys_fsync_enter_t: ctypes._CFunctionType
-on_sys_fsync_return_t: ctypes._CFunctionType
-on_sys_ftruncate_enter_t: ctypes._CFunctionType
-on_sys_ftruncate_return_t: ctypes._CFunctionType
-on_sys_futex_enter_t: ctypes._CFunctionType
-on_sys_futex_return_t: ctypes._CFunctionType
-on_sys_get_mempolicy_enter_t: ctypes._CFunctionType
-on_sys_get_mempolicy_return_t: ctypes._CFunctionType
-on_sys_get_robust_list_enter_t: ctypes._CFunctionType
-on_sys_get_robust_list_return_t: ctypes._CFunctionType
-on_sys_getcpu_enter_t: ctypes._CFunctionType
-on_sys_getcpu_return_t: ctypes._CFunctionType
-on_sys_getcwd_enter_t: ctypes._CFunctionType
-on_sys_getcwd_return_t: ctypes._CFunctionType
-on_sys_getdents64_enter_t: ctypes._CFunctionType
-on_sys_getdents64_return_t: ctypes._CFunctionType
-on_sys_getegid_enter_t: ctypes._CFunctionType
-on_sys_getegid_return_t: ctypes._CFunctionType
-on_sys_geteuid_enter_t: ctypes._CFunctionType
-on_sys_geteuid_return_t: ctypes._CFunctionType
-on_sys_getgid_enter_t: ctypes._CFunctionType
-on_sys_getgid_return_t: ctypes._CFunctionType
-on_sys_getgroups_enter_t: ctypes._CFunctionType
-on_sys_getgroups_return_t: ctypes._CFunctionType
-on_sys_getitimer_enter_t: ctypes._CFunctionType
-on_sys_getitimer_return_t: ctypes._CFunctionType
-on_sys_getpeername_enter_t: ctypes._CFunctionType
-on_sys_getpeername_return_t: ctypes._CFunctionType
-on_sys_getpgid_enter_t: ctypes._CFunctionType
-on_sys_getpgid_return_t: ctypes._CFunctionType
-on_sys_getpid_enter_t: ctypes._CFunctionType
-on_sys_getpid_return_t: ctypes._CFunctionType
-on_sys_getppid_enter_t: ctypes._CFunctionType
-on_sys_getppid_return_t: ctypes._CFunctionType
-on_sys_getpriority_enter_t: ctypes._CFunctionType
-on_sys_getpriority_return_t: ctypes._CFunctionType
-on_sys_getrandom_enter_t: ctypes._CFunctionType
-on_sys_getrandom_return_t: ctypes._CFunctionType
-on_sys_getresgid_enter_t: ctypes._CFunctionType
-on_sys_getresgid_return_t: ctypes._CFunctionType
-on_sys_getresuid_enter_t: ctypes._CFunctionType
-on_sys_getresuid_return_t: ctypes._CFunctionType
-on_sys_getrlimit_enter_t: ctypes._CFunctionType
-on_sys_getrlimit_return_t: ctypes._CFunctionType
-on_sys_getrusage_enter_t: ctypes._CFunctionType
-on_sys_getrusage_return_t: ctypes._CFunctionType
-on_sys_getsid_enter_t: ctypes._CFunctionType
-on_sys_getsid_return_t: ctypes._CFunctionType
-on_sys_getsockname_enter_t: ctypes._CFunctionType
-on_sys_getsockname_return_t: ctypes._CFunctionType
-on_sys_getsockopt_enter_t: ctypes._CFunctionType
-on_sys_getsockopt_return_t: ctypes._CFunctionType
-on_sys_gettid_enter_t: ctypes._CFunctionType
-on_sys_gettid_return_t: ctypes._CFunctionType
-on_sys_gettimeofday_enter_t: ctypes._CFunctionType
-on_sys_gettimeofday_return_t: ctypes._CFunctionType
-on_sys_getuid_enter_t: ctypes._CFunctionType
-on_sys_getuid_return_t: ctypes._CFunctionType
-on_sys_getxattr_enter_t: ctypes._CFunctionType
-on_sys_getxattr_return_t: ctypes._CFunctionType
-on_sys_init_module_enter_t: ctypes._CFunctionType
-on_sys_init_module_return_t: ctypes._CFunctionType
-on_sys_inotify_add_watch_enter_t: ctypes._CFunctionType
-on_sys_inotify_add_watch_return_t: ctypes._CFunctionType
-on_sys_inotify_init1_enter_t: ctypes._CFunctionType
-on_sys_inotify_init1_return_t: ctypes._CFunctionType
-on_sys_inotify_rm_watch_enter_t: ctypes._CFunctionType
-on_sys_inotify_rm_watch_return_t: ctypes._CFunctionType
-on_sys_io_cancel_enter_t: ctypes._CFunctionType
-on_sys_io_cancel_return_t: ctypes._CFunctionType
-on_sys_io_destroy_enter_t: ctypes._CFunctionType
-on_sys_io_destroy_return_t: ctypes._CFunctionType
-on_sys_io_getevents_enter_t: ctypes._CFunctionType
-on_sys_io_getevents_return_t: ctypes._CFunctionType
-on_sys_io_setup_enter_t: ctypes._CFunctionType
-on_sys_io_setup_return_t: ctypes._CFunctionType
-on_sys_io_submit_enter_t: ctypes._CFunctionType
-on_sys_io_submit_return_t: ctypes._CFunctionType
-on_sys_ioctl_enter_t: ctypes._CFunctionType
-on_sys_ioctl_return_t: ctypes._CFunctionType
-on_sys_ioprio_get_enter_t: ctypes._CFunctionType
-on_sys_ioprio_get_return_t: ctypes._CFunctionType
-on_sys_ioprio_set_enter_t: ctypes._CFunctionType
-on_sys_ioprio_set_return_t: ctypes._CFunctionType
-on_sys_kcmp_enter_t: ctypes._CFunctionType
-on_sys_kcmp_return_t: ctypes._CFunctionType
-on_sys_kexec_file_load_enter_t: ctypes._CFunctionType
-on_sys_kexec_file_load_return_t: ctypes._CFunctionType
-on_sys_kexec_load_enter_t: ctypes._CFunctionType
-on_sys_kexec_load_return_t: ctypes._CFunctionType
-on_sys_keyctl_enter_t: ctypes._CFunctionType
-on_sys_keyctl_return_t: ctypes._CFunctionType
-on_sys_kill_enter_t: ctypes._CFunctionType
-on_sys_kill_return_t: ctypes._CFunctionType
-on_sys_lgetxattr_enter_t: ctypes._CFunctionType
-on_sys_lgetxattr_return_t: ctypes._CFunctionType
-on_sys_linkat_enter_t: ctypes._CFunctionType
-on_sys_linkat_return_t: ctypes._CFunctionType
-on_sys_listen_enter_t: ctypes._CFunctionType
-on_sys_listen_return_t: ctypes._CFunctionType
-on_sys_listxattr_enter_t: ctypes._CFunctionType
-on_sys_listxattr_return_t: ctypes._CFunctionType
-on_sys_llistxattr_enter_t: ctypes._CFunctionType
-on_sys_llistxattr_return_t: ctypes._CFunctionType
-on_sys_lookup_dcookie_enter_t: ctypes._CFunctionType
-on_sys_lookup_dcookie_return_t: ctypes._CFunctionType
-on_sys_lremovexattr_enter_t: ctypes._CFunctionType
-on_sys_lremovexattr_return_t: ctypes._CFunctionType
-on_sys_lseek_enter_t: ctypes._CFunctionType
-on_sys_lseek_return_t: ctypes._CFunctionType
-on_sys_lsetxattr_enter_t: ctypes._CFunctionType
-on_sys_lsetxattr_return_t: ctypes._CFunctionType
-on_sys_madvise_enter_t: ctypes._CFunctionType
-on_sys_madvise_return_t: ctypes._CFunctionType
-on_sys_mbind_enter_t: ctypes._CFunctionType
-on_sys_mbind_return_t: ctypes._CFunctionType
-on_sys_membarrier_enter_t: ctypes._CFunctionType
-on_sys_membarrier_return_t: ctypes._CFunctionType
-on_sys_memfd_create_enter_t: ctypes._CFunctionType
-on_sys_memfd_create_return_t: ctypes._CFunctionType
-on_sys_migrate_pages_enter_t: ctypes._CFunctionType
-on_sys_migrate_pages_return_t: ctypes._CFunctionType
-on_sys_mincore_enter_t: ctypes._CFunctionType
-on_sys_mincore_return_t: ctypes._CFunctionType
-on_sys_mkdirat_enter_t: ctypes._CFunctionType
-on_sys_mkdirat_return_t: ctypes._CFunctionType
-on_sys_mknodat_enter_t: ctypes._CFunctionType
-on_sys_mknodat_return_t: ctypes._CFunctionType
-on_sys_mlock2_enter_t: ctypes._CFunctionType
-on_sys_mlock2_return_t: ctypes._CFunctionType
-on_sys_mlock_enter_t: ctypes._CFunctionType
-on_sys_mlock_return_t: ctypes._CFunctionType
-on_sys_mlockall_enter_t: ctypes._CFunctionType
-on_sys_mlockall_return_t: ctypes._CFunctionType
-on_sys_mmap_enter_t: ctypes._CFunctionType
-on_sys_mmap_return_t: ctypes._CFunctionType
-on_sys_mount_enter_t: ctypes._CFunctionType
-on_sys_mount_return_t: ctypes._CFunctionType
-on_sys_move_pages_enter_t: ctypes._CFunctionType
-on_sys_move_pages_return_t: ctypes._CFunctionType
-on_sys_mprotect_enter_t: ctypes._CFunctionType
-on_sys_mprotect_return_t: ctypes._CFunctionType
-on_sys_mq_getsetattr_enter_t: ctypes._CFunctionType
-on_sys_mq_getsetattr_return_t: ctypes._CFunctionType
-on_sys_mq_notify_enter_t: ctypes._CFunctionType
-on_sys_mq_notify_return_t: ctypes._CFunctionType
-on_sys_mq_open_enter_t: ctypes._CFunctionType
-on_sys_mq_open_return_t: ctypes._CFunctionType
-on_sys_mq_timedreceive_enter_t: ctypes._CFunctionType
-on_sys_mq_timedreceive_return_t: ctypes._CFunctionType
-on_sys_mq_timedsend_enter_t: ctypes._CFunctionType
-on_sys_mq_timedsend_return_t: ctypes._CFunctionType
-on_sys_mq_unlink_enter_t: ctypes._CFunctionType
-on_sys_mq_unlink_return_t: ctypes._CFunctionType
-on_sys_mremap_enter_t: ctypes._CFunctionType
-on_sys_mremap_return_t: ctypes._CFunctionType
-on_sys_msgctl_enter_t: ctypes._CFunctionType
-on_sys_msgctl_return_t: ctypes._CFunctionType
-on_sys_msgget_enter_t: ctypes._CFunctionType
-on_sys_msgget_return_t: ctypes._CFunctionType
-on_sys_msgrcv_enter_t: ctypes._CFunctionType
-on_sys_msgrcv_return_t: ctypes._CFunctionType
-on_sys_msgsnd_enter_t: ctypes._CFunctionType
-on_sys_msgsnd_return_t: ctypes._CFunctionType
-on_sys_msync_enter_t: ctypes._CFunctionType
-on_sys_msync_return_t: ctypes._CFunctionType
-on_sys_munlock_enter_t: ctypes._CFunctionType
-on_sys_munlock_return_t: ctypes._CFunctionType
-on_sys_munlockall_enter_t: ctypes._CFunctionType
-on_sys_munlockall_return_t: ctypes._CFunctionType
-on_sys_munmap_enter_t: ctypes._CFunctionType
-on_sys_munmap_return_t: ctypes._CFunctionType
-on_sys_name_to_handle_at_enter_t: ctypes._CFunctionType
-on_sys_name_to_handle_at_return_t: ctypes._CFunctionType
-on_sys_nanosleep_enter_t: ctypes._CFunctionType
-on_sys_nanosleep_return_t: ctypes._CFunctionType
-on_sys_newfstatat_enter_t: ctypes._CFunctionType
-on_sys_newfstatat_return_t: ctypes._CFunctionType
-on_sys_nfsservctl_enter_t: ctypes._CFunctionType
-on_sys_nfsservctl_return_t: ctypes._CFunctionType
-on_sys_open_by_handle_at_enter_t: ctypes._CFunctionType
-on_sys_open_by_handle_at_return_t: ctypes._CFunctionType
-on_sys_openat2_enter_t: ctypes._CFunctionType
-on_sys_openat2_return_t: ctypes._CFunctionType
-on_sys_openat_enter_t: ctypes._CFunctionType
-on_sys_openat_return_t: ctypes._CFunctionType
-on_sys_perf_event_open_enter_t: ctypes._CFunctionType
-on_sys_perf_event_open_return_t: ctypes._CFunctionType
-on_sys_personality_enter_t: ctypes._CFunctionType
-on_sys_personality_return_t: ctypes._CFunctionType
-on_sys_pidfd_getfd_enter_t: ctypes._CFunctionType
-on_sys_pidfd_getfd_return_t: ctypes._CFunctionType
-on_sys_pidfd_open_enter_t: ctypes._CFunctionType
-on_sys_pidfd_open_return_t: ctypes._CFunctionType
-on_sys_pidfd_send_signal_enter_t: ctypes._CFunctionType
-on_sys_pidfd_send_signal_return_t: ctypes._CFunctionType
-on_sys_pipe2_enter_t: ctypes._CFunctionType
-on_sys_pipe2_return_t: ctypes._CFunctionType
-on_sys_pivot_root_enter_t: ctypes._CFunctionType
-on_sys_pivot_root_return_t: ctypes._CFunctionType
-on_sys_pkey_alloc_enter_t: ctypes._CFunctionType
-on_sys_pkey_alloc_return_t: ctypes._CFunctionType
-on_sys_pkey_free_enter_t: ctypes._CFunctionType
-on_sys_pkey_free_return_t: ctypes._CFunctionType
-on_sys_pkey_mprotect_enter_t: ctypes._CFunctionType
-on_sys_pkey_mprotect_return_t: ctypes._CFunctionType
-on_sys_ppoll_enter_t: ctypes._CFunctionType
-on_sys_ppoll_return_t: ctypes._CFunctionType
-on_sys_prctl_enter_t: ctypes._CFunctionType
-on_sys_prctl_return_t: ctypes._CFunctionType
-on_sys_pread64_enter_t: ctypes._CFunctionType
-on_sys_pread64_return_t: ctypes._CFunctionType
-on_sys_preadv2_enter_t: ctypes._CFunctionType
-on_sys_preadv2_return_t: ctypes._CFunctionType
-on_sys_preadv_enter_t: ctypes._CFunctionType
-on_sys_preadv_return_t: ctypes._CFunctionType
-on_sys_prlimit64_enter_t: ctypes._CFunctionType
-on_sys_prlimit64_return_t: ctypes._CFunctionType
-on_sys_process_vm_readv_enter_t: ctypes._CFunctionType
-on_sys_process_vm_readv_return_t: ctypes._CFunctionType
-on_sys_process_vm_writev_enter_t: ctypes._CFunctionType
-on_sys_process_vm_writev_return_t: ctypes._CFunctionType
-on_sys_pselect6_enter_t: ctypes._CFunctionType
-on_sys_pselect6_return_t: ctypes._CFunctionType
-on_sys_ptrace_enter_t: ctypes._CFunctionType
-on_sys_ptrace_return_t: ctypes._CFunctionType
-on_sys_pwrite64_enter_t: ctypes._CFunctionType
-on_sys_pwrite64_return_t: ctypes._CFunctionType
-on_sys_pwritev2_enter_t: ctypes._CFunctionType
-on_sys_pwritev2_return_t: ctypes._CFunctionType
-on_sys_pwritev_enter_t: ctypes._CFunctionType
-on_sys_pwritev_return_t: ctypes._CFunctionType
-on_sys_quotactl_enter_t: ctypes._CFunctionType
-on_sys_quotactl_return_t: ctypes._CFunctionType
-on_sys_read_enter_t: ctypes._CFunctionType
-on_sys_read_return_t: ctypes._CFunctionType
-on_sys_readahead_enter_t: ctypes._CFunctionType
-on_sys_readahead_return_t: ctypes._CFunctionType
-on_sys_readlinkat_enter_t: ctypes._CFunctionType
-on_sys_readlinkat_return_t: ctypes._CFunctionType
-on_sys_readv_enter_t: ctypes._CFunctionType
-on_sys_readv_return_t: ctypes._CFunctionType
-on_sys_reboot_enter_t: ctypes._CFunctionType
-on_sys_reboot_return_t: ctypes._CFunctionType
-on_sys_recvfrom_enter_t: ctypes._CFunctionType
-on_sys_recvfrom_return_t: ctypes._CFunctionType
-on_sys_recvmmsg_enter_t: ctypes._CFunctionType
-on_sys_recvmmsg_return_t: ctypes._CFunctionType
-on_sys_recvmsg_enter_t: ctypes._CFunctionType
-on_sys_recvmsg_return_t: ctypes._CFunctionType
-on_sys_remap_file_pages_enter_t: ctypes._CFunctionType
-on_sys_remap_file_pages_return_t: ctypes._CFunctionType
-on_sys_removexattr_enter_t: ctypes._CFunctionType
-on_sys_removexattr_return_t: ctypes._CFunctionType
-on_sys_renameat2_enter_t: ctypes._CFunctionType
-on_sys_renameat2_return_t: ctypes._CFunctionType
-on_sys_renameat_enter_t: ctypes._CFunctionType
-on_sys_renameat_return_t: ctypes._CFunctionType
-on_sys_request_key_enter_t: ctypes._CFunctionType
-on_sys_request_key_return_t: ctypes._CFunctionType
-on_sys_restart_syscall_enter_t: ctypes._CFunctionType
-on_sys_restart_syscall_return_t: ctypes._CFunctionType
-on_sys_rt_sigaction_enter_t: ctypes._CFunctionType
-on_sys_rt_sigaction_return_t: ctypes._CFunctionType
-on_sys_rt_sigpending_enter_t: ctypes._CFunctionType
-on_sys_rt_sigpending_return_t: ctypes._CFunctionType
-on_sys_rt_sigprocmask_enter_t: ctypes._CFunctionType
-on_sys_rt_sigprocmask_return_t: ctypes._CFunctionType
-on_sys_rt_sigqueueinfo_enter_t: ctypes._CFunctionType
-on_sys_rt_sigqueueinfo_return_t: ctypes._CFunctionType
-on_sys_rt_sigreturn_enter_t: ctypes._CFunctionType
-on_sys_rt_sigreturn_return_t: ctypes._CFunctionType
-on_sys_rt_sigsuspend_enter_t: ctypes._CFunctionType
-on_sys_rt_sigsuspend_return_t: ctypes._CFunctionType
-on_sys_rt_sigtimedwait_enter_t: ctypes._CFunctionType
-on_sys_rt_sigtimedwait_return_t: ctypes._CFunctionType
-on_sys_rt_tgsigqueueinfo_enter_t: ctypes._CFunctionType
-on_sys_rt_tgsigqueueinfo_return_t: ctypes._CFunctionType
-on_sys_sched_get_priority_max_enter_t: ctypes._CFunctionType
-on_sys_sched_get_priority_max_return_t: ctypes._CFunctionType
-on_sys_sched_get_priority_min_enter_t: ctypes._CFunctionType
-on_sys_sched_get_priority_min_return_t: ctypes._CFunctionType
-on_sys_sched_getaffinity_enter_t: ctypes._CFunctionType
-on_sys_sched_getaffinity_return_t: ctypes._CFunctionType
-on_sys_sched_getattr_enter_t: ctypes._CFunctionType
-on_sys_sched_getattr_return_t: ctypes._CFunctionType
-on_sys_sched_getparam_enter_t: ctypes._CFunctionType
-on_sys_sched_getparam_return_t: ctypes._CFunctionType
-on_sys_sched_getscheduler_enter_t: ctypes._CFunctionType
-on_sys_sched_getscheduler_return_t: ctypes._CFunctionType
-on_sys_sched_rr_get_interval_enter_t: ctypes._CFunctionType
-on_sys_sched_rr_get_interval_return_t: ctypes._CFunctionType
-on_sys_sched_setaffinity_enter_t: ctypes._CFunctionType
-on_sys_sched_setaffinity_return_t: ctypes._CFunctionType
-on_sys_sched_setattr_enter_t: ctypes._CFunctionType
-on_sys_sched_setattr_return_t: ctypes._CFunctionType
-on_sys_sched_setparam_enter_t: ctypes._CFunctionType
-on_sys_sched_setparam_return_t: ctypes._CFunctionType
-on_sys_sched_setscheduler_enter_t: ctypes._CFunctionType
-on_sys_sched_setscheduler_return_t: ctypes._CFunctionType
-on_sys_sched_yield_enter_t: ctypes._CFunctionType
-on_sys_sched_yield_return_t: ctypes._CFunctionType
-on_sys_seccomp_enter_t: ctypes._CFunctionType
-on_sys_seccomp_return_t: ctypes._CFunctionType
-on_sys_semctl_enter_t: ctypes._CFunctionType
-on_sys_semctl_return_t: ctypes._CFunctionType
-on_sys_semget_enter_t: ctypes._CFunctionType
-on_sys_semget_return_t: ctypes._CFunctionType
-on_sys_semop_enter_t: ctypes._CFunctionType
-on_sys_semop_return_t: ctypes._CFunctionType
-on_sys_semtimedop_enter_t: ctypes._CFunctionType
-on_sys_semtimedop_return_t: ctypes._CFunctionType
-on_sys_sendfile_enter_t: ctypes._CFunctionType
-on_sys_sendfile_return_t: ctypes._CFunctionType
-on_sys_sendmmsg_enter_t: ctypes._CFunctionType
-on_sys_sendmmsg_return_t: ctypes._CFunctionType
-on_sys_sendmsg_enter_t: ctypes._CFunctionType
-on_sys_sendmsg_return_t: ctypes._CFunctionType
-on_sys_sendto_enter_t: ctypes._CFunctionType
-on_sys_sendto_return_t: ctypes._CFunctionType
-on_sys_set_mempolicy_enter_t: ctypes._CFunctionType
-on_sys_set_mempolicy_return_t: ctypes._CFunctionType
-on_sys_set_robust_list_enter_t: ctypes._CFunctionType
-on_sys_set_robust_list_return_t: ctypes._CFunctionType
-on_sys_set_tid_address_enter_t: ctypes._CFunctionType
-on_sys_set_tid_address_return_t: ctypes._CFunctionType
-on_sys_setdomainname_enter_t: ctypes._CFunctionType
-on_sys_setdomainname_return_t: ctypes._CFunctionType
-on_sys_setfsgid_enter_t: ctypes._CFunctionType
-on_sys_setfsgid_return_t: ctypes._CFunctionType
-on_sys_setfsuid_enter_t: ctypes._CFunctionType
-on_sys_setfsuid_return_t: ctypes._CFunctionType
-on_sys_setgid_enter_t: ctypes._CFunctionType
-on_sys_setgid_return_t: ctypes._CFunctionType
-on_sys_setgroups_enter_t: ctypes._CFunctionType
-on_sys_setgroups_return_t: ctypes._CFunctionType
-on_sys_sethostname_enter_t: ctypes._CFunctionType
-on_sys_sethostname_return_t: ctypes._CFunctionType
-on_sys_setitimer_enter_t: ctypes._CFunctionType
-on_sys_setitimer_return_t: ctypes._CFunctionType
-on_sys_setns_enter_t: ctypes._CFunctionType
-on_sys_setns_return_t: ctypes._CFunctionType
-on_sys_setpgid_enter_t: ctypes._CFunctionType
-on_sys_setpgid_return_t: ctypes._CFunctionType
-on_sys_setpriority_enter_t: ctypes._CFunctionType
-on_sys_setpriority_return_t: ctypes._CFunctionType
-on_sys_setregid_enter_t: ctypes._CFunctionType
-on_sys_setregid_return_t: ctypes._CFunctionType
-on_sys_setresgid_enter_t: ctypes._CFunctionType
-on_sys_setresgid_return_t: ctypes._CFunctionType
-on_sys_setresuid_enter_t: ctypes._CFunctionType
-on_sys_setresuid_return_t: ctypes._CFunctionType
-on_sys_setreuid_enter_t: ctypes._CFunctionType
-on_sys_setreuid_return_t: ctypes._CFunctionType
-on_sys_setrlimit_enter_t: ctypes._CFunctionType
-on_sys_setrlimit_return_t: ctypes._CFunctionType
-on_sys_setsid_enter_t: ctypes._CFunctionType
-on_sys_setsid_return_t: ctypes._CFunctionType
-on_sys_setsockopt_enter_t: ctypes._CFunctionType
-on_sys_setsockopt_return_t: ctypes._CFunctionType
-on_sys_settimeofday_enter_t: ctypes._CFunctionType
-on_sys_settimeofday_return_t: ctypes._CFunctionType
-on_sys_setuid_enter_t: ctypes._CFunctionType
-on_sys_setuid_return_t: ctypes._CFunctionType
-on_sys_setxattr_enter_t: ctypes._CFunctionType
-on_sys_setxattr_return_t: ctypes._CFunctionType
-on_sys_shmat_enter_t: ctypes._CFunctionType
-on_sys_shmat_return_t: ctypes._CFunctionType
-on_sys_shmctl_enter_t: ctypes._CFunctionType
-on_sys_shmctl_return_t: ctypes._CFunctionType
-on_sys_shmdt_enter_t: ctypes._CFunctionType
-on_sys_shmdt_return_t: ctypes._CFunctionType
-on_sys_shmget_enter_t: ctypes._CFunctionType
-on_sys_shmget_return_t: ctypes._CFunctionType
-on_sys_shutdown_enter_t: ctypes._CFunctionType
-on_sys_shutdown_return_t: ctypes._CFunctionType
-on_sys_sigaltstack_enter_t: ctypes._CFunctionType
-on_sys_sigaltstack_return_t: ctypes._CFunctionType
-on_sys_signalfd4_enter_t: ctypes._CFunctionType
-on_sys_signalfd4_return_t: ctypes._CFunctionType
-on_sys_socket_enter_t: ctypes._CFunctionType
-on_sys_socket_return_t: ctypes._CFunctionType
-on_sys_socketpair_enter_t: ctypes._CFunctionType
-on_sys_socketpair_return_t: ctypes._CFunctionType
-on_sys_splice_enter_t: ctypes._CFunctionType
-on_sys_splice_return_t: ctypes._CFunctionType
-on_sys_statfs_enter_t: ctypes._CFunctionType
-on_sys_statfs_return_t: ctypes._CFunctionType
-on_sys_statx_enter_t: ctypes._CFunctionType
-on_sys_statx_return_t: ctypes._CFunctionType
-on_sys_swapoff_enter_t: ctypes._CFunctionType
-on_sys_swapoff_return_t: ctypes._CFunctionType
-on_sys_swapon_enter_t: ctypes._CFunctionType
-on_sys_swapon_return_t: ctypes._CFunctionType
-on_sys_symlinkat_enter_t: ctypes._CFunctionType
-on_sys_symlinkat_return_t: ctypes._CFunctionType
-on_sys_sync_enter_t: ctypes._CFunctionType
-on_sys_sync_file_range_enter_t: ctypes._CFunctionType
-on_sys_sync_file_range_return_t: ctypes._CFunctionType
-on_sys_sync_return_t: ctypes._CFunctionType
-on_sys_syncfs_enter_t: ctypes._CFunctionType
-on_sys_syncfs_return_t: ctypes._CFunctionType
-on_sys_sysinfo_enter_t: ctypes._CFunctionType
-on_sys_sysinfo_return_t: ctypes._CFunctionType
-on_sys_syslog_enter_t: ctypes._CFunctionType
-on_sys_syslog_return_t: ctypes._CFunctionType
-on_sys_tee_enter_t: ctypes._CFunctionType
-on_sys_tee_return_t: ctypes._CFunctionType
-on_sys_tgkill_enter_t: ctypes._CFunctionType
-on_sys_tgkill_return_t: ctypes._CFunctionType
-on_sys_timer_create_enter_t: ctypes._CFunctionType
-on_sys_timer_create_return_t: ctypes._CFunctionType
-on_sys_timer_delete_enter_t: ctypes._CFunctionType
-on_sys_timer_delete_return_t: ctypes._CFunctionType
-on_sys_timer_getoverrun_enter_t: ctypes._CFunctionType
-on_sys_timer_getoverrun_return_t: ctypes._CFunctionType
-on_sys_timer_gettime_enter_t: ctypes._CFunctionType
-on_sys_timer_gettime_return_t: ctypes._CFunctionType
-on_sys_timer_settime_enter_t: ctypes._CFunctionType
-on_sys_timer_settime_return_t: ctypes._CFunctionType
-on_sys_timerfd_create_enter_t: ctypes._CFunctionType
-on_sys_timerfd_create_return_t: ctypes._CFunctionType
-on_sys_timerfd_gettime_enter_t: ctypes._CFunctionType
-on_sys_timerfd_gettime_return_t: ctypes._CFunctionType
-on_sys_timerfd_settime_enter_t: ctypes._CFunctionType
-on_sys_timerfd_settime_return_t: ctypes._CFunctionType
-on_sys_times_enter_t: ctypes._CFunctionType
-on_sys_times_return_t: ctypes._CFunctionType
-on_sys_tkill_enter_t: ctypes._CFunctionType
-on_sys_tkill_return_t: ctypes._CFunctionType
-on_sys_truncate_enter_t: ctypes._CFunctionType
-on_sys_truncate_return_t: ctypes._CFunctionType
-on_sys_umask_enter_t: ctypes._CFunctionType
-on_sys_umask_return_t: ctypes._CFunctionType
-on_sys_umount2_enter_t: ctypes._CFunctionType
-on_sys_umount2_return_t: ctypes._CFunctionType
-on_sys_uname_enter_t: ctypes._CFunctionType
-on_sys_uname_return_t: ctypes._CFunctionType
-on_sys_unlinkat_enter_t: ctypes._CFunctionType
-on_sys_unlinkat_return_t: ctypes._CFunctionType
-on_sys_unshare_enter_t: ctypes._CFunctionType
-on_sys_unshare_return_t: ctypes._CFunctionType
-on_sys_userfaultfd_enter_t: ctypes._CFunctionType
-on_sys_userfaultfd_return_t: ctypes._CFunctionType
-on_sys_utimensat_enter_t: ctypes._CFunctionType
-on_sys_utimensat_return_t: ctypes._CFunctionType
-on_sys_vhangup_enter_t: ctypes._CFunctionType
-on_sys_vhangup_return_t: ctypes._CFunctionType
-on_sys_vmsplice_enter_t: ctypes._CFunctionType
-on_sys_vmsplice_return_t: ctypes._CFunctionType
-on_sys_wait4_enter_t: ctypes._CFunctionType
-on_sys_wait4_return_t: ctypes._CFunctionType
-on_sys_waitid_enter_t: ctypes._CFunctionType
-on_sys_waitid_return_t: ctypes._CFunctionType
-on_sys_write_enter_t: ctypes._CFunctionType
-on_sys_write_return_t: ctypes._CFunctionType
-on_sys_writev_enter_t: ctypes._CFunctionType
-on_sys_writev_return_t: ctypes._CFunctionType
-on_taint_change_t: ctypes._CFunctionType
-on_taint_prop_t: ctypes._CFunctionType
-on_task_change_t: ctypes._CFunctionType
-on_thread_end_t: ctypes._CFunctionType
-on_thread_start_t: ctypes._CFunctionType
-on_unknown_sys_enter_t: ctypes._CFunctionType
-on_unknown_sys_return_t: ctypes._CFunctionType
+on_after_load_t: ctypes._CFuncPtr
+on_after_store_t: ctypes._CFuncPtr
+on_all_sys_enter2_t: ctypes._CFuncPtr
+on_all_sys_enter_t: ctypes._CFuncPtr
+on_all_sys_return2_t: ctypes._CFuncPtr
+on_all_sys_return_t: ctypes._CFuncPtr
+on_branch2_t: ctypes._CFuncPtr
+on_branch_t: ctypes._CFuncPtr
+on_call_match_num_t: ctypes._CFuncPtr
+on_call_match_str_t: ctypes._CFuncPtr
+on_call_t: ctypes._CFuncPtr
+on_get_current_process_handle_t: ctypes._CFuncPtr
+on_get_current_process_t: ctypes._CFuncPtr
+on_get_current_thread_t: ctypes._CFuncPtr
+on_get_file_mappings_t: ctypes._CFuncPtr
+on_get_heap_mappings_t: ctypes._CFuncPtr
+on_get_mapping_base_address_by_name_t: ctypes._CFuncPtr
+on_get_mapping_by_addr_t: ctypes._CFuncPtr
+on_get_mappings_t: ctypes._CFuncPtr
+on_get_modules_t: ctypes._CFuncPtr
+on_get_proc_mem_t: ctypes._CFuncPtr
+on_get_process_handles_t: ctypes._CFuncPtr
+on_get_process_pid_t: ctypes._CFuncPtr
+on_get_process_ppid_t: ctypes._CFuncPtr
+on_get_process_t: ctypes._CFuncPtr
+on_get_processes_t: ctypes._CFuncPtr
+on_get_stack_mappings_t: ctypes._CFuncPtr
+on_get_unknown_mappings_t: ctypes._CFuncPtr
+on_has_mapping_prefix_t: ctypes._CFuncPtr
+on_indirect_jump_t: ctypes._CFuncPtr
+on_mmap_updated_t: ctypes._CFuncPtr
+on_process_end_t: ctypes._CFuncPtr
+on_process_start_t: ctypes._CFuncPtr
+on_ptr_load_t: ctypes._CFuncPtr
+on_ptr_store_t: ctypes._CFuncPtr
+on_rec_auxv_t: ctypes._CFuncPtr
+on_ret_t: ctypes._CFuncPtr
+on_ssm_t: ctypes._CFuncPtr
+on_sys_accept4_enter_t: ctypes._CFuncPtr
+on_sys_accept4_return_t: ctypes._CFuncPtr
+on_sys_accept_enter_t: ctypes._CFuncPtr
+on_sys_accept_return_t: ctypes._CFuncPtr
+on_sys_acct_enter_t: ctypes._CFuncPtr
+on_sys_acct_return_t: ctypes._CFuncPtr
+on_sys_add_key_enter_t: ctypes._CFuncPtr
+on_sys_add_key_return_t: ctypes._CFuncPtr
+on_sys_adjtimex_enter_t: ctypes._CFuncPtr
+on_sys_adjtimex_return_t: ctypes._CFuncPtr
+on_sys_bind_enter_t: ctypes._CFuncPtr
+on_sys_bind_return_t: ctypes._CFuncPtr
+on_sys_bpf_enter_t: ctypes._CFuncPtr
+on_sys_bpf_return_t: ctypes._CFuncPtr
+on_sys_brk_enter_t: ctypes._CFuncPtr
+on_sys_brk_return_t: ctypes._CFuncPtr
+on_sys_capget_enter_t: ctypes._CFuncPtr
+on_sys_capget_return_t: ctypes._CFuncPtr
+on_sys_capset_enter_t: ctypes._CFuncPtr
+on_sys_capset_return_t: ctypes._CFuncPtr
+on_sys_chdir_enter_t: ctypes._CFuncPtr
+on_sys_chdir_return_t: ctypes._CFuncPtr
+on_sys_chroot_enter_t: ctypes._CFuncPtr
+on_sys_chroot_return_t: ctypes._CFuncPtr
+on_sys_clock_adjtime_enter_t: ctypes._CFuncPtr
+on_sys_clock_adjtime_return_t: ctypes._CFuncPtr
+on_sys_clock_getres_enter_t: ctypes._CFuncPtr
+on_sys_clock_getres_return_t: ctypes._CFuncPtr
+on_sys_clock_gettime_enter_t: ctypes._CFuncPtr
+on_sys_clock_gettime_return_t: ctypes._CFuncPtr
+on_sys_clock_nanosleep_enter_t: ctypes._CFuncPtr
+on_sys_clock_nanosleep_return_t: ctypes._CFuncPtr
+on_sys_clock_settime_enter_t: ctypes._CFuncPtr
+on_sys_clock_settime_return_t: ctypes._CFuncPtr
+on_sys_clone3_enter_t: ctypes._CFuncPtr
+on_sys_clone3_return_t: ctypes._CFuncPtr
+on_sys_clone_enter_t: ctypes._CFuncPtr
+on_sys_clone_return_t: ctypes._CFuncPtr
+on_sys_close_enter_t: ctypes._CFuncPtr
+on_sys_close_return_t: ctypes._CFuncPtr
+on_sys_connect_enter_t: ctypes._CFuncPtr
+on_sys_connect_return_t: ctypes._CFuncPtr
+on_sys_copy_file_range_enter_t: ctypes._CFuncPtr
+on_sys_copy_file_range_return_t: ctypes._CFuncPtr
+on_sys_delete_module_enter_t: ctypes._CFuncPtr
+on_sys_delete_module_return_t: ctypes._CFuncPtr
+on_sys_dup3_enter_t: ctypes._CFuncPtr
+on_sys_dup3_return_t: ctypes._CFuncPtr
+on_sys_dup_enter_t: ctypes._CFuncPtr
+on_sys_dup_return_t: ctypes._CFuncPtr
+on_sys_epoll_create1_enter_t: ctypes._CFuncPtr
+on_sys_epoll_create1_return_t: ctypes._CFuncPtr
+on_sys_epoll_ctl_enter_t: ctypes._CFuncPtr
+on_sys_epoll_ctl_return_t: ctypes._CFuncPtr
+on_sys_epoll_pwait_enter_t: ctypes._CFuncPtr
+on_sys_epoll_pwait_return_t: ctypes._CFuncPtr
+on_sys_eventfd2_enter_t: ctypes._CFuncPtr
+on_sys_eventfd2_return_t: ctypes._CFuncPtr
+on_sys_execve_enter_t: ctypes._CFuncPtr
+on_sys_execve_return_t: ctypes._CFuncPtr
+on_sys_execveat_enter_t: ctypes._CFuncPtr
+on_sys_execveat_return_t: ctypes._CFuncPtr
+on_sys_exit_enter_t: ctypes._CFuncPtr
+on_sys_exit_group_enter_t: ctypes._CFuncPtr
+on_sys_exit_group_return_t: ctypes._CFuncPtr
+on_sys_exit_return_t: ctypes._CFuncPtr
+on_sys_faccessat2_enter_t: ctypes._CFuncPtr
+on_sys_faccessat2_return_t: ctypes._CFuncPtr
+on_sys_faccessat_enter_t: ctypes._CFuncPtr
+on_sys_faccessat_return_t: ctypes._CFuncPtr
+on_sys_fadvise64_enter_t: ctypes._CFuncPtr
+on_sys_fadvise64_return_t: ctypes._CFuncPtr
+on_sys_fallocate_enter_t: ctypes._CFuncPtr
+on_sys_fallocate_return_t: ctypes._CFuncPtr
+on_sys_fanotify_init_enter_t: ctypes._CFuncPtr
+on_sys_fanotify_init_return_t: ctypes._CFuncPtr
+on_sys_fanotify_mark_enter_t: ctypes._CFuncPtr
+on_sys_fanotify_mark_return_t: ctypes._CFuncPtr
+on_sys_fchdir_enter_t: ctypes._CFuncPtr
+on_sys_fchdir_return_t: ctypes._CFuncPtr
+on_sys_fchmod_enter_t: ctypes._CFuncPtr
+on_sys_fchmod_return_t: ctypes._CFuncPtr
+on_sys_fchmodat_enter_t: ctypes._CFuncPtr
+on_sys_fchmodat_return_t: ctypes._CFuncPtr
+on_sys_fchown_enter_t: ctypes._CFuncPtr
+on_sys_fchown_return_t: ctypes._CFuncPtr
+on_sys_fchownat_enter_t: ctypes._CFuncPtr
+on_sys_fchownat_return_t: ctypes._CFuncPtr
+on_sys_fcntl_enter_t: ctypes._CFuncPtr
+on_sys_fcntl_return_t: ctypes._CFuncPtr
+on_sys_fdatasync_enter_t: ctypes._CFuncPtr
+on_sys_fdatasync_return_t: ctypes._CFuncPtr
+on_sys_fgetxattr_enter_t: ctypes._CFuncPtr
+on_sys_fgetxattr_return_t: ctypes._CFuncPtr
+on_sys_finit_module_enter_t: ctypes._CFuncPtr
+on_sys_finit_module_return_t: ctypes._CFuncPtr
+on_sys_flistxattr_enter_t: ctypes._CFuncPtr
+on_sys_flistxattr_return_t: ctypes._CFuncPtr
+on_sys_flock_enter_t: ctypes._CFuncPtr
+on_sys_flock_return_t: ctypes._CFuncPtr
+on_sys_fremovexattr_enter_t: ctypes._CFuncPtr
+on_sys_fremovexattr_return_t: ctypes._CFuncPtr
+on_sys_fsetxattr_enter_t: ctypes._CFuncPtr
+on_sys_fsetxattr_return_t: ctypes._CFuncPtr
+on_sys_fstat_enter_t: ctypes._CFuncPtr
+on_sys_fstat_return_t: ctypes._CFuncPtr
+on_sys_fstatfs_enter_t: ctypes._CFuncPtr
+on_sys_fstatfs_return_t: ctypes._CFuncPtr
+on_sys_fsync_enter_t: ctypes._CFuncPtr
+on_sys_fsync_return_t: ctypes._CFuncPtr
+on_sys_ftruncate_enter_t: ctypes._CFuncPtr
+on_sys_ftruncate_return_t: ctypes._CFuncPtr
+on_sys_futex_enter_t: ctypes._CFuncPtr
+on_sys_futex_return_t: ctypes._CFuncPtr
+on_sys_get_mempolicy_enter_t: ctypes._CFuncPtr
+on_sys_get_mempolicy_return_t: ctypes._CFuncPtr
+on_sys_get_robust_list_enter_t: ctypes._CFuncPtr
+on_sys_get_robust_list_return_t: ctypes._CFuncPtr
+on_sys_getcpu_enter_t: ctypes._CFuncPtr
+on_sys_getcpu_return_t: ctypes._CFuncPtr
+on_sys_getcwd_enter_t: ctypes._CFuncPtr
+on_sys_getcwd_return_t: ctypes._CFuncPtr
+on_sys_getdents64_enter_t: ctypes._CFuncPtr
+on_sys_getdents64_return_t: ctypes._CFuncPtr
+on_sys_getegid_enter_t: ctypes._CFuncPtr
+on_sys_getegid_return_t: ctypes._CFuncPtr
+on_sys_geteuid_enter_t: ctypes._CFuncPtr
+on_sys_geteuid_return_t: ctypes._CFuncPtr
+on_sys_getgid_enter_t: ctypes._CFuncPtr
+on_sys_getgid_return_t: ctypes._CFuncPtr
+on_sys_getgroups_enter_t: ctypes._CFuncPtr
+on_sys_getgroups_return_t: ctypes._CFuncPtr
+on_sys_getitimer_enter_t: ctypes._CFuncPtr
+on_sys_getitimer_return_t: ctypes._CFuncPtr
+on_sys_getpeername_enter_t: ctypes._CFuncPtr
+on_sys_getpeername_return_t: ctypes._CFuncPtr
+on_sys_getpgid_enter_t: ctypes._CFuncPtr
+on_sys_getpgid_return_t: ctypes._CFuncPtr
+on_sys_getpid_enter_t: ctypes._CFuncPtr
+on_sys_getpid_return_t: ctypes._CFuncPtr
+on_sys_getppid_enter_t: ctypes._CFuncPtr
+on_sys_getppid_return_t: ctypes._CFuncPtr
+on_sys_getpriority_enter_t: ctypes._CFuncPtr
+on_sys_getpriority_return_t: ctypes._CFuncPtr
+on_sys_getrandom_enter_t: ctypes._CFuncPtr
+on_sys_getrandom_return_t: ctypes._CFuncPtr
+on_sys_getresgid_enter_t: ctypes._CFuncPtr
+on_sys_getresgid_return_t: ctypes._CFuncPtr
+on_sys_getresuid_enter_t: ctypes._CFuncPtr
+on_sys_getresuid_return_t: ctypes._CFuncPtr
+on_sys_getrlimit_enter_t: ctypes._CFuncPtr
+on_sys_getrlimit_return_t: ctypes._CFuncPtr
+on_sys_getrusage_enter_t: ctypes._CFuncPtr
+on_sys_getrusage_return_t: ctypes._CFuncPtr
+on_sys_getsid_enter_t: ctypes._CFuncPtr
+on_sys_getsid_return_t: ctypes._CFuncPtr
+on_sys_getsockname_enter_t: ctypes._CFuncPtr
+on_sys_getsockname_return_t: ctypes._CFuncPtr
+on_sys_getsockopt_enter_t: ctypes._CFuncPtr
+on_sys_getsockopt_return_t: ctypes._CFuncPtr
+on_sys_gettid_enter_t: ctypes._CFuncPtr
+on_sys_gettid_return_t: ctypes._CFuncPtr
+on_sys_gettimeofday_enter_t: ctypes._CFuncPtr
+on_sys_gettimeofday_return_t: ctypes._CFuncPtr
+on_sys_getuid_enter_t: ctypes._CFuncPtr
+on_sys_getuid_return_t: ctypes._CFuncPtr
+on_sys_getxattr_enter_t: ctypes._CFuncPtr
+on_sys_getxattr_return_t: ctypes._CFuncPtr
+on_sys_init_module_enter_t: ctypes._CFuncPtr
+on_sys_init_module_return_t: ctypes._CFuncPtr
+on_sys_inotify_add_watch_enter_t: ctypes._CFuncPtr
+on_sys_inotify_add_watch_return_t: ctypes._CFuncPtr
+on_sys_inotify_init1_enter_t: ctypes._CFuncPtr
+on_sys_inotify_init1_return_t: ctypes._CFuncPtr
+on_sys_inotify_rm_watch_enter_t: ctypes._CFuncPtr
+on_sys_inotify_rm_watch_return_t: ctypes._CFuncPtr
+on_sys_io_cancel_enter_t: ctypes._CFuncPtr
+on_sys_io_cancel_return_t: ctypes._CFuncPtr
+on_sys_io_destroy_enter_t: ctypes._CFuncPtr
+on_sys_io_destroy_return_t: ctypes._CFuncPtr
+on_sys_io_getevents_enter_t: ctypes._CFuncPtr
+on_sys_io_getevents_return_t: ctypes._CFuncPtr
+on_sys_io_setup_enter_t: ctypes._CFuncPtr
+on_sys_io_setup_return_t: ctypes._CFuncPtr
+on_sys_io_submit_enter_t: ctypes._CFuncPtr
+on_sys_io_submit_return_t: ctypes._CFuncPtr
+on_sys_ioctl_enter_t: ctypes._CFuncPtr
+on_sys_ioctl_return_t: ctypes._CFuncPtr
+on_sys_ioprio_get_enter_t: ctypes._CFuncPtr
+on_sys_ioprio_get_return_t: ctypes._CFuncPtr
+on_sys_ioprio_set_enter_t: ctypes._CFuncPtr
+on_sys_ioprio_set_return_t: ctypes._CFuncPtr
+on_sys_kcmp_enter_t: ctypes._CFuncPtr
+on_sys_kcmp_return_t: ctypes._CFuncPtr
+on_sys_kexec_file_load_enter_t: ctypes._CFuncPtr
+on_sys_kexec_file_load_return_t: ctypes._CFuncPtr
+on_sys_kexec_load_enter_t: ctypes._CFuncPtr
+on_sys_kexec_load_return_t: ctypes._CFuncPtr
+on_sys_keyctl_enter_t: ctypes._CFuncPtr
+on_sys_keyctl_return_t: ctypes._CFuncPtr
+on_sys_kill_enter_t: ctypes._CFuncPtr
+on_sys_kill_return_t: ctypes._CFuncPtr
+on_sys_lgetxattr_enter_t: ctypes._CFuncPtr
+on_sys_lgetxattr_return_t: ctypes._CFuncPtr
+on_sys_linkat_enter_t: ctypes._CFuncPtr
+on_sys_linkat_return_t: ctypes._CFuncPtr
+on_sys_listen_enter_t: ctypes._CFuncPtr
+on_sys_listen_return_t: ctypes._CFuncPtr
+on_sys_listxattr_enter_t: ctypes._CFuncPtr
+on_sys_listxattr_return_t: ctypes._CFuncPtr
+on_sys_llistxattr_enter_t: ctypes._CFuncPtr
+on_sys_llistxattr_return_t: ctypes._CFuncPtr
+on_sys_lookup_dcookie_enter_t: ctypes._CFuncPtr
+on_sys_lookup_dcookie_return_t: ctypes._CFuncPtr
+on_sys_lremovexattr_enter_t: ctypes._CFuncPtr
+on_sys_lremovexattr_return_t: ctypes._CFuncPtr
+on_sys_lseek_enter_t: ctypes._CFuncPtr
+on_sys_lseek_return_t: ctypes._CFuncPtr
+on_sys_lsetxattr_enter_t: ctypes._CFuncPtr
+on_sys_lsetxattr_return_t: ctypes._CFuncPtr
+on_sys_madvise_enter_t: ctypes._CFuncPtr
+on_sys_madvise_return_t: ctypes._CFuncPtr
+on_sys_mbind_enter_t: ctypes._CFuncPtr
+on_sys_mbind_return_t: ctypes._CFuncPtr
+on_sys_membarrier_enter_t: ctypes._CFuncPtr
+on_sys_membarrier_return_t: ctypes._CFuncPtr
+on_sys_memfd_create_enter_t: ctypes._CFuncPtr
+on_sys_memfd_create_return_t: ctypes._CFuncPtr
+on_sys_migrate_pages_enter_t: ctypes._CFuncPtr
+on_sys_migrate_pages_return_t: ctypes._CFuncPtr
+on_sys_mincore_enter_t: ctypes._CFuncPtr
+on_sys_mincore_return_t: ctypes._CFuncPtr
+on_sys_mkdirat_enter_t: ctypes._CFuncPtr
+on_sys_mkdirat_return_t: ctypes._CFuncPtr
+on_sys_mknodat_enter_t: ctypes._CFuncPtr
+on_sys_mknodat_return_t: ctypes._CFuncPtr
+on_sys_mlock2_enter_t: ctypes._CFuncPtr
+on_sys_mlock2_return_t: ctypes._CFuncPtr
+on_sys_mlock_enter_t: ctypes._CFuncPtr
+on_sys_mlock_return_t: ctypes._CFuncPtr
+on_sys_mlockall_enter_t: ctypes._CFuncPtr
+on_sys_mlockall_return_t: ctypes._CFuncPtr
+on_sys_mmap_enter_t: ctypes._CFuncPtr
+on_sys_mmap_return_t: ctypes._CFuncPtr
+on_sys_mount_enter_t: ctypes._CFuncPtr
+on_sys_mount_return_t: ctypes._CFuncPtr
+on_sys_move_pages_enter_t: ctypes._CFuncPtr
+on_sys_move_pages_return_t: ctypes._CFuncPtr
+on_sys_mprotect_enter_t: ctypes._CFuncPtr
+on_sys_mprotect_return_t: ctypes._CFuncPtr
+on_sys_mq_getsetattr_enter_t: ctypes._CFuncPtr
+on_sys_mq_getsetattr_return_t: ctypes._CFuncPtr
+on_sys_mq_notify_enter_t: ctypes._CFuncPtr
+on_sys_mq_notify_return_t: ctypes._CFuncPtr
+on_sys_mq_open_enter_t: ctypes._CFuncPtr
+on_sys_mq_open_return_t: ctypes._CFuncPtr
+on_sys_mq_timedreceive_enter_t: ctypes._CFuncPtr
+on_sys_mq_timedreceive_return_t: ctypes._CFuncPtr
+on_sys_mq_timedsend_enter_t: ctypes._CFuncPtr
+on_sys_mq_timedsend_return_t: ctypes._CFuncPtr
+on_sys_mq_unlink_enter_t: ctypes._CFuncPtr
+on_sys_mq_unlink_return_t: ctypes._CFuncPtr
+on_sys_mremap_enter_t: ctypes._CFuncPtr
+on_sys_mremap_return_t: ctypes._CFuncPtr
+on_sys_msgctl_enter_t: ctypes._CFuncPtr
+on_sys_msgctl_return_t: ctypes._CFuncPtr
+on_sys_msgget_enter_t: ctypes._CFuncPtr
+on_sys_msgget_return_t: ctypes._CFuncPtr
+on_sys_msgrcv_enter_t: ctypes._CFuncPtr
+on_sys_msgrcv_return_t: ctypes._CFuncPtr
+on_sys_msgsnd_enter_t: ctypes._CFuncPtr
+on_sys_msgsnd_return_t: ctypes._CFuncPtr
+on_sys_msync_enter_t: ctypes._CFuncPtr
+on_sys_msync_return_t: ctypes._CFuncPtr
+on_sys_munlock_enter_t: ctypes._CFuncPtr
+on_sys_munlock_return_t: ctypes._CFuncPtr
+on_sys_munlockall_enter_t: ctypes._CFuncPtr
+on_sys_munlockall_return_t: ctypes._CFuncPtr
+on_sys_munmap_enter_t: ctypes._CFuncPtr
+on_sys_munmap_return_t: ctypes._CFuncPtr
+on_sys_name_to_handle_at_enter_t: ctypes._CFuncPtr
+on_sys_name_to_handle_at_return_t: ctypes._CFuncPtr
+on_sys_nanosleep_enter_t: ctypes._CFuncPtr
+on_sys_nanosleep_return_t: ctypes._CFuncPtr
+on_sys_newfstatat_enter_t: ctypes._CFuncPtr
+on_sys_newfstatat_return_t: ctypes._CFuncPtr
+on_sys_nfsservctl_enter_t: ctypes._CFuncPtr
+on_sys_nfsservctl_return_t: ctypes._CFuncPtr
+on_sys_open_by_handle_at_enter_t: ctypes._CFuncPtr
+on_sys_open_by_handle_at_return_t: ctypes._CFuncPtr
+on_sys_openat2_enter_t: ctypes._CFuncPtr
+on_sys_openat2_return_t: ctypes._CFuncPtr
+on_sys_openat_enter_t: ctypes._CFuncPtr
+on_sys_openat_return_t: ctypes._CFuncPtr
+on_sys_perf_event_open_enter_t: ctypes._CFuncPtr
+on_sys_perf_event_open_return_t: ctypes._CFuncPtr
+on_sys_personality_enter_t: ctypes._CFuncPtr
+on_sys_personality_return_t: ctypes._CFuncPtr
+on_sys_pidfd_getfd_enter_t: ctypes._CFuncPtr
+on_sys_pidfd_getfd_return_t: ctypes._CFuncPtr
+on_sys_pidfd_open_enter_t: ctypes._CFuncPtr
+on_sys_pidfd_open_return_t: ctypes._CFuncPtr
+on_sys_pidfd_send_signal_enter_t: ctypes._CFuncPtr
+on_sys_pidfd_send_signal_return_t: ctypes._CFuncPtr
+on_sys_pipe2_enter_t: ctypes._CFuncPtr
+on_sys_pipe2_return_t: ctypes._CFuncPtr
+on_sys_pivot_root_enter_t: ctypes._CFuncPtr
+on_sys_pivot_root_return_t: ctypes._CFuncPtr
+on_sys_pkey_alloc_enter_t: ctypes._CFuncPtr
+on_sys_pkey_alloc_return_t: ctypes._CFuncPtr
+on_sys_pkey_free_enter_t: ctypes._CFuncPtr
+on_sys_pkey_free_return_t: ctypes._CFuncPtr
+on_sys_pkey_mprotect_enter_t: ctypes._CFuncPtr
+on_sys_pkey_mprotect_return_t: ctypes._CFuncPtr
+on_sys_ppoll_enter_t: ctypes._CFuncPtr
+on_sys_ppoll_return_t: ctypes._CFuncPtr
+on_sys_prctl_enter_t: ctypes._CFuncPtr
+on_sys_prctl_return_t: ctypes._CFuncPtr
+on_sys_pread64_enter_t: ctypes._CFuncPtr
+on_sys_pread64_return_t: ctypes._CFuncPtr
+on_sys_preadv2_enter_t: ctypes._CFuncPtr
+on_sys_preadv2_return_t: ctypes._CFuncPtr
+on_sys_preadv_enter_t: ctypes._CFuncPtr
+on_sys_preadv_return_t: ctypes._CFuncPtr
+on_sys_prlimit64_enter_t: ctypes._CFuncPtr
+on_sys_prlimit64_return_t: ctypes._CFuncPtr
+on_sys_process_vm_readv_enter_t: ctypes._CFuncPtr
+on_sys_process_vm_readv_return_t: ctypes._CFuncPtr
+on_sys_process_vm_writev_enter_t: ctypes._CFuncPtr
+on_sys_process_vm_writev_return_t: ctypes._CFuncPtr
+on_sys_pselect6_enter_t: ctypes._CFuncPtr
+on_sys_pselect6_return_t: ctypes._CFuncPtr
+on_sys_ptrace_enter_t: ctypes._CFuncPtr
+on_sys_ptrace_return_t: ctypes._CFuncPtr
+on_sys_pwrite64_enter_t: ctypes._CFuncPtr
+on_sys_pwrite64_return_t: ctypes._CFuncPtr
+on_sys_pwritev2_enter_t: ctypes._CFuncPtr
+on_sys_pwritev2_return_t: ctypes._CFuncPtr
+on_sys_pwritev_enter_t: ctypes._CFuncPtr
+on_sys_pwritev_return_t: ctypes._CFuncPtr
+on_sys_quotactl_enter_t: ctypes._CFuncPtr
+on_sys_quotactl_return_t: ctypes._CFuncPtr
+on_sys_read_enter_t: ctypes._CFuncPtr
+on_sys_read_return_t: ctypes._CFuncPtr
+on_sys_readahead_enter_t: ctypes._CFuncPtr
+on_sys_readahead_return_t: ctypes._CFuncPtr
+on_sys_readlinkat_enter_t: ctypes._CFuncPtr
+on_sys_readlinkat_return_t: ctypes._CFuncPtr
+on_sys_readv_enter_t: ctypes._CFuncPtr
+on_sys_readv_return_t: ctypes._CFuncPtr
+on_sys_reboot_enter_t: ctypes._CFuncPtr
+on_sys_reboot_return_t: ctypes._CFuncPtr
+on_sys_recvfrom_enter_t: ctypes._CFuncPtr
+on_sys_recvfrom_return_t: ctypes._CFuncPtr
+on_sys_recvmmsg_enter_t: ctypes._CFuncPtr
+on_sys_recvmmsg_return_t: ctypes._CFuncPtr
+on_sys_recvmsg_enter_t: ctypes._CFuncPtr
+on_sys_recvmsg_return_t: ctypes._CFuncPtr
+on_sys_remap_file_pages_enter_t: ctypes._CFuncPtr
+on_sys_remap_file_pages_return_t: ctypes._CFuncPtr
+on_sys_removexattr_enter_t: ctypes._CFuncPtr
+on_sys_removexattr_return_t: ctypes._CFuncPtr
+on_sys_renameat2_enter_t: ctypes._CFuncPtr
+on_sys_renameat2_return_t: ctypes._CFuncPtr
+on_sys_renameat_enter_t: ctypes._CFuncPtr
+on_sys_renameat_return_t: ctypes._CFuncPtr
+on_sys_request_key_enter_t: ctypes._CFuncPtr
+on_sys_request_key_return_t: ctypes._CFuncPtr
+on_sys_restart_syscall_enter_t: ctypes._CFuncPtr
+on_sys_restart_syscall_return_t: ctypes._CFuncPtr
+on_sys_rt_sigaction_enter_t: ctypes._CFuncPtr
+on_sys_rt_sigaction_return_t: ctypes._CFuncPtr
+on_sys_rt_sigpending_enter_t: ctypes._CFuncPtr
+on_sys_rt_sigpending_return_t: ctypes._CFuncPtr
+on_sys_rt_sigprocmask_enter_t: ctypes._CFuncPtr
+on_sys_rt_sigprocmask_return_t: ctypes._CFuncPtr
+on_sys_rt_sigqueueinfo_enter_t: ctypes._CFuncPtr
+on_sys_rt_sigqueueinfo_return_t: ctypes._CFuncPtr
+on_sys_rt_sigreturn_enter_t: ctypes._CFuncPtr
+on_sys_rt_sigreturn_return_t: ctypes._CFuncPtr
+on_sys_rt_sigsuspend_enter_t: ctypes._CFuncPtr
+on_sys_rt_sigsuspend_return_t: ctypes._CFuncPtr
+on_sys_rt_sigtimedwait_enter_t: ctypes._CFuncPtr
+on_sys_rt_sigtimedwait_return_t: ctypes._CFuncPtr
+on_sys_rt_tgsigqueueinfo_enter_t: ctypes._CFuncPtr
+on_sys_rt_tgsigqueueinfo_return_t: ctypes._CFuncPtr
+on_sys_sched_get_priority_max_enter_t: ctypes._CFuncPtr
+on_sys_sched_get_priority_max_return_t: ctypes._CFuncPtr
+on_sys_sched_get_priority_min_enter_t: ctypes._CFuncPtr
+on_sys_sched_get_priority_min_return_t: ctypes._CFuncPtr
+on_sys_sched_getaffinity_enter_t: ctypes._CFuncPtr
+on_sys_sched_getaffinity_return_t: ctypes._CFuncPtr
+on_sys_sched_getattr_enter_t: ctypes._CFuncPtr
+on_sys_sched_getattr_return_t: ctypes._CFuncPtr
+on_sys_sched_getparam_enter_t: ctypes._CFuncPtr
+on_sys_sched_getparam_return_t: ctypes._CFuncPtr
+on_sys_sched_getscheduler_enter_t: ctypes._CFuncPtr
+on_sys_sched_getscheduler_return_t: ctypes._CFuncPtr
+on_sys_sched_rr_get_interval_enter_t: ctypes._CFuncPtr
+on_sys_sched_rr_get_interval_return_t: ctypes._CFuncPtr
+on_sys_sched_setaffinity_enter_t: ctypes._CFuncPtr
+on_sys_sched_setaffinity_return_t: ctypes._CFuncPtr
+on_sys_sched_setattr_enter_t: ctypes._CFuncPtr
+on_sys_sched_setattr_return_t: ctypes._CFuncPtr
+on_sys_sched_setparam_enter_t: ctypes._CFuncPtr
+on_sys_sched_setparam_return_t: ctypes._CFuncPtr
+on_sys_sched_setscheduler_enter_t: ctypes._CFuncPtr
+on_sys_sched_setscheduler_return_t: ctypes._CFuncPtr
+on_sys_sched_yield_enter_t: ctypes._CFuncPtr
+on_sys_sched_yield_return_t: ctypes._CFuncPtr
+on_sys_seccomp_enter_t: ctypes._CFuncPtr
+on_sys_seccomp_return_t: ctypes._CFuncPtr
+on_sys_semctl_enter_t: ctypes._CFuncPtr
+on_sys_semctl_return_t: ctypes._CFuncPtr
+on_sys_semget_enter_t: ctypes._CFuncPtr
+on_sys_semget_return_t: ctypes._CFuncPtr
+on_sys_semop_enter_t: ctypes._CFuncPtr
+on_sys_semop_return_t: ctypes._CFuncPtr
+on_sys_semtimedop_enter_t: ctypes._CFuncPtr
+on_sys_semtimedop_return_t: ctypes._CFuncPtr
+on_sys_sendfile_enter_t: ctypes._CFuncPtr
+on_sys_sendfile_return_t: ctypes._CFuncPtr
+on_sys_sendmmsg_enter_t: ctypes._CFuncPtr
+on_sys_sendmmsg_return_t: ctypes._CFuncPtr
+on_sys_sendmsg_enter_t: ctypes._CFuncPtr
+on_sys_sendmsg_return_t: ctypes._CFuncPtr
+on_sys_sendto_enter_t: ctypes._CFuncPtr
+on_sys_sendto_return_t: ctypes._CFuncPtr
+on_sys_set_mempolicy_enter_t: ctypes._CFuncPtr
+on_sys_set_mempolicy_return_t: ctypes._CFuncPtr
+on_sys_set_robust_list_enter_t: ctypes._CFuncPtr
+on_sys_set_robust_list_return_t: ctypes._CFuncPtr
+on_sys_set_tid_address_enter_t: ctypes._CFuncPtr
+on_sys_set_tid_address_return_t: ctypes._CFuncPtr
+on_sys_setdomainname_enter_t: ctypes._CFuncPtr
+on_sys_setdomainname_return_t: ctypes._CFuncPtr
+on_sys_setfsgid_enter_t: ctypes._CFuncPtr
+on_sys_setfsgid_return_t: ctypes._CFuncPtr
+on_sys_setfsuid_enter_t: ctypes._CFuncPtr
+on_sys_setfsuid_return_t: ctypes._CFuncPtr
+on_sys_setgid_enter_t: ctypes._CFuncPtr
+on_sys_setgid_return_t: ctypes._CFuncPtr
+on_sys_setgroups_enter_t: ctypes._CFuncPtr
+on_sys_setgroups_return_t: ctypes._CFuncPtr
+on_sys_sethostname_enter_t: ctypes._CFuncPtr
+on_sys_sethostname_return_t: ctypes._CFuncPtr
+on_sys_setitimer_enter_t: ctypes._CFuncPtr
+on_sys_setitimer_return_t: ctypes._CFuncPtr
+on_sys_setns_enter_t: ctypes._CFuncPtr
+on_sys_setns_return_t: ctypes._CFuncPtr
+on_sys_setpgid_enter_t: ctypes._CFuncPtr
+on_sys_setpgid_return_t: ctypes._CFuncPtr
+on_sys_setpriority_enter_t: ctypes._CFuncPtr
+on_sys_setpriority_return_t: ctypes._CFuncPtr
+on_sys_setregid_enter_t: ctypes._CFuncPtr
+on_sys_setregid_return_t: ctypes._CFuncPtr
+on_sys_setresgid_enter_t: ctypes._CFuncPtr
+on_sys_setresgid_return_t: ctypes._CFuncPtr
+on_sys_setresuid_enter_t: ctypes._CFuncPtr
+on_sys_setresuid_return_t: ctypes._CFuncPtr
+on_sys_setreuid_enter_t: ctypes._CFuncPtr
+on_sys_setreuid_return_t: ctypes._CFuncPtr
+on_sys_setrlimit_enter_t: ctypes._CFuncPtr
+on_sys_setrlimit_return_t: ctypes._CFuncPtr
+on_sys_setsid_enter_t: ctypes._CFuncPtr
+on_sys_setsid_return_t: ctypes._CFuncPtr
+on_sys_setsockopt_enter_t: ctypes._CFuncPtr
+on_sys_setsockopt_return_t: ctypes._CFuncPtr
+on_sys_settimeofday_enter_t: ctypes._CFuncPtr
+on_sys_settimeofday_return_t: ctypes._CFuncPtr
+on_sys_setuid_enter_t: ctypes._CFuncPtr
+on_sys_setuid_return_t: ctypes._CFuncPtr
+on_sys_setxattr_enter_t: ctypes._CFuncPtr
+on_sys_setxattr_return_t: ctypes._CFuncPtr
+on_sys_shmat_enter_t: ctypes._CFuncPtr
+on_sys_shmat_return_t: ctypes._CFuncPtr
+on_sys_shmctl_enter_t: ctypes._CFuncPtr
+on_sys_shmctl_return_t: ctypes._CFuncPtr
+on_sys_shmdt_enter_t: ctypes._CFuncPtr
+on_sys_shmdt_return_t: ctypes._CFuncPtr
+on_sys_shmget_enter_t: ctypes._CFuncPtr
+on_sys_shmget_return_t: ctypes._CFuncPtr
+on_sys_shutdown_enter_t: ctypes._CFuncPtr
+on_sys_shutdown_return_t: ctypes._CFuncPtr
+on_sys_sigaltstack_enter_t: ctypes._CFuncPtr
+on_sys_sigaltstack_return_t: ctypes._CFuncPtr
+on_sys_signalfd4_enter_t: ctypes._CFuncPtr
+on_sys_signalfd4_return_t: ctypes._CFuncPtr
+on_sys_socket_enter_t: ctypes._CFuncPtr
+on_sys_socket_return_t: ctypes._CFuncPtr
+on_sys_socketpair_enter_t: ctypes._CFuncPtr
+on_sys_socketpair_return_t: ctypes._CFuncPtr
+on_sys_splice_enter_t: ctypes._CFuncPtr
+on_sys_splice_return_t: ctypes._CFuncPtr
+on_sys_statfs_enter_t: ctypes._CFuncPtr
+on_sys_statfs_return_t: ctypes._CFuncPtr
+on_sys_statx_enter_t: ctypes._CFuncPtr
+on_sys_statx_return_t: ctypes._CFuncPtr
+on_sys_swapoff_enter_t: ctypes._CFuncPtr
+on_sys_swapoff_return_t: ctypes._CFuncPtr
+on_sys_swapon_enter_t: ctypes._CFuncPtr
+on_sys_swapon_return_t: ctypes._CFuncPtr
+on_sys_symlinkat_enter_t: ctypes._CFuncPtr
+on_sys_symlinkat_return_t: ctypes._CFuncPtr
+on_sys_sync_enter_t: ctypes._CFuncPtr
+on_sys_sync_file_range_enter_t: ctypes._CFuncPtr
+on_sys_sync_file_range_return_t: ctypes._CFuncPtr
+on_sys_sync_return_t: ctypes._CFuncPtr
+on_sys_syncfs_enter_t: ctypes._CFuncPtr
+on_sys_syncfs_return_t: ctypes._CFuncPtr
+on_sys_sysinfo_enter_t: ctypes._CFuncPtr
+on_sys_sysinfo_return_t: ctypes._CFuncPtr
+on_sys_syslog_enter_t: ctypes._CFuncPtr
+on_sys_syslog_return_t: ctypes._CFuncPtr
+on_sys_tee_enter_t: ctypes._CFuncPtr
+on_sys_tee_return_t: ctypes._CFuncPtr
+on_sys_tgkill_enter_t: ctypes._CFuncPtr
+on_sys_tgkill_return_t: ctypes._CFuncPtr
+on_sys_timer_create_enter_t: ctypes._CFuncPtr
+on_sys_timer_create_return_t: ctypes._CFuncPtr
+on_sys_timer_delete_enter_t: ctypes._CFuncPtr
+on_sys_timer_delete_return_t: ctypes._CFuncPtr
+on_sys_timer_getoverrun_enter_t: ctypes._CFuncPtr
+on_sys_timer_getoverrun_return_t: ctypes._CFuncPtr
+on_sys_timer_gettime_enter_t: ctypes._CFuncPtr
+on_sys_timer_gettime_return_t: ctypes._CFuncPtr
+on_sys_timer_settime_enter_t: ctypes._CFuncPtr
+on_sys_timer_settime_return_t: ctypes._CFuncPtr
+on_sys_timerfd_create_enter_t: ctypes._CFuncPtr
+on_sys_timerfd_create_return_t: ctypes._CFuncPtr
+on_sys_timerfd_gettime_enter_t: ctypes._CFuncPtr
+on_sys_timerfd_gettime_return_t: ctypes._CFuncPtr
+on_sys_timerfd_settime_enter_t: ctypes._CFuncPtr
+on_sys_timerfd_settime_return_t: ctypes._CFuncPtr
+on_sys_times_enter_t: ctypes._CFuncPtr
+on_sys_times_return_t: ctypes._CFuncPtr
+on_sys_tkill_enter_t: ctypes._CFuncPtr
+on_sys_tkill_return_t: ctypes._CFuncPtr
+on_sys_truncate_enter_t: ctypes._CFuncPtr
+on_sys_truncate_return_t: ctypes._CFuncPtr
+on_sys_umask_enter_t: ctypes._CFuncPtr
+on_sys_umask_return_t: ctypes._CFuncPtr
+on_sys_umount2_enter_t: ctypes._CFuncPtr
+on_sys_umount2_return_t: ctypes._CFuncPtr
+on_sys_uname_enter_t: ctypes._CFuncPtr
+on_sys_uname_return_t: ctypes._CFuncPtr
+on_sys_unlinkat_enter_t: ctypes._CFuncPtr
+on_sys_unlinkat_return_t: ctypes._CFuncPtr
+on_sys_unshare_enter_t: ctypes._CFuncPtr
+on_sys_unshare_return_t: ctypes._CFuncPtr
+on_sys_userfaultfd_enter_t: ctypes._CFuncPtr
+on_sys_userfaultfd_return_t: ctypes._CFuncPtr
+on_sys_utimensat_enter_t: ctypes._CFuncPtr
+on_sys_utimensat_return_t: ctypes._CFuncPtr
+on_sys_vhangup_enter_t: ctypes._CFuncPtr
+on_sys_vhangup_return_t: ctypes._CFuncPtr
+on_sys_vmsplice_enter_t: ctypes._CFuncPtr
+on_sys_vmsplice_return_t: ctypes._CFuncPtr
+on_sys_wait4_enter_t: ctypes._CFuncPtr
+on_sys_wait4_return_t: ctypes._CFuncPtr
+on_sys_waitid_enter_t: ctypes._CFuncPtr
+on_sys_waitid_return_t: ctypes._CFuncPtr
+on_sys_write_enter_t: ctypes._CFuncPtr
+on_sys_write_return_t: ctypes._CFuncPtr
+on_sys_writev_enter_t: ctypes._CFuncPtr
+on_sys_writev_return_t: ctypes._CFuncPtr
+on_taint_change_t: ctypes._CFuncPtr
+on_taint_prop_t: ctypes._CFuncPtr
+on_task_change_t: ctypes._CFuncPtr
+on_thread_end_t: ctypes._CFuncPtr
+on_thread_start_t: ctypes._CFuncPtr
+on_unknown_sys_enter_t: ctypes._CFuncPtr
+on_unknown_sys_return_t: ctypes._CFuncPtr
 class panda_arg(CStructure):
     argptr: 'ctypes._Pointer[ctypes.c_char]'
     key: 'ctypes._Pointer[ctypes.c_char]'
@@ -1697,58 +1697,58 @@ class panda_arg_list(CStructure):
     plugin_name: 'ctypes._Pointer[ctypes.c_char]'
 
 class panda_cb(CUnion):
-    before_block_exec_invalidate_opt: 'ctypes._CFunctionType'
-    before_tcg_codegen: 'ctypes._CFunctionType'
-    before_block_exec: 'ctypes._CFunctionType'
-    after_block_exec: 'ctypes._CFunctionType'
-    before_block_translate: 'ctypes._CFunctionType'
-    after_block_translate: 'ctypes._CFunctionType'
-    after_cpu_exec_enter: 'ctypes._CFunctionType'
-    before_cpu_exec_exit: 'ctypes._CFunctionType'
-    insn_translate: 'ctypes._CFunctionType'
-    insn_exec: 'ctypes._CFunctionType'
-    after_insn_translate: 'ctypes._CFunctionType'
-    after_insn_exec: 'ctypes._CFunctionType'
-    virt_mem_before_read: 'ctypes._CFunctionType'
-    virt_mem_before_write: 'ctypes._CFunctionType'
-    phys_mem_before_read: 'ctypes._CFunctionType'
-    phys_mem_before_write: 'ctypes._CFunctionType'
-    virt_mem_after_read: 'ctypes._CFunctionType'
-    virt_mem_after_write: 'ctypes._CFunctionType'
-    phys_mem_after_read: 'ctypes._CFunctionType'
-    phys_mem_after_write: 'ctypes._CFunctionType'
-    mmio_after_read: 'ctypes._CFunctionType'
-    mmio_before_write: 'ctypes._CFunctionType'
-    hd_read: 'ctypes._CFunctionType'
-    hd_write: 'ctypes._CFunctionType'
-    guest_hypercall: 'ctypes._CFunctionType'
-    monitor: 'ctypes._CFunctionType'
-    qmp: 'ctypes._CFunctionType'
-    cpu_restore_state: 'ctypes._CFunctionType'
-    before_loadvm: 'ctypes._CFunctionType'
-    asid_changed: 'ctypes._CFunctionType'
-    replay_hd_transfer: 'ctypes._CFunctionType'
-    replay_before_dma: 'ctypes._CFunctionType'
-    replay_after_dma: 'ctypes._CFunctionType'
-    replay_handle_packet: 'ctypes._CFunctionType'
-    replay_net_transfer: 'ctypes._CFunctionType'
-    replay_serial_receive: 'ctypes._CFunctionType'
-    replay_serial_read: 'ctypes._CFunctionType'
-    replay_serial_send: 'ctypes._CFunctionType'
-    replay_serial_write: 'ctypes._CFunctionType'
-    after_machine_init: 'ctypes._CFunctionType'
-    after_loadvm: 'ctypes._CFunctionType'
-    top_loop: 'ctypes._CFunctionType'
-    during_machine_init: 'ctypes._CFunctionType'
-    main_loop_wait: 'ctypes._CFunctionType'
-    pre_shutdown: 'ctypes._CFunctionType'
-    unassigned_io_read: 'ctypes._CFunctionType'
-    unassigned_io_write: 'ctypes._CFunctionType'
-    before_handle_exception: 'ctypes._CFunctionType'
-    before_handle_interrupt: 'ctypes._CFunctionType'
-    start_block_exec: 'ctypes._CFunctionType'
-    end_block_exec: 'ctypes._CFunctionType'
-    cbaddr: 'ctypes._CFunctionType'
+    before_block_exec_invalidate_opt: 'ctypes._CFuncPtr'
+    before_tcg_codegen: 'ctypes._CFuncPtr'
+    before_block_exec: 'ctypes._CFuncPtr'
+    after_block_exec: 'ctypes._CFuncPtr'
+    before_block_translate: 'ctypes._CFuncPtr'
+    after_block_translate: 'ctypes._CFuncPtr'
+    after_cpu_exec_enter: 'ctypes._CFuncPtr'
+    before_cpu_exec_exit: 'ctypes._CFuncPtr'
+    insn_translate: 'ctypes._CFuncPtr'
+    insn_exec: 'ctypes._CFuncPtr'
+    after_insn_translate: 'ctypes._CFuncPtr'
+    after_insn_exec: 'ctypes._CFuncPtr'
+    virt_mem_before_read: 'ctypes._CFuncPtr'
+    virt_mem_before_write: 'ctypes._CFuncPtr'
+    phys_mem_before_read: 'ctypes._CFuncPtr'
+    phys_mem_before_write: 'ctypes._CFuncPtr'
+    virt_mem_after_read: 'ctypes._CFuncPtr'
+    virt_mem_after_write: 'ctypes._CFuncPtr'
+    phys_mem_after_read: 'ctypes._CFuncPtr'
+    phys_mem_after_write: 'ctypes._CFuncPtr'
+    mmio_after_read: 'ctypes._CFuncPtr'
+    mmio_before_write: 'ctypes._CFuncPtr'
+    hd_read: 'ctypes._CFuncPtr'
+    hd_write: 'ctypes._CFuncPtr'
+    guest_hypercall: 'ctypes._CFuncPtr'
+    monitor: 'ctypes._CFuncPtr'
+    qmp: 'ctypes._CFuncPtr'
+    cpu_restore_state: 'ctypes._CFuncPtr'
+    before_loadvm: 'ctypes._CFuncPtr'
+    asid_changed: 'ctypes._CFuncPtr'
+    replay_hd_transfer: 'ctypes._CFuncPtr'
+    replay_before_dma: 'ctypes._CFuncPtr'
+    replay_after_dma: 'ctypes._CFuncPtr'
+    replay_handle_packet: 'ctypes._CFuncPtr'
+    replay_net_transfer: 'ctypes._CFuncPtr'
+    replay_serial_receive: 'ctypes._CFuncPtr'
+    replay_serial_read: 'ctypes._CFuncPtr'
+    replay_serial_send: 'ctypes._CFuncPtr'
+    replay_serial_write: 'ctypes._CFuncPtr'
+    after_machine_init: 'ctypes._CFuncPtr'
+    after_loadvm: 'ctypes._CFuncPtr'
+    top_loop: 'ctypes._CFuncPtr'
+    during_machine_init: 'ctypes._CFuncPtr'
+    main_loop_wait: 'ctypes._CFuncPtr'
+    pre_shutdown: 'ctypes._CFuncPtr'
+    unassigned_io_read: 'ctypes._CFuncPtr'
+    unassigned_io_write: 'ctypes._CFuncPtr'
+    before_handle_exception: 'ctypes._CFuncPtr'
+    before_handle_interrupt: 'ctypes._CFuncPtr'
+    start_block_exec: 'ctypes._CFuncPtr'
+    end_block_exec: 'ctypes._CFuncPtr'
+    cbaddr: 'ctypes._CFuncPtr'
 
 class panda_cb_list(CStructure):
     entry: 'panda_cb_with_context'
@@ -1760,58 +1760,58 @@ class panda_cb_list(CStructure):
 
 panda_cb_type:ctypes.c_int
 class panda_cb_with_context(CUnion):
-    before_block_exec_invalidate_opt: 'ctypes._CFunctionType'
-    before_tcg_codegen: 'ctypes._CFunctionType'
-    before_block_exec: 'ctypes._CFunctionType'
-    after_block_exec: 'ctypes._CFunctionType'
-    before_block_translate: 'ctypes._CFunctionType'
-    after_block_translate: 'ctypes._CFunctionType'
-    after_cpu_exec_enter: 'ctypes._CFunctionType'
-    before_cpu_exec_exit: 'ctypes._CFunctionType'
-    insn_translate: 'ctypes._CFunctionType'
-    insn_exec: 'ctypes._CFunctionType'
-    after_insn_translate: 'ctypes._CFunctionType'
-    after_insn_exec: 'ctypes._CFunctionType'
-    virt_mem_before_read: 'ctypes._CFunctionType'
-    virt_mem_before_write: 'ctypes._CFunctionType'
-    phys_mem_before_read: 'ctypes._CFunctionType'
-    phys_mem_before_write: 'ctypes._CFunctionType'
-    virt_mem_after_read: 'ctypes._CFunctionType'
-    virt_mem_after_write: 'ctypes._CFunctionType'
-    phys_mem_after_read: 'ctypes._CFunctionType'
-    phys_mem_after_write: 'ctypes._CFunctionType'
-    mmio_after_read: 'ctypes._CFunctionType'
-    mmio_before_write: 'ctypes._CFunctionType'
-    hd_read: 'ctypes._CFunctionType'
-    hd_write: 'ctypes._CFunctionType'
-    guest_hypercall: 'ctypes._CFunctionType'
-    monitor: 'ctypes._CFunctionType'
-    qmp: 'ctypes._CFunctionType'
-    cpu_restore_state: 'ctypes._CFunctionType'
-    before_loadvm: 'ctypes._CFunctionType'
-    asid_changed: 'ctypes._CFunctionType'
-    replay_hd_transfer: 'ctypes._CFunctionType'
-    replay_before_dma: 'ctypes._CFunctionType'
-    replay_after_dma: 'ctypes._CFunctionType'
-    replay_handle_packet: 'ctypes._CFunctionType'
-    replay_net_transfer: 'ctypes._CFunctionType'
-    replay_serial_receive: 'ctypes._CFunctionType'
-    replay_serial_read: 'ctypes._CFunctionType'
-    replay_serial_send: 'ctypes._CFunctionType'
-    replay_serial_write: 'ctypes._CFunctionType'
-    after_machine_init: 'ctypes._CFunctionType'
-    after_loadvm: 'ctypes._CFunctionType'
-    top_loop: 'ctypes._CFunctionType'
-    during_machine_init: 'ctypes._CFunctionType'
-    main_loop_wait: 'ctypes._CFunctionType'
-    pre_shutdown: 'ctypes._CFunctionType'
-    unassigned_io_read: 'ctypes._CFunctionType'
-    unassigned_io_write: 'ctypes._CFunctionType'
-    before_handle_exception: 'ctypes._CFunctionType'
-    before_handle_interrupt: 'ctypes._CFunctionType'
-    start_block_exec: 'ctypes._CFunctionType'
-    end_block_exec: 'ctypes._CFunctionType'
-    cbaddr: 'ctypes._CFunctionType'
+    before_block_exec_invalidate_opt: 'ctypes._CFuncPtr'
+    before_tcg_codegen: 'ctypes._CFuncPtr'
+    before_block_exec: 'ctypes._CFuncPtr'
+    after_block_exec: 'ctypes._CFuncPtr'
+    before_block_translate: 'ctypes._CFuncPtr'
+    after_block_translate: 'ctypes._CFuncPtr'
+    after_cpu_exec_enter: 'ctypes._CFuncPtr'
+    before_cpu_exec_exit: 'ctypes._CFuncPtr'
+    insn_translate: 'ctypes._CFuncPtr'
+    insn_exec: 'ctypes._CFuncPtr'
+    after_insn_translate: 'ctypes._CFuncPtr'
+    after_insn_exec: 'ctypes._CFuncPtr'
+    virt_mem_before_read: 'ctypes._CFuncPtr'
+    virt_mem_before_write: 'ctypes._CFuncPtr'
+    phys_mem_before_read: 'ctypes._CFuncPtr'
+    phys_mem_before_write: 'ctypes._CFuncPtr'
+    virt_mem_after_read: 'ctypes._CFuncPtr'
+    virt_mem_after_write: 'ctypes._CFuncPtr'
+    phys_mem_after_read: 'ctypes._CFuncPtr'
+    phys_mem_after_write: 'ctypes._CFuncPtr'
+    mmio_after_read: 'ctypes._CFuncPtr'
+    mmio_before_write: 'ctypes._CFuncPtr'
+    hd_read: 'ctypes._CFuncPtr'
+    hd_write: 'ctypes._CFuncPtr'
+    guest_hypercall: 'ctypes._CFuncPtr'
+    monitor: 'ctypes._CFuncPtr'
+    qmp: 'ctypes._CFuncPtr'
+    cpu_restore_state: 'ctypes._CFuncPtr'
+    before_loadvm: 'ctypes._CFuncPtr'
+    asid_changed: 'ctypes._CFuncPtr'
+    replay_hd_transfer: 'ctypes._CFuncPtr'
+    replay_before_dma: 'ctypes._CFuncPtr'
+    replay_after_dma: 'ctypes._CFuncPtr'
+    replay_handle_packet: 'ctypes._CFuncPtr'
+    replay_net_transfer: 'ctypes._CFuncPtr'
+    replay_serial_receive: 'ctypes._CFuncPtr'
+    replay_serial_read: 'ctypes._CFuncPtr'
+    replay_serial_send: 'ctypes._CFuncPtr'
+    replay_serial_write: 'ctypes._CFuncPtr'
+    after_machine_init: 'ctypes._CFuncPtr'
+    after_loadvm: 'ctypes._CFuncPtr'
+    top_loop: 'ctypes._CFuncPtr'
+    during_machine_init: 'ctypes._CFuncPtr'
+    main_loop_wait: 'ctypes._CFuncPtr'
+    pre_shutdown: 'ctypes._CFuncPtr'
+    unassigned_io_read: 'ctypes._CFuncPtr'
+    unassigned_io_write: 'ctypes._CFuncPtr'
+    before_handle_exception: 'ctypes._CFuncPtr'
+    before_handle_interrupt: 'ctypes._CFuncPtr'
+    start_block_exec: 'ctypes._CFuncPtr'
+    end_block_exec: 'ctypes._CFuncPtr'
+    cbaddr: 'ctypes._CFuncPtr'
 
 class panda_plugin(CStructure):
     name: 'ctypes._Pointer[ctypes.c_char]'
@@ -1838,7 +1838,7 @@ class qemu_work_item(CStructure):
 ram_addr_t: ctypes.c_ulong
 class rcu_head(CStructure):
     next: 'ctypes._Pointer[rcu_head]'
-    func: 'ctypes._CFunctionType'
+    func: 'ctypes._CFuncPtr'
 
 run_on_cpu_data: ctypes.c_ulong
 run_on_cpu_func: ctypes.c_void_p
@@ -1967,7 +1967,7 @@ class cred_info(CStructure):
 class dynamic_symbol_hook(CStructure):
     library_name: 'ctypes.Array[ctypes.c_char]'
     symbol: 'ctypes.Array[ctypes.c_char]'
-    cb: 'ctypes._CFunctionType'
+    cb: 'ctypes._CFuncPtr'
 
 class fs_info(CStructure):
     f_path_dentry_offset: 'ctypes.c_int'
@@ -1990,7 +1990,7 @@ class hook_symbol_resolve(CStructure):
     offset: 'ctypes.c_ulong'
     hook_offset: 'ctypes.c_bool'
     section: 'ctypes.Array[ctypes.c_char]'
-    cb: 'ctypes._CFunctionType'
+    cb: 'ctypes._CFuncPtr'
     enabled: 'ctypes.c_bool'
     id: 'ctypes.c_int'
 
@@ -2031,7 +2031,7 @@ class memory_hooks_region(CStructure):
     on_write: 'ctypes.c_bool'
     on_virtual: 'ctypes.c_bool'
     on_physical: 'ctypes.c_bool'
-    cb: 'ctypes._CFunctionType'
+    cb: 'ctypes._CFuncPtr'
 
 class mm_info(CStructure):
     size: 'ctypes.c_ulong'

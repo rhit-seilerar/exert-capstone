@@ -212,7 +212,7 @@ def get_python_type(c_data_type: CType, struct_type: (str | None) = None,
         #     else:
         #         args += python_arg_type + ', '
 
-        return 'ctypes._CFunctionType'
+        return 'ctypes._CFuncPtr'
 
     if c_data_type_kind == 'void':
         return 'None'
