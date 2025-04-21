@@ -9,6 +9,8 @@ from exert.parser.preprocessor import Preprocessor
 from exert.utilities.debug import dprint
 from exert.utilities.command import run_command
 from exert.utilities.types.global_types import TokenType
+from collections.abc import Callable
+from typing import Any
 
 REPO_URL: str = 'git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git'
 VERSION_PATH: str = './cache/linux-version.txt'
@@ -95,7 +97,7 @@ class Parser(TokenManager):
 #     def has(self, values, key):
 #         return key in values
 
-    def unwrap(self, k: tuple):
+    def unwrap(self, k):
         dprint(3, 'unwrap.start')
         while isinstance(k, tuple) and len(k) == 3:
             if self.time + 10 < time.time():
@@ -132,7 +134,7 @@ class Parser(TokenManager):
         dprint(5, 'por')
         def start(p, f):
             dprint(4, 'por.start')
-            def getnext(p1, f1, rest: tuple):
+            def getnext(p1, f1, rest):
                 dprint(5, 'por.getnext')
                 def nex(p2, f2):
                     dprint(4, 'por.next')
@@ -147,7 +149,7 @@ class Parser(TokenManager):
         dprint(5, 'pand', clauses)
         def start(p, f):
             dprint(4, 'pand.start')
-            def getnext(p1, f1, rest: tuple):
+            def getnext(p1, f1, rest):
                 dprint(5, 'pand.getnext')
                 def nex(p2, f2):
                     dprint(4, 'pand.next')

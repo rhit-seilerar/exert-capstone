@@ -158,7 +158,7 @@ class DefMap:
     mappings between symbols to their definitions.
     """
 
-    def __init__(self, parent, skipping: bool = False, initial: (dict | None) = None):
+    def __init__(self, parent, skipping: bool = False, initial: (dict[str, Def] | None) = None):
         assert parent is None or isinstance(parent, DefMap)
         assert initial is None or isinstance(initial, dict)
         self.skipping = skipping
@@ -231,8 +231,8 @@ class DefMap:
         return f'DefMap(parent = {self.parent}, skipping = {self.skipping}, ' \
             f'defs = {{{", ".join(defs_strs)}}})'
 
-def substitute(tokmgr, defmap, replmap = None, keys = None):
-    def parse_macro(tokmgr):
+def substitute(tokmgr: TokenManager, defmap, replmap = None, keys = None):
+    def parse_macro(tokmgr: TokenManager):
         bindex = tokmgr.index
         if tokmgr.peek_type() not in ['identifier', 'keyword']:
             return None, []
@@ -332,32 +332,32 @@ class DefEvaluator(expressions.Evaluator):
         # First we run through and replace all defined(MACRO) with a special
         # token so we don't substitute it later. This token will never be
         # serialized, but expressions.py knows how to handle it
-        keys: set = set()
+        keys: set[TokenType] = set()
         identlike = ['identifier', 'keyword']
-        replmap: dict = {}
+        replmap: dict[str | int, dict[None, list[set[DefOption]]]] = {}
         nex = []
-        i = 0
-        while i < len(tokens):
+        index = 0
+        while index < len(tokens):
             deftok = None
             delta = 1
-            if tokens[i] == mk_id('defined'):
+            if tokens[index] == mk_id('defined'):
                 # 'defined MACRO' form
-                if i+1 < len(tokens) and tokens[i+1][0] in identlike:
-                    deftok = tokens[i+1]
+                if index+1 < len(tokens) and tokens[index+1][0] in identlike:
+                    deftok = tokens[index+1]
                     delta = 2
                 # 'defined ( MACRO )' form
-                elif i+3 < len(tokens) and tokens[i+1] == mk_op('(') \
-                    and tokens[i+2][0] in identlike and tokens[i+3] == mk_op(')'):
-                    deftok = tokens[i+2]
+                elif index+3 < len(tokens) and tokens[index+1] == mk_op('(') \
+                    and tokens[index+2][0] in identlike and tokens[index+3] == mk_op(')'):
+                    deftok = tokens[index+2]
                     delta = 4
             if deftok is None:
-                nex.append(tokens[i])
+                nex.append(tokens[index])
             else:
                 nex.append(('defined', deftok[1]))
                 if deftok[1] not in replmap:
                     replmap[deftok[1]] = {None: []}
                 replmap[deftok[1]][None].append({DefOption([deftok])})
-            i += delta
+            index += delta
         tokens = nex
 
         # Next we run through and replace all remaining macros with their ANY
@@ -370,15 +370,15 @@ class DefEvaluator(expressions.Evaluator):
             nex += substitute(tokmgr, self.defs, keys = keys, replmap = replmap)
         tokens = nex
 
-        lookups: list = []
+        lookups: list[dict[str | int, Def]] = []
         if replmap:
             # Note that this currently doesn't consider open-ended definitions correctly
             # Also, wildcards could be improved in accuracy
-            lists: list = []
+            lists: list[list[Def]] = []
             keylist = list(keys)
-            for i, k in enumerate(keylist):
+            for index, key in enumerate(keylist):
                 lists.append([])
-                defn = self.defs[k[1]]
+                defn = self.defs[key[1]]
                 if not defn.is_defined():
                     lists[-1].append(Def(undefined = True))
                 if defn.is_initial() or defn.is_empty_def():
@@ -389,18 +389,18 @@ class DefEvaluator(expressions.Evaluator):
             lookups = []
             for p in permutations:
                 lookups.append({})
-                for i, k in enumerate(keylist):
-                    lookups[-1][k[1]] = p[i]
+                for index, key in enumerate(keylist):
+                    lookups[-1][key[1]] = p[index]
         else:
             lookups = [{}]
 
         self.any_match = False
         self.all_match = True
 
-        def insert_permutation(lookup: dict, tokens: list):
+        def insert_permutation(lookup: dict[str | int, Def], tokens: list[TokenType]):
             nex = []
             for tok in tokens:
-                if tok[0] == 'any' and len(tok[2]) > 0:
+                if tok[0] == 'any' and len(tok) > 2 and len(tok[2]) > 0:
                     repl = lookup[tok[1]].get_replacements(('identifier', tok[1]))
                     repl_toks = list(repl)[0].tokens
                     nex += insert_permutation(lookup, repl_toks)
@@ -420,14 +420,15 @@ class DefEvaluator(expressions.Evaluator):
             elif result.value == 0:
                 self.all_match = False
             else:
-                for k, v in self.defines.items():
-                    if v:
-                        self.matches.getlocal(k).defined = True
+                for expression, is_defined in self.defines.items():
+                    if is_defined:
+                        self.matches.getlocal(expression).defined = True
                     else:
-                        self.matches.getlocal(k).undefined = True
-                for k, v in lookup.items():
-                    if len(v) > 0:
-                        self.matches.define(k, list(v.options)[0])
+                        self.matches.getlocal(expression).undefined = True
+
+                for l, m in lookup.items():
+                    if len(m) > 0:
+                        self.matches.define(l, list(m.options)[0])
                 self.any_match = True
         return self.any_match, self.all_match, self.matches
 
@@ -452,21 +453,21 @@ class DefLayer:
     def __init__(self, parent: DefMap, bitsize: int, skip_all):
         self.depth = 0
         self.evaluator = DefEvaluator(bitsize, parent)
-        self.cond_acc: list = []
-        self.cond: list = []
+        self.cond_acc: list[TokenType] = []
+        self.cond: list[TokenType] = []
         self.accumulator = DefMap(None)
         self.skip_rest = skip_all
         self.current: (DefMap | None) = None
         self.closed = False
-        self.emitted: list = []
-        self.blocks: list = []
+        self.emitted: list[TokenType] = []
+        self.blocks: list[list[TokenType]] = []
 
     def apply(self):
         if self.current is not None and not self.current.skipping:
             self.accumulator.combine(self.current.defs, replace = False)
             self.current = None
 
-    def add_map(self, cond_tokens: list, closing: bool = False):
+    def add_map(self, cond_tokens: list[TokenType], closing: bool = False):
         self.depth += 1
         if self.skip_rest:
             self.apply()
@@ -499,7 +500,7 @@ class DefState:
 
     def __init__(self, bitsize: int, initial = None):
         self.bitsize = bitsize
-        self.keys = set()
+        self.keys: set[TokenType] = set()
         self.layers = [DefLayer(DefMap(None, initial = initial), bitsize, False)]
         self.layers[0].add_map([mk_int(1)], closing = True)
         if initial is not None:
@@ -516,7 +517,7 @@ class DefState:
         return not self.is_skipping() and self.layers[-1].skip_rest
 
     def flat_defines(self):
-        result: dict = {}
+        result: dict[TokenType, Def] = {}
         for key in self.keys:
             assert self.layers[-1].current is not None
             defn = self.layers[-1].current[key]
@@ -525,7 +526,7 @@ class DefState:
         return result
 
     def flat_unknowns(self):
-        result: set = set()
+        result: set[TokenType] = set()
         assert self.layers[-1].current is not None
         for key in self.keys:
             if self.layers[-1].current[key].is_uncertain():
@@ -546,7 +547,7 @@ class DefState:
             assert self.layers[-1].current is not None
             self.layers[-1].current.undefine(sym)
 
-    def on_if(self, cond_tokens: list):
+    def on_if(self, cond_tokens: list[TokenType]):
         dprint(2, '  ' * self.depth() + f'#if {tok_seq(cond_tokens)}')
         parent = self.layers[-1].current
         assert parent is not None
@@ -559,7 +560,7 @@ class DefState:
     def on_ifndef(self, sym):
         self.on_if([ mk_op('!'), mk_id('defined'), mk_id(sym) ])
 
-    def on_elif(self, cond_tokens: list):
+    def on_elif(self, cond_tokens: list[TokenType]):
         dprint(2, '  ' * self.depth() + f'#elif {tok_seq(cond_tokens)}')
         self.layers[-1].add_map(cond_tokens)
 

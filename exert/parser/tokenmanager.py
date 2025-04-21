@@ -24,7 +24,7 @@ def tok_str(token: TokenType,
     assert isinstance(string, str)
     return string.replace('\n', ' ')
 
-def tok_seq(tokens: list[tuple[str, str | int] | tuple[str, str | int, str | set]],
+def tok_seq(tokens: list[TokenType],
             newlines: bool = False):
     return ''.join(tok_str(n, newlines) for n in tokens).strip() \
         if isinstance(tokens, list) else tokens
@@ -84,7 +84,7 @@ class TokenManager:
     def consume_type(self, typ):
         return self.next() if (token := self.peek()) and token[0] == typ else None
 
-    def consume(self, token: tuple):
+    def consume(self, token: TokenType):
         if self.peek() == token:
             return self.next()
         return None

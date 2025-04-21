@@ -1,4 +1,5 @@
 import exert.parser.tokenmanager as tm
+from exert.utilities.types.global_types import TokenType
 
 class Tokenizer:
     def __init__(self):
@@ -167,7 +168,7 @@ class Tokenizer:
         self.in_directive = False
         self.can_be_directive = True
         self.next_parenthesis_is_directive = False
-        self.tokens: list = []
+        self.tokens: list[TokenType] = []
 
         while self.has_next():
             if self.consume(' ', '\t'):

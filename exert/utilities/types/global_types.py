@@ -1,4 +1,9 @@
-from exert.parser.definitions import Def, DefOption
-from exert.parser.expressions import UnaryPlus, UnaryMinus, LogicalNot, BitwiseNot
+from exert.parser.definitions import DefOption
+from exert.parser.expressions import Expression
+from typing import TypeVar
 
 type TokenType = (tuple[str, str | int] | tuple[str, str | int, str | set[DefOption]])
+
+type ExpressionTypes = (Expression | str | int)
+
+ExpressionInstance = TypeVar('ExpressionInstance', bound=Expression)

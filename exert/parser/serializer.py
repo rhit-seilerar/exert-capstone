@@ -1,5 +1,6 @@
 from io import BufferedReader, BufferedWriter
 from exert.parser.definitions import DefOption
+from exert.utilities.types.global_types import TokenType
 
 TOK_TYPES: list[str] = [
     'string', 'integer', 'identifier', 'keyword',
@@ -66,26 +67,39 @@ def read_tokens(path: str):
         file.close()
     return tokens
 
-def write_tokens(file: BufferedWriter, tokens: list):
+def write_tokens(file: BufferedWriter, tokens: list[TokenType]):
     for token in tokens:
         write_number(file, TOK_TYPES.index(token[0]), length = 1)
         if token[0] == 'string':
+            assert isinstance(token[1], str)
             write_string(file, token[1])
+            assert len(token) > 2
+            assert isinstance(token[2], str)
             write_string(file, token[2], sizelength = 1)
         elif token[0] == 'integer':
+            assert isinstance(token[1], int)
             write_number(file, token[1], length = 9, signed = True)
+            assert len(token) > 2
+            assert isinstance(token[2], str)
             write_string(file, token[2], sizelength = 1)
         elif token[0] == 'identifier':
+            assert isinstance(token[1], str)
             write_string(file, token[1])
         elif token[0] == 'keyword':
+            assert isinstance(token[1], str)
             write_string(file, token[1], sizelength = 1)
         elif token[0] == 'operator':
+            assert isinstance(token[1], str)
             write_string(file, token[1], sizelength = 1)
         elif token[0] == 'directive':
+            assert isinstance(token[1], str)
             write_string(file, token[1], sizelength = 1)
         elif token[0] == 'any':
+            assert isinstance(token[1], str)
             write_string(file, token[1])
+            assert len(token) > 2
             write_number(file, len(token[2]))
             for option in token[2]:
+                assert isinstance(option, DefOption)
                 write_number(file, len(option.tokens))
                 write_tokens(file, option.tokens)

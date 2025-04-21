@@ -16,6 +16,7 @@ from exert.parser.definitions import DefState, Def, DefOption
 from exert.parser.serializer import write_tokens, read_tokens
 from exert.parser.tokenizer import Tokenizer
 from exert.utilities.debug import dprint
+from exert.utilities.types.global_types import TokenType
 
 def read_file(path: str):
     try:
@@ -26,7 +27,7 @@ def read_file(path: str):
 
 class Preprocessor(TokenManager):
     def __init__(self, tokenizer: Tokenizer, bitsize: int,
-                 includes: list[str | Callable], defns: dict[str, str],
+                 includes: list[str | Callable[[str], (str | None)]], defns: dict[str, str],
                  filereader: Callable[[str], str | None] = read_file):
         super().__init__()
         self.tokenizer = tokenizer
@@ -125,7 +126,7 @@ class Preprocessor(TokenManager):
                     {DefOption(b) for b in blocks}))
 
     def skip_to_newline(self, offset: int = 0):
-        tokens = []
+        tokens: list[TokenType] = []
         while not self.peek_type() == 'newline':
             tokens.append(self.next())
         if not self.consume_type('newline'):
@@ -275,7 +276,7 @@ class Preprocessor(TokenManager):
         return self.skip_to_newline()
 
     def parse_directive(self):
-        result: (bool | list) = False
+        result: (bool | list[TokenType]) = False
         if self.consume(('identifier', 'line')):
             result = self.handle_line()
         elif self.consume_identifier('include'):
@@ -311,7 +312,7 @@ class Preprocessor(TokenManager):
 
         return result
 
-    def insert(self, tokens: (str | tuple | list[tuple])):
+    def insert(self, tokens: (str | TokenType | list[TokenType])):
         if isinstance(tokens, str):
             tokens = self.tokenizer.tokenize(tokens)
         if isinstance(tokens, tuple):
@@ -332,13 +333,13 @@ class Preprocessor(TokenManager):
             dprint(3, f"::Substituting {tok[0]} '{tok[1]}': {tok_seq(result)}")
         self.emit_tokens(result)
 
-    def emit_tokens(self, tokens: list):
+    def emit_tokens(self, tokens: list[TokenType]):
         if not self.defs.is_skipping():
             self.defs.layers[-1].emitted += tokens
 
     def preprocess(self, data: str, cache: str, reset_cache: bool = False):
         super().reset()
-        self.conditions: list = []
+        self.conditions: list[TokenType] = []
         self.file = ''
         self.insert(data)
 
