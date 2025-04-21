@@ -117,16 +117,25 @@ class Tokenizer:
         return None
 
     def parse_operator(self):
+        if self.consume('%:%:'):
+            return ('operator', '##')
+
         if (op3 := self.peek(3)) in ['||=', '&&=', '<<=', '>>=', '...']:
             self.bump(3)
             return ('operator', op3)
-        #TODO Alternative operators (<:, :>, etc)
+
         if (op2 := self.peek(2)) in ['++', '--', '+=', '-=', '*=', '/=',
                 '%=', '&=', '|=', '^=', '||', '&&', '//', '/*', '*/', '##',
                 '<<', '>>', '<=', '>=', '!=', '==', '->', '::']:
             self.bump(2)
             return ('operator', op2)
-        if (op1 := self.peek(1)) in '-=[]\\;,./~!#%^&*()+{}|:<>?':
+
+        alt2s = { '<:': '[', ':>': ']', '<%': '{', '%>': '}', '%:': '#' }
+        op1 = alt2s.get(op2, self.peek(1))
+        if op2 in alt2s:
+            self.bump()
+
+        if op1 in '-=[]\\;,./~!#%^&*()+{}|:<>?':
             self.bump()
 
             if op1 == '(' and self.next_parenthesis_is_directive:
@@ -138,15 +147,16 @@ class Tokenizer:
                 return ('directive', '#')
 
             return ('operator', op1)
+
         return None
 
     def parse_token(self):
         token = None
+        token = token or self.parse_string()
         token = token or self.parse_identifier()
         # token = token or self.parse_character()
         token = token or self.parse_integer()
         # token = token or self.parse_float()
-        token = token or self.parse_string()
         token = token or self.parse_operator()
         return token
 

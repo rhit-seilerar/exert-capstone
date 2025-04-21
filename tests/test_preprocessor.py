@@ -61,6 +61,16 @@ def check(incls, defns, str_in, str_out):
     pp.load(CACHE)
     assert pp.tokens == TK.tokenize(str_out)
 
+def test_string_concat():
+    check([], {}, '"Hello " "there!\n"', '"Hello there!\n"')
+    check([], {}, 'L"Hello " "there!\n"', 'L"Hello there!\n"')
+    check([], {}, '"Hello " u"there!\n"', 'u"Hello there!\n"')
+    try:
+        check([], {}, 'L"Hello " u"there!\n"', 'u"Hello there!\n"')
+        raise ValueError
+    except AssertionError:
+        pass
+
 def test_standard():
     check([], {}, """
         typedef int dummy;
@@ -75,7 +85,6 @@ def test_standard():
             return 0;
         }
     """)
-    #TODO string concat
 
 def test_defines():
     check([], {}, """
@@ -87,8 +96,6 @@ def test_defines():
         typedef int[3] vec3;
         ABC;
     """)
-    #TODO ident stringification
-    #TODO ident concat
 
 def test_blocks():
     pp = Preprocessor(TK, 32, [], {}, filereader = dummy_reader)
@@ -159,6 +166,7 @@ def test_blocks():
         #endif
         int C = 6;
     """, CACHE, True).load(CACHE)
+    print([str(p) for p in pp.tokens[0][2]])
     assert pp.tokens == [
         ('any', '', {
             dm.DefOption([
@@ -168,7 +176,6 @@ def test_blocks():
                 }),
                 *TK.tokenize('int B = 3;')
             ]),
-            dm.DefOption(TK.tokenize('int B = 4;')),
             dm.DefOption(TK.tokenize('int B = 1;')),
             dm.DefOption(TK.tokenize('int B = 7;'))
         }),

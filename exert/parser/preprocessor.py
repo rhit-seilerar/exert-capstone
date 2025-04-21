@@ -1,17 +1,17 @@
 """
 TODO There are still a number of optimizations that can be done for better results:
  - #defines with a replacement with no #undef preceding them guarantee only no definition from cli
- - Guarantees from #if/#elif expressions
+ - Better guarantees from #if/#elif expressions
  - Guarantees from #if/#elif can be used in the rules system
- - #error should cancel the block
  - #pragma
- - String concatenation, token concatenation, token stringification
+ - Macro replacement, #, ##, __VA_ARGS__, __VA_OPT__
+ - __FILE__, __DATE__, __LINE__, __TIME__, __COUNT__, _Pragma
 """
 
 import os
 import types
 from collections.abc import Callable
-from exert.parser.tokenmanager import tok_seq, TokenManager
+from exert.parser.tokenmanager import mk_int, tok_seq, TokenManager
 from exert.parser.definitions import DefState, Def, DefOption
 from exert.parser.serializer import write_tokens, read_tokens
 from exert.parser.tokenizer import Tokenizer
@@ -35,9 +35,18 @@ class Preprocessor(TokenManager):
         self.invalid_paths: set[str] = set()
         self.tokenized_cache: dict[str, str] = {}
         self.unresolved: list[str] = []
-        self.defs = DefState(bitsize, initial = {
+        initdefs = {
             key: Def(DefOption(tokenizer.tokenize(defns[key]))) for key in defns
-        })
+        }
+        initdefs['__STDC__'] = Def(DefOption([mk_int(1)]))
+        initdefs['__STDC_EMBED_NOT_FOUND__'] = Def(DefOption([mk_int(0)]))
+        initdefs['__STDC_EMBED_FOUND__'] = Def(DefOption([mk_int(1)]))
+        initdefs['__STDC_EMBED_EMPTY__'] = Def(DefOption([mk_int(2)]))
+        initdefs['__STDC_HOSTED__'] = Def(DefOption([mk_int(0)]))
+        initdefs['__STDC_UTF_16__'] = Def(DefOption([mk_int(1)]))
+        initdefs['__STDC_UTF_32__'] = Def(DefOption([mk_int(1)]))
+        initdefs['__STDC_VERSION__'] = Def(DefOption([mk_int(202311, 'L')]))
+        self.defs = DefState(bitsize, initial = initdefs)
 
     def load_file(self, path: str, is_relative: bool):
         if self.defs.is_skipping():
@@ -147,9 +156,10 @@ class Preprocessor(TokenManager):
     def handle_define(self):
         if not (name := self.parse_ident_or_keyword()):
             return self.err('#define must be followed by an identifier')
-        params = []
+        params = None
         index = self.index
         if self.consume_directive('('):
+            params = []
             while True:
                 if (ident := self.parse_identifier()):
                     params.append(ident)
@@ -172,7 +182,7 @@ class Preprocessor(TokenManager):
         self.index = index
         if (tokens := self.skip_to_newline(1)) is None:
             return False
-        self.defs.on_define(name, params, tokens)
+        self.defs.on_define(name, tokens, params)
         return True
 
     def handle_undef(self):
@@ -250,6 +260,7 @@ class Preprocessor(TokenManager):
     def handle_error(self):
         if not self.defs.is_skipping():
             dprint(2, '  ' * self.defs.depth() + '#error')
+        self.defs.layers[-1].current.skipping = True
         return self.skip_to_newline()
 
     def handle_warning(self):
@@ -294,12 +305,8 @@ class Preprocessor(TokenManager):
             result = self.handle_warning()
         elif self.consume_identifier('pragma'):
             result = self.handle_pragma()
-        else:
-            directives = self.next()
-            if isinstance(directives, tuple):
-                return self.err(f'Unknown preprocessor directive #{directives[1]}')
-
-            return self.err('Unknown preprocessor directive')
+        elif not self.consume_type('newline'):
+            return self.err(f'Unexpected token after directive: {self.peek()}')
 
         return result
 
@@ -318,8 +325,8 @@ class Preprocessor(TokenManager):
         self.tokens_added += size
 
     def substitute(self):
-        tok = self.next()
-        result = self.defs.substitute(tok)
+        tok = self.peek()
+        result = self.defs.substitute(self)
         if result != [tok]:
             dprint(3, f"::Substituting {tok[0]} '{tok[1]}': {tok_seq(result)}")
         self.emit_tokens(result)
@@ -343,20 +350,13 @@ class Preprocessor(TokenManager):
         else:
             print('Cache file not found: Generating...')
 
-        # String combination not implemented
         # Stringification and concatenation not implemented
 
         with open(cache, mode = 'bw') as file:
-            # flush_size = 40000
             self.defs.layers[-1].emitted = []
 
             while self.has_next() and not self.has_error:
                 self.print_progress()
-
-                # if self.index > flush_size + 20:
-                #     del self.tokens[:flush_size]
-                #     self.index -= flush_size
-                #     self.len -= flush_size
 
                 if self.consume_directive('#'):
                     self.parse_directive()
@@ -369,6 +369,18 @@ class Preprocessor(TokenManager):
                 if self.peek_type() in ['identifier', 'keyword']:
                     self.substitute()
                     continue
+
+                if self.peek_type(-1) == 'string' and self.peek_type() == 'string':
+                    prev = self.peek(-1)
+                    if prev[2] != '<':
+                        curr = self.next()
+                        if curr[2] and prev[2] and curr[2] != prev[2]:
+                            self.err(f'String concatenation of different encodings! \
+                                ({prev[2]} and {curr[2]})')
+                            continue
+                        newstr = ('string', prev[1] + curr[1], prev[2] or curr[2])
+                        self.defs.layers[-1].emitted[-1] = newstr
+                        continue
 
                 self.emit_tokens([self.next()])
 

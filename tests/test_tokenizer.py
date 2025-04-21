@@ -8,6 +8,8 @@ def roundtrip(string: str, out: (str | None) = None):
 
 def test():
     roundtrip('0')
+    roundtrip('<:', '[')
+    roundtrip('%:%:', '##')
     roundtrip('0x7F', '127')
     roundtrip('0b110', '6')
     roundtrip('017', '15')
@@ -33,6 +35,7 @@ def test():
         DEFN1 \\
         DEFN2
     """, '#define MULTILINE_DEFN DEFN1 DEFN2')
+    assert TK.tokenize('%:define') == [('directive', '#'), tm.mk_id('define'), ('newline', '')]
     assert TK.tokenize('#define A(B)') == [('directive', '#'), tm.mk_id('define'),
         tm.mk_id('A'), ('directive', '('), tm.mk_id('B'), tm.mk_op(')'), ('newline', '')]
 

@@ -45,8 +45,11 @@ def mk_str(string:str, suffix: str = '"'):
     return ('string', string, suffix)
 
 class TokenManager:
-    def __init__(self):
+    def __init__(self, tokens = None):
         self.reset()
+        if tokens is not None:
+            self.tokens = tokens
+            self.len = len(tokens)
 
     def reset(self):
         self.has_error = False

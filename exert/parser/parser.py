@@ -51,6 +51,7 @@ def parse(filename: str, arch: str):
         64, #TODO bitsize
         includes = [
             f'{SOURCE_PATH}/include/',
+            # f'{SOURCE_PATH}/include/uapi/',
             f'{SOURCE_PATH}/arch/{arch}/include/',
             lambda path: f'{SOURCE_PATH}/include/asm-generic/{path[4:]}'
                 if path.startswith('asm/') else None
@@ -60,7 +61,7 @@ def parse(filename: str, arch: str):
             '__extension__': ''
         }
     )
-    preprocessor.preprocess(SOURCE, PREPROCESSOR_CACHE, False)
+    preprocessor.preprocess(SOURCE, PREPROCESSOR_CACHE, True)
     preprocessor.load(PREPROCESSOR_CACHE)
     print(str(preprocessor))
 
