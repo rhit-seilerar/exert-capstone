@@ -12,7 +12,13 @@ def get_ffi_datatypes(panda: Panda):
 
     python_file_str: str = 'from enum import IntEnum\n'
     # python_file_str += "from collections.abc import Callable\n"
-    python_file_str += 'import ctypes\n\n'
+    python_file_str += 'import ctypes\n'
+    python_file_str += 'from typing import TYPE_CHECKING\n\n'
+
+    python_file_str += 'if TYPE_CHECKING:\n'
+    python_file_str += '    Function = ctypes._CFunctionType\n'
+    python_file_str += 'else:\n'
+    python_file_str += '    Function = ctypes._CFuncPtr\n\n'
 
     python_file_str += "class CStructure(ctypes.Structure):\n"
     python_file_str += "    def __init__(self):\n"
@@ -212,7 +218,7 @@ def get_python_type(c_data_type: CType, struct_type: (str | None) = None,
         #     else:
         #         args += python_arg_type + ', '
 
-        return 'ctypes._CFuncPtr'
+        return 'Function'
 
     if c_data_type_kind == 'void':
         return 'None'
