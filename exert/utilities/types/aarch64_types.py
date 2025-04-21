@@ -285,7 +285,6 @@ class CPUAddressSpace(CStructure):
     cpu: 'ctypes._Pointer[CPUState]'
     memory_dispatch: 'ctypes._Pointer[AddressSpaceDispatch]'
     tcg_as_listener: 'MemoryListener'
-setattr(CPUAddressSpace, "as", ctypes._Pointer[AddressSpace]())
 
 CPUArchIdList: ctypes.c_ulong
 class CPUBreakpoint(CStructure):
@@ -374,7 +373,6 @@ class CPUState(CStructure):
     hax_vcpu_dirty: 'ctypes.c_bool'
     hax_vcpu: 'ctypes._Pointer[hax_vcpu_state]'
     pending_tlb_flush: 'ctypes.c_ushort'
-setattr(CPUState, "as", ctypes._Pointer[AddressSpace]())
 
 class CPUTLBEntry(CStructure):
     addr_read: 'ctypes.c_ulong'

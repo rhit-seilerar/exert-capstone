@@ -159,11 +159,11 @@ def get_struct_union_definition(struct_type: CType, struct_name: str, prefix: st
                                                      local_is_union)
             class_str += '\n'
 
-        if field_reserved:
-            reserved_str = f'{prefix}setattr'
-            reserved_str += f'({struct_name}, "{field_name}", {field_python_type}())\n'
-            reserved_attributes.append(reserved_str)
-        else:
+        # if field_reserved:
+            # reserved_str = f'{prefix}setattr'
+            # reserved_str += f'({struct_name}, "{field_name}", {field_python_type}())\n'
+            # reserved_attributes.append(reserved_str)
+        if not field_reserved:
             class_str += f'    {prefix}{field_name}: \'{field_python_type}\'\n'
 
     for attribute in reserved_attributes:
