@@ -14,412 +14,412 @@ class CUnion(ctypes.Union):
             self.fields.append((key, self.__annotations__[key]))
 
 class AccelState(CStructure):
-    parent_obj: Object
+    parent_obj: 'Object'
 
 class Addr(CStructure):
-    typ: ctypes.c_int
-    val: ctypes.c_ulong
-    off: ctypes.c_ushort
-    flag: ctypes.c_int
+    typ: 'ctypes.c_int'
+    val: 'ctypes.c_ulong'
+    off: 'ctypes.c_ushort'
+    flag: 'ctypes.c_int'
 
 AddrFlag:ctypes.c_int
 class AddrRange(CStructure):
-    start: ctypes.Array[ctypes.c_ubyte]
-    size: ctypes.Array[ctypes.c_ubyte]
+    start: 'ctypes.Array[ctypes.c_ubyte]'
+    size: 'ctypes.Array[ctypes.c_ubyte]'
 
 AddrType:ctypes.c_int
 class AddressSpace(CStructure):
-    rcu: rcu_head
-    name: ctypes._Pointer[ctypes.c_char]
-    root: ctypes._Pointer[MemoryRegion]
-    ref_count: ctypes.c_int
-    malloced: ctypes.c_bool
-    current_map: ctypes._Pointer[FlatView]
-    ioeventfd_nb: ctypes.c_int
-    ioeventfds: ctypes._Pointer[MemoryRegionIoeventfd]
-    dispatch: ctypes._Pointer[AddressSpaceDispatch]
-    next_dispatch: ctypes._Pointer[AddressSpaceDispatch]
-    dispatch_listener: MemoryListener
-    listeners: memory_listeners_as
+    rcu: 'rcu_head'
+    name: 'ctypes._Pointer[ctypes.c_char]'
+    root: 'ctypes._Pointer[MemoryRegion]'
+    ref_count: 'ctypes.c_int'
+    malloced: 'ctypes.c_bool'
+    current_map: 'ctypes._Pointer[FlatView]'
+    ioeventfd_nb: 'ctypes.c_int'
+    ioeventfds: 'ctypes._Pointer[MemoryRegionIoeventfd]'
+    dispatch: 'ctypes._Pointer[AddressSpaceDispatch]'
+    next_dispatch: 'ctypes._Pointer[AddressSpaceDispatch]'
+    dispatch_listener: 'MemoryListener'
+    listeners: 'memory_listeners_as'
     class internal_7(CStructure):
-        tqe_next: ctypes._Pointer[AddressSpace]
-        tqe_prev: ctypes._Pointer[ctypes._Pointer[AddressSpace]]
+        tqe_next: 'ctypes._Pointer[AddressSpace]'
+        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[AddressSpace]]'
 
-    address_spaces_link: internal_7
+    address_spaces_link: 'internal_7'
 
 class BNDCSReg(CStructure):
-    cfgu: ctypes.c_ulong
-    sts: ctypes.c_ulong
+    cfgu: 'ctypes.c_ulong'
+    sts: 'ctypes.c_ulong'
 
 class BNDReg(CStructure):
-    lb: ctypes.c_ulong
-    ub: ctypes.c_ulong
+    lb: 'ctypes.c_ulong'
+    ub: 'ctypes.c_ulong'
 
 BlockCompletionFunc: None
 class BusState(CStructure):
-    obj: Object
-    parent: ctypes._Pointer[DeviceState]
-    name: ctypes._Pointer[ctypes.c_char]
-    hotplug_handler: ctypes._Pointer[HotplugHandler]
-    max_index: ctypes.c_int
-    realized: ctypes.c_bool
-    children: ChildrenHead
+    obj: 'Object'
+    parent: 'ctypes._Pointer[DeviceState]'
+    name: 'ctypes._Pointer[ctypes.c_char]'
+    hotplug_handler: 'ctypes._Pointer[HotplugHandler]'
+    max_index: 'ctypes.c_int'
+    realized: 'ctypes.c_bool'
+    children: 'ChildrenHead'
     class internal_21(CStructure):
-        le_next: ctypes._Pointer[BusState]
-        le_prev: ctypes._Pointer[ctypes._Pointer[BusState]]
+        le_next: 'ctypes._Pointer[BusState]'
+        le_prev: 'ctypes._Pointer[ctypes._Pointer[BusState]]'
 
-    sibling: internal_21
+    sibling: 'internal_21'
 
 class CPUAddressSpace(CStructure):
-    cpu: ctypes._Pointer[CPUState]
-    memory_dispatch: ctypes._Pointer[AddressSpaceDispatch]
-    tcg_as_listener: MemoryListener
+    cpu: 'ctypes._Pointer[CPUState]'
+    memory_dispatch: 'ctypes._Pointer[AddressSpaceDispatch]'
+    tcg_as_listener: 'MemoryListener'
 setattr(CPUAddressSpace, "as", ctypes._Pointer[AddressSpace]())
 
 CPUArchIdList: ctypes.c_ulong
 class CPUBreakpoint(CStructure):
-    pc: ctypes.c_ulong
-    rr_instr_count: ctypes.c_ulong
-    flags: ctypes.c_int
-    entry: CPUBreakpoint_qtailq
+    pc: 'ctypes.c_ulong'
+    rr_instr_count: 'ctypes.c_ulong'
+    flags: 'ctypes.c_int'
+    entry: 'CPUBreakpoint_qtailq'
 
 class CPUBreakpoint_qtailq(CStructure):
-    tqe_next: ctypes._Pointer[CPUBreakpoint]
-    tqe_prev: ctypes._Pointer[ctypes._Pointer[CPUBreakpoint]]
+    tqe_next: 'ctypes._Pointer[CPUBreakpoint]'
+    tqe_prev: 'ctypes._Pointer[ctypes._Pointer[CPUBreakpoint]]'
 
 class CPUIOTLBEntry(CStructure):
-    addr: ctypes.c_ulong
-    attrs: MemTxAttrs
+    addr: 'ctypes.c_ulong'
+    attrs: 'MemTxAttrs'
 
 CPUReadMemoryFunc: ctypes.c_uint
 class CPUState(CStructure):
-    parent_obj: DeviceState
-    nr_cores: ctypes.c_int
-    nr_threads: ctypes.c_int
-    numa_node: ctypes.c_int
-    thread: ctypes._Pointer[QemuThread]
-    thread_id: ctypes.c_int
-    host_tid: ctypes.c_uint
-    running: ctypes.c_bool
-    has_waiter: ctypes.c_bool
-    halt_cond: ctypes._Pointer[QemuCond]
-    thread_kicked: ctypes.c_bool
-    created: ctypes.c_bool
-    stop: ctypes.c_bool
-    stopped: ctypes.c_bool
-    unplug: ctypes.c_bool
-    crash_occurred: ctypes.c_bool
-    exit_request: ctypes.c_bool
-    interrupt_request: ctypes.c_uint
-    singlestep_enabled: ctypes.c_int
-    icount_budget: ctypes.c_long
-    icount_extra: ctypes.c_long
-    jmp_env: ctypes.Array[ctypes.c_ubyte]
-    work_mutex: QemuMutex
-    queued_work_first: ctypes._Pointer[qemu_work_item]
-    queued_work_last: ctypes._Pointer[qemu_work_item]
-    cpu_ases: ctypes._Pointer[CPUAddressSpace]
-    num_ases: ctypes.c_int
-    memory: ctypes._Pointer[MemoryRegion]
-    env_ptr: ctypes._Pointer[CPUX86State]
-    tb_jmp_cache: ctypes.Array[ctypes._Pointer[TranslationBlock]]
-    gdb_regs: ctypes._Pointer[GDBRegisterState]
-    gdb_num_regs: ctypes.c_int
-    gdb_num_g_regs: ctypes.c_int
+    parent_obj: 'DeviceState'
+    nr_cores: 'ctypes.c_int'
+    nr_threads: 'ctypes.c_int'
+    numa_node: 'ctypes.c_int'
+    thread: 'ctypes._Pointer[QemuThread]'
+    thread_id: 'ctypes.c_int'
+    host_tid: 'ctypes.c_uint'
+    running: 'ctypes.c_bool'
+    has_waiter: 'ctypes.c_bool'
+    halt_cond: 'ctypes._Pointer[QemuCond]'
+    thread_kicked: 'ctypes.c_bool'
+    created: 'ctypes.c_bool'
+    stop: 'ctypes.c_bool'
+    stopped: 'ctypes.c_bool'
+    unplug: 'ctypes.c_bool'
+    crash_occurred: 'ctypes.c_bool'
+    exit_request: 'ctypes.c_bool'
+    interrupt_request: 'ctypes.c_uint'
+    singlestep_enabled: 'ctypes.c_int'
+    icount_budget: 'ctypes.c_long'
+    icount_extra: 'ctypes.c_long'
+    jmp_env: 'ctypes.Array[ctypes.c_ubyte]'
+    work_mutex: 'QemuMutex'
+    queued_work_first: 'ctypes._Pointer[qemu_work_item]'
+    queued_work_last: 'ctypes._Pointer[qemu_work_item]'
+    cpu_ases: 'ctypes._Pointer[CPUAddressSpace]'
+    num_ases: 'ctypes.c_int'
+    memory: 'ctypes._Pointer[MemoryRegion]'
+    env_ptr: 'ctypes._Pointer[CPUX86State]'
+    tb_jmp_cache: 'ctypes.Array[ctypes._Pointer[TranslationBlock]]'
+    gdb_regs: 'ctypes._Pointer[GDBRegisterState]'
+    gdb_num_regs: 'ctypes.c_int'
+    gdb_num_g_regs: 'ctypes.c_int'
     class internal_23(CStructure):
-        tqe_next: ctypes._Pointer[CPUState]
-        tqe_prev: ctypes._Pointer[ctypes._Pointer[CPUState]]
+        tqe_next: 'ctypes._Pointer[CPUState]'
+        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[CPUState]]'
 
-    node: internal_23
-    breakpoints: breakpoints_head
-    watchpoints: watchpoints_head
-    watchpoint_hit: ctypes._Pointer[CPUWatchpoint]
-    watchpoints_disabled: ctypes.c_bool
-    opaque: ctypes.c_void_p
-    mem_io_pc: ctypes.c_ulong
-    mem_io_vaddr: ctypes.c_ulong
-    kvm_fd: ctypes.c_int
-    kvm_vcpu_dirty: ctypes.c_bool
-    kvm_state: ctypes._Pointer[KVMState]
-    kvm_run: ctypes._Pointer[kvm_run]
-    trace_dstate: ctypes._Pointer[ctypes.c_ulong]
-    cpu_index: ctypes.c_int
-    halted: ctypes.c_uint
+    node: 'internal_23'
+    breakpoints: 'breakpoints_head'
+    watchpoints: 'watchpoints_head'
+    watchpoint_hit: 'ctypes._Pointer[CPUWatchpoint]'
+    watchpoints_disabled: 'ctypes.c_bool'
+    opaque: 'ctypes.c_void_p'
+    mem_io_pc: 'ctypes.c_ulong'
+    mem_io_vaddr: 'ctypes.c_ulong'
+    kvm_fd: 'ctypes.c_int'
+    kvm_vcpu_dirty: 'ctypes.c_bool'
+    kvm_state: 'ctypes._Pointer[KVMState]'
+    kvm_run: 'ctypes._Pointer[kvm_run]'
+    trace_dstate: 'ctypes._Pointer[ctypes.c_ulong]'
+    cpu_index: 'ctypes.c_int'
+    halted: 'ctypes.c_uint'
     class internal_24(CUnion):
-        u32: ctypes.c_uint
-        u16: icount_decr_u16
+        u32: 'ctypes.c_uint'
+        u16: 'icount_decr_u16'
 
-    icount_decr: internal_24
-    can_do_io: ctypes.c_uint
-    exception_index: ctypes.c_int
-    rr_guest_instr_count: ctypes.c_ulong
-    panda_guest_pc: ctypes.c_ulong
-    reverse_flags: ctypes.c_ubyte
-    last_gdb_instr: ctypes.c_ulong
-    last_bp_hit_instr: ctypes.c_ulong
-    temp_rr_bp_instr: ctypes.c_ulong
-    throttle_thread_scheduled: ctypes.c_bool
-    tcg_exit_req: ctypes.c_uint
-    hax_vcpu_dirty: ctypes.c_bool
-    hax_vcpu: ctypes._Pointer[hax_vcpu_state]
-    pending_tlb_flush: ctypes.c_ushort
+    icount_decr: 'internal_24'
+    can_do_io: 'ctypes.c_uint'
+    exception_index: 'ctypes.c_int'
+    rr_guest_instr_count: 'ctypes.c_ulong'
+    panda_guest_pc: 'ctypes.c_ulong'
+    reverse_flags: 'ctypes.c_ubyte'
+    last_gdb_instr: 'ctypes.c_ulong'
+    last_bp_hit_instr: 'ctypes.c_ulong'
+    temp_rr_bp_instr: 'ctypes.c_ulong'
+    throttle_thread_scheduled: 'ctypes.c_bool'
+    tcg_exit_req: 'ctypes.c_uint'
+    hax_vcpu_dirty: 'ctypes.c_bool'
+    hax_vcpu: 'ctypes._Pointer[hax_vcpu_state]'
+    pending_tlb_flush: 'ctypes.c_ushort'
 setattr(CPUState, "as", ctypes._Pointer[AddressSpace]())
 
 class CPUTLBEntry(CStructure):
-    addr_read: ctypes.c_ulong
-    addr_write: ctypes.c_ulong
-    addr_code: ctypes.c_ulong
-    addend: ctypes.c_ulong
-    dummy: ctypes.Array[ctypes.c_ubyte]
+    addr_read: 'ctypes.c_ulong'
+    addr_write: 'ctypes.c_ulong'
+    addr_code: 'ctypes.c_ulong'
+    addend: 'ctypes.c_ulong'
+    dummy: 'ctypes.Array[ctypes.c_ubyte]'
 
 class CPUWatchpoint(CStructure):
-    virtaddr: ctypes.c_ulong
-    len: ctypes.c_ulong
-    hitaddr: ctypes.c_ulong
-    hitattrs: MemTxAttrs
-    flags: ctypes.c_int
+    virtaddr: 'ctypes.c_ulong'
+    len: 'ctypes.c_ulong'
+    hitaddr: 'ctypes.c_ulong'
+    hitattrs: 'MemTxAttrs'
+    flags: 'ctypes.c_int'
     class internal_6(CStructure):
-        tqe_next: ctypes._Pointer[CPUWatchpoint]
-        tqe_prev: ctypes._Pointer[ctypes._Pointer[CPUWatchpoint]]
+        tqe_next: 'ctypes._Pointer[CPUWatchpoint]'
+        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[CPUWatchpoint]]'
 
-    entry: internal_6
+    entry: 'internal_6'
 
 CPUWriteMemoryFunc: None
 class CPUX86State(CStructure):
-    regs: ctypes.Array[ctypes.c_ulong]
-    eip: ctypes.c_ulong
-    eflags: ctypes.c_ulong
-    cc_dst: ctypes.c_ulong
-    cc_src: ctypes.c_ulong
-    cc_src2: ctypes.c_ulong
-    cc_op: ctypes.c_uint
-    df: ctypes.c_int
-    hflags: ctypes.c_uint
-    hflags2: ctypes.c_uint
-    segs: ctypes.Array[SegmentCache]
-    ldt: SegmentCache
-    tr: SegmentCache
-    gdt: SegmentCache
-    idt: SegmentCache
-    cr: ctypes.Array[ctypes.c_ulong]
-    a20_mask: ctypes.c_int
-    bnd_regs: ctypes.Array[BNDReg]
-    bndcs_regs: BNDCSReg
-    msr_bndcfgs: ctypes.c_ulong
-    efer: ctypes.c_ulong
-    fpstt: ctypes.c_uint
-    fpus: ctypes.c_ushort
-    fpuc: ctypes.c_ushort
-    fptags: ctypes.Array[ctypes.c_ubyte]
-    fpregs: ctypes.Array[ctypes.Array[ctypes.c_ubyte]]
-    fpop: ctypes.c_ushort
-    fpip: ctypes.c_ulong
-    fpdp: ctypes.c_ulong
-    fp_status: float_status
-    ft0: floatx80
-    mmx_status: float_status
-    sse_status: float_status
-    mxcsr: ctypes.c_uint
-    xmm_regs: ctypes.Array[ctypes.Array[ctypes.c_ubyte]]
-    xmm_t0: ctypes.Array[ctypes.c_ubyte]
-    mmx_t0: ctypes.Array[ctypes.c_ubyte]
-    opmask_regs: ctypes.Array[ctypes.c_ulong]
-    sysenter_cs: ctypes.c_uint
-    sysenter_esp: ctypes.c_ulong
-    sysenter_eip: ctypes.c_ulong
-    star: ctypes.c_ulong
-    vm_hsave: ctypes.c_ulong
-    lstar: ctypes.c_ulong
-    cstar: ctypes.c_ulong
-    fmask: ctypes.c_ulong
-    kernelgsbase: ctypes.c_ulong
-    tsc: ctypes.c_ulong
-    tsc_adjust: ctypes.c_ulong
-    tsc_deadline: ctypes.c_ulong
-    tsc_aux: ctypes.c_ulong
-    xcr0: ctypes.c_ulong
-    mcg_status: ctypes.c_ulong
-    msr_ia32_misc_enable: ctypes.c_ulong
-    msr_ia32_feature_control: ctypes.c_ulong
-    msr_fixed_ctr_ctrl: ctypes.c_ulong
-    msr_global_ctrl: ctypes.c_ulong
-    msr_global_status: ctypes.c_ulong
-    msr_global_ovf_ctrl: ctypes.c_ulong
-    msr_fixed_counters: ctypes.Array[ctypes.c_ulong]
-    msr_gp_counters: ctypes.Array[ctypes.c_ulong]
-    msr_gp_evtsel: ctypes.Array[ctypes.c_ulong]
-    pat: ctypes.c_ulong
-    smbase: ctypes.c_uint
-    pkru: ctypes.c_uint
-    system_time_msr: ctypes.c_ulong
-    wall_clock_msr: ctypes.c_ulong
-    steal_time_msr: ctypes.c_ulong
-    async_pf_en_msr: ctypes.c_ulong
-    pv_eoi_en_msr: ctypes.c_ulong
-    msr_hv_hypercall: ctypes.c_ulong
-    msr_hv_guest_os_id: ctypes.c_ulong
-    msr_hv_vapic: ctypes.c_ulong
-    msr_hv_tsc: ctypes.c_ulong
-    msr_hv_crash_params: ctypes.Array[ctypes.c_ulong]
-    msr_hv_runtime: ctypes.c_ulong
-    msr_hv_synic_control: ctypes.c_ulong
-    msr_hv_synic_version: ctypes.c_ulong
-    msr_hv_synic_evt_page: ctypes.c_ulong
-    msr_hv_synic_msg_page: ctypes.c_ulong
-    msr_hv_synic_sint: ctypes.Array[ctypes.c_ulong]
-    msr_hv_stimer_config: ctypes.Array[ctypes.c_ulong]
-    msr_hv_stimer_count: ctypes.Array[ctypes.c_ulong]
-    error_code: ctypes.c_int
-    exception_is_int: ctypes.c_int
-    exception_next_eip: ctypes.c_ulong
-    dr: ctypes.Array[ctypes.c_ulong]
-    cpu_breakpoint: ctypes.Array[ctypes._Pointer[CPUBreakpoint]]
-    cpu_watchpoint: ctypes.Array[ctypes._Pointer[CPUWatchpoint]]
-    old_exception: ctypes.c_int
-    vm_vmcb: ctypes.c_ulong
-    tsc_offset: ctypes.c_ulong
-    intercept: ctypes.c_ulong
-    intercept_cr_read: ctypes.c_ushort
-    intercept_cr_write: ctypes.c_ushort
-    intercept_dr_read: ctypes.c_ushort
-    intercept_dr_write: ctypes.c_ushort
-    intercept_exceptions: ctypes.c_uint
-    v_tpr: ctypes.c_ubyte
-    nmi_injected: ctypes.c_ubyte
-    nmi_pending: ctypes.c_ubyte
-    tlb_table: ctypes.Array[ctypes.Array[CPUTLBEntry]]
-    tlb_v_table: ctypes.Array[ctypes.Array[CPUTLBEntry]]
-    iotlb: ctypes.Array[ctypes.Array[CPUIOTLBEntry]]
-    iotlb_v: ctypes.Array[ctypes.Array[CPUIOTLBEntry]]
-    tlb_flush_addr: ctypes.c_ulong
-    tlb_flush_mask: ctypes.c_ulong
-    vtlb_index: ctypes.c_ulong
-    cpuid_min_level: ctypes.c_uint
-    cpuid_min_xlevel: ctypes.c_uint
-    cpuid_min_xlevel2: ctypes.c_uint
-    cpuid_max_level: ctypes.c_uint
-    cpuid_max_xlevel: ctypes.c_uint
-    cpuid_max_xlevel2: ctypes.c_uint
-    cpuid_level: ctypes.c_uint
-    cpuid_xlevel: ctypes.c_uint
-    cpuid_xlevel2: ctypes.c_uint
-    cpuid_vendor1: ctypes.c_uint
-    cpuid_vendor2: ctypes.c_uint
-    cpuid_vendor3: ctypes.c_uint
-    cpuid_version: ctypes.c_uint
-    features: ctypes.Array[ctypes.c_uint]
-    user_features: ctypes.Array[ctypes.c_uint]
-    cpuid_model: ctypes.Array[ctypes.c_uint]
-    mtrr_fixed: ctypes.Array[ctypes.c_ulong]
-    mtrr_deftype: ctypes.c_ulong
-    mtrr_var: ctypes.Array[MTRRVar]
-    mp_state: ctypes.c_uint
-    exception_injected: ctypes.c_int
-    interrupt_injected: ctypes.c_int
-    soft_interrupt: ctypes.c_ubyte
-    has_error_code: ctypes.c_ubyte
-    sipi_vector: ctypes.c_uint
-    tsc_valid: ctypes.c_bool
-    tsc_khz: ctypes.c_long
-    user_tsc_khz: ctypes.c_long
-    kvm_xsave_buf: ctypes.c_void_p
-    mcg_cap: ctypes.c_ulong
-    mcg_ctl: ctypes.c_ulong
-    mcg_ext_ctl: ctypes.c_ulong
-    mce_banks: ctypes.Array[ctypes.c_ulong]
-    xstate_bv: ctypes.c_ulong
-    fpus_vmstate: ctypes.c_ushort
-    fptag_vmstate: ctypes.c_ushort
-    fpregs_format_vmstate: ctypes.c_ushort
-    xss: ctypes.c_ulong
-    tpr_access_type: ctypes.c_int
+    regs: 'ctypes.Array[ctypes.c_ulong]'
+    eip: 'ctypes.c_ulong'
+    eflags: 'ctypes.c_ulong'
+    cc_dst: 'ctypes.c_ulong'
+    cc_src: 'ctypes.c_ulong'
+    cc_src2: 'ctypes.c_ulong'
+    cc_op: 'ctypes.c_uint'
+    df: 'ctypes.c_int'
+    hflags: 'ctypes.c_uint'
+    hflags2: 'ctypes.c_uint'
+    segs: 'ctypes.Array[SegmentCache]'
+    ldt: 'SegmentCache'
+    tr: 'SegmentCache'
+    gdt: 'SegmentCache'
+    idt: 'SegmentCache'
+    cr: 'ctypes.Array[ctypes.c_ulong]'
+    a20_mask: 'ctypes.c_int'
+    bnd_regs: 'ctypes.Array[BNDReg]'
+    bndcs_regs: 'BNDCSReg'
+    msr_bndcfgs: 'ctypes.c_ulong'
+    efer: 'ctypes.c_ulong'
+    fpstt: 'ctypes.c_uint'
+    fpus: 'ctypes.c_ushort'
+    fpuc: 'ctypes.c_ushort'
+    fptags: 'ctypes.Array[ctypes.c_ubyte]'
+    fpregs: 'ctypes.Array[ctypes.Array[ctypes.c_ubyte]]'
+    fpop: 'ctypes.c_ushort'
+    fpip: 'ctypes.c_ulong'
+    fpdp: 'ctypes.c_ulong'
+    fp_status: 'float_status'
+    ft0: 'floatx80'
+    mmx_status: 'float_status'
+    sse_status: 'float_status'
+    mxcsr: 'ctypes.c_uint'
+    xmm_regs: 'ctypes.Array[ctypes.Array[ctypes.c_ubyte]]'
+    xmm_t0: 'ctypes.Array[ctypes.c_ubyte]'
+    mmx_t0: 'ctypes.Array[ctypes.c_ubyte]'
+    opmask_regs: 'ctypes.Array[ctypes.c_ulong]'
+    sysenter_cs: 'ctypes.c_uint'
+    sysenter_esp: 'ctypes.c_ulong'
+    sysenter_eip: 'ctypes.c_ulong'
+    star: 'ctypes.c_ulong'
+    vm_hsave: 'ctypes.c_ulong'
+    lstar: 'ctypes.c_ulong'
+    cstar: 'ctypes.c_ulong'
+    fmask: 'ctypes.c_ulong'
+    kernelgsbase: 'ctypes.c_ulong'
+    tsc: 'ctypes.c_ulong'
+    tsc_adjust: 'ctypes.c_ulong'
+    tsc_deadline: 'ctypes.c_ulong'
+    tsc_aux: 'ctypes.c_ulong'
+    xcr0: 'ctypes.c_ulong'
+    mcg_status: 'ctypes.c_ulong'
+    msr_ia32_misc_enable: 'ctypes.c_ulong'
+    msr_ia32_feature_control: 'ctypes.c_ulong'
+    msr_fixed_ctr_ctrl: 'ctypes.c_ulong'
+    msr_global_ctrl: 'ctypes.c_ulong'
+    msr_global_status: 'ctypes.c_ulong'
+    msr_global_ovf_ctrl: 'ctypes.c_ulong'
+    msr_fixed_counters: 'ctypes.Array[ctypes.c_ulong]'
+    msr_gp_counters: 'ctypes.Array[ctypes.c_ulong]'
+    msr_gp_evtsel: 'ctypes.Array[ctypes.c_ulong]'
+    pat: 'ctypes.c_ulong'
+    smbase: 'ctypes.c_uint'
+    pkru: 'ctypes.c_uint'
+    system_time_msr: 'ctypes.c_ulong'
+    wall_clock_msr: 'ctypes.c_ulong'
+    steal_time_msr: 'ctypes.c_ulong'
+    async_pf_en_msr: 'ctypes.c_ulong'
+    pv_eoi_en_msr: 'ctypes.c_ulong'
+    msr_hv_hypercall: 'ctypes.c_ulong'
+    msr_hv_guest_os_id: 'ctypes.c_ulong'
+    msr_hv_vapic: 'ctypes.c_ulong'
+    msr_hv_tsc: 'ctypes.c_ulong'
+    msr_hv_crash_params: 'ctypes.Array[ctypes.c_ulong]'
+    msr_hv_runtime: 'ctypes.c_ulong'
+    msr_hv_synic_control: 'ctypes.c_ulong'
+    msr_hv_synic_version: 'ctypes.c_ulong'
+    msr_hv_synic_evt_page: 'ctypes.c_ulong'
+    msr_hv_synic_msg_page: 'ctypes.c_ulong'
+    msr_hv_synic_sint: 'ctypes.Array[ctypes.c_ulong]'
+    msr_hv_stimer_config: 'ctypes.Array[ctypes.c_ulong]'
+    msr_hv_stimer_count: 'ctypes.Array[ctypes.c_ulong]'
+    error_code: 'ctypes.c_int'
+    exception_is_int: 'ctypes.c_int'
+    exception_next_eip: 'ctypes.c_ulong'
+    dr: 'ctypes.Array[ctypes.c_ulong]'
+    cpu_breakpoint: 'ctypes.Array[ctypes._Pointer[CPUBreakpoint]]'
+    cpu_watchpoint: 'ctypes.Array[ctypes._Pointer[CPUWatchpoint]]'
+    old_exception: 'ctypes.c_int'
+    vm_vmcb: 'ctypes.c_ulong'
+    tsc_offset: 'ctypes.c_ulong'
+    intercept: 'ctypes.c_ulong'
+    intercept_cr_read: 'ctypes.c_ushort'
+    intercept_cr_write: 'ctypes.c_ushort'
+    intercept_dr_read: 'ctypes.c_ushort'
+    intercept_dr_write: 'ctypes.c_ushort'
+    intercept_exceptions: 'ctypes.c_uint'
+    v_tpr: 'ctypes.c_ubyte'
+    nmi_injected: 'ctypes.c_ubyte'
+    nmi_pending: 'ctypes.c_ubyte'
+    tlb_table: 'ctypes.Array[ctypes.Array[CPUTLBEntry]]'
+    tlb_v_table: 'ctypes.Array[ctypes.Array[CPUTLBEntry]]'
+    iotlb: 'ctypes.Array[ctypes.Array[CPUIOTLBEntry]]'
+    iotlb_v: 'ctypes.Array[ctypes.Array[CPUIOTLBEntry]]'
+    tlb_flush_addr: 'ctypes.c_ulong'
+    tlb_flush_mask: 'ctypes.c_ulong'
+    vtlb_index: 'ctypes.c_ulong'
+    cpuid_min_level: 'ctypes.c_uint'
+    cpuid_min_xlevel: 'ctypes.c_uint'
+    cpuid_min_xlevel2: 'ctypes.c_uint'
+    cpuid_max_level: 'ctypes.c_uint'
+    cpuid_max_xlevel: 'ctypes.c_uint'
+    cpuid_max_xlevel2: 'ctypes.c_uint'
+    cpuid_level: 'ctypes.c_uint'
+    cpuid_xlevel: 'ctypes.c_uint'
+    cpuid_xlevel2: 'ctypes.c_uint'
+    cpuid_vendor1: 'ctypes.c_uint'
+    cpuid_vendor2: 'ctypes.c_uint'
+    cpuid_vendor3: 'ctypes.c_uint'
+    cpuid_version: 'ctypes.c_uint'
+    features: 'ctypes.Array[ctypes.c_uint]'
+    user_features: 'ctypes.Array[ctypes.c_uint]'
+    cpuid_model: 'ctypes.Array[ctypes.c_uint]'
+    mtrr_fixed: 'ctypes.Array[ctypes.c_ulong]'
+    mtrr_deftype: 'ctypes.c_ulong'
+    mtrr_var: 'ctypes.Array[MTRRVar]'
+    mp_state: 'ctypes.c_uint'
+    exception_injected: 'ctypes.c_int'
+    interrupt_injected: 'ctypes.c_int'
+    soft_interrupt: 'ctypes.c_ubyte'
+    has_error_code: 'ctypes.c_ubyte'
+    sipi_vector: 'ctypes.c_uint'
+    tsc_valid: 'ctypes.c_bool'
+    tsc_khz: 'ctypes.c_long'
+    user_tsc_khz: 'ctypes.c_long'
+    kvm_xsave_buf: 'ctypes.c_void_p'
+    mcg_cap: 'ctypes.c_ulong'
+    mcg_ctl: 'ctypes.c_ulong'
+    mcg_ext_ctl: 'ctypes.c_ulong'
+    mce_banks: 'ctypes.Array[ctypes.c_ulong]'
+    xstate_bv: 'ctypes.c_ulong'
+    fpus_vmstate: 'ctypes.c_ushort'
+    fptag_vmstate: 'ctypes.c_ushort'
+    fpregs_format_vmstate: 'ctypes.c_ushort'
+    xss: 'ctypes.c_ulong'
+    tpr_access_type: 'ctypes.c_int'
 
 class CharBackend(CStructure):
-    chr: ctypes._Pointer[Chardev]
-    chr_event: ctypes._CFunctionType
-    chr_can_read: ctypes._CFunctionType
-    chr_read: ctypes._CFunctionType
-    opaque: ctypes.c_void_p
-    tag: ctypes.c_int
-    fe_open: ctypes.c_int
+    chr: 'ctypes._Pointer[Chardev]'
+    chr_event: 'ctypes._CFunctionType'
+    chr_can_read: 'ctypes._CFunctionType'
+    chr_read: 'ctypes._CFunctionType'
+    opaque: 'ctypes.c_void_p'
+    tag: 'ctypes.c_int'
+    fe_open: 'ctypes.c_int'
 
 class Chardev(CStructure):
-    parent_obj: Object
-    chr_write_lock: QemuMutex
-    be: ctypes._Pointer[CharBackend]
-    label: ctypes._Pointer[ctypes.c_char]
-    filename: ctypes._Pointer[ctypes.c_char]
-    logfd: ctypes.c_int
-    be_open: ctypes.c_int
-    fd_in_tag: ctypes.c_uint
-    features: ctypes.Array[ctypes.c_ulong]
+    parent_obj: 'Object'
+    chr_write_lock: 'QemuMutex'
+    be: 'ctypes._Pointer[CharBackend]'
+    label: 'ctypes._Pointer[ctypes.c_char]'
+    filename: 'ctypes._Pointer[ctypes.c_char]'
+    logfd: 'ctypes.c_int'
+    be_open: 'ctypes.c_int'
+    fd_in_tag: 'ctypes.c_uint'
+    features: 'ctypes.Array[ctypes.c_ulong]'
     class internal_18(CStructure):
-        tqe_next: ctypes._Pointer[Chardev]
-        tqe_prev: ctypes._Pointer[ctypes._Pointer[Chardev]]
+        tqe_next: 'ctypes._Pointer[Chardev]'
+        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[Chardev]]'
 
-    next: internal_18
+    next: 'internal_18'
 
 class ChildrenHead(CStructure):
-    tqh_first: ctypes._Pointer[BusChild]
-    tqh_last: ctypes._Pointer[ctypes._Pointer[BusChild]]
+    tqh_first: 'ctypes._Pointer[BusChild]'
+    tqh_last: 'ctypes._Pointer[ctypes._Pointer[BusChild]]'
 
 Const: ctypes.c_ulong
 class CosiFile(CStructure):
-    addr: ctypes.c_ulong
-    file_struct: File
-    name: ctypes._Pointer[String]
-    fd: ctypes.c_uint
+    addr: 'ctypes.c_ulong'
+    file_struct: 'File'
+    name: 'ctypes._Pointer[String]'
+    fd: 'ctypes.c_uint'
 
 class CosiFiles(CStructure):
     pass
 
 class CosiMappings(CStructure):
-    modules: ctypes._Pointer[Vec_CosiModule]
+    modules: 'ctypes._Pointer[Vec_CosiModule]'
 
 class CosiModule(CStructure):
-    modd: ctypes.c_ulong
-    base: ctypes.c_ulong
-    size: ctypes.c_ulong
-    vma: VmAreaStruct
-    file: ctypes._Pointer[String]
-    name: ctypes._Pointer[String]
+    modd: 'ctypes.c_ulong'
+    base: 'ctypes.c_ulong'
+    size: 'ctypes.c_ulong'
+    vma: 'VmAreaStruct'
+    file: 'ctypes._Pointer[String]'
+    name: 'ctypes._Pointer[String]'
 
 class CosiProc(CStructure):
-    addr: ctypes.c_ulong
-    task: TaskStruct
-    name: ctypes._Pointer[String]
-    ppid: ctypes.c_uint
-    mm: ctypes._Pointer[MmStruct]
-    asid: ctypes.c_uint
-    taskd: ctypes.c_ulong
+    addr: 'ctypes.c_ulong'
+    task: 'TaskStruct'
+    name: 'ctypes._Pointer[String]'
+    ppid: 'ctypes.c_uint'
+    mm: 'ctypes._Pointer[MmStruct]'
+    asid: 'ctypes.c_uint'
+    taskd: 'ctypes.c_ulong'
 
 class CosiThread(CStructure):
-    tid: ctypes.c_uint
-    pid: ctypes.c_uint
+    tid: 'ctypes.c_uint'
+    pid: 'ctypes.c_uint'
 
 class DeviceState(CStructure):
-    parent_obj: Object
-    id: ctypes._Pointer[ctypes.c_char]
-    realized: ctypes.c_bool
-    pending_deleted_event: ctypes.c_bool
-    opts: ctypes._Pointer[QemuOpts]
-    hotplugged: ctypes.c_int
-    parent_bus: ctypes._Pointer[BusState]
+    parent_obj: 'Object'
+    id: 'ctypes._Pointer[ctypes.c_char]'
+    realized: 'ctypes.c_bool'
+    pending_deleted_event: 'ctypes.c_bool'
+    opts: 'ctypes._Pointer[QemuOpts]'
+    hotplugged: 'ctypes.c_int'
+    parent_bus: 'ctypes._Pointer[BusState]'
     class internal_16(CStructure):
-        lh_first: ctypes._Pointer[NamedGPIOList]
+        lh_first: 'ctypes._Pointer[NamedGPIOList]'
 
-    gpios: internal_16
+    gpios: 'internal_16'
     class internal_17(CStructure):
-        lh_first: ctypes._Pointer[BusState]
+        lh_first: 'ctypes._Pointer[BusState]'
 
-    child_bus: internal_17
-    num_child_bus: ctypes.c_int
-    instance_id_alias: ctypes.c_int
-    alias_required_for_version: ctypes.c_int
+    child_bus: 'internal_17'
+    num_child_bus: 'ctypes.c_int'
+    instance_id_alias: 'ctypes.c_int'
+    alias_required_for_version: 'ctypes.c_int'
 
 class EventNotifier(CStructure):
-    rfd: ctypes.c_int
-    wfd: ctypes.c_int
+    rfd: 'ctypes.c_int'
+    wfd: 'ctypes.c_int'
 
 class FILE(CStructure):
     pass
@@ -427,17 +427,17 @@ class FILE(CStructure):
 FPReg: ctypes.Array[ctypes.c_ubyte]
 FeatureWordArray: ctypes.Array[ctypes.c_uint]
 class File(CStructure):
-    f_path: Path
-    f_pos: ctypes.c_ulong
+    f_path: 'Path'
+    f_pos: 'ctypes.c_ulong'
 
 GArray: None
 class GDBRegisterState(CStructure):
-    base_reg: ctypes.c_int
-    num_regs: ctypes.c_int
-    get_reg: ctypes.c_int
-    set_reg: ctypes.c_int
-    xml: ctypes._Pointer[ctypes.c_char]
-    next: ctypes._Pointer[GDBRegisterState]
+    base_reg: 'ctypes.c_int'
+    num_regs: 'ctypes.c_int'
+    get_reg: 'ctypes.c_int'
+    set_reg: 'ctypes.c_int'
+    xml: 'ctypes._Pointer[ctypes.c_char]'
+    next: 'ctypes._Pointer[GDBRegisterState]'
 
 class GHashTable(CStructure):
     pass
@@ -446,7 +446,7 @@ GReg: ctypes.c_ulong
 GSpec: ctypes.c_ulong
 HAddr: ctypes.c_ulong
 class HotplugHandler(CStructure):
-    Parent: Object
+    Parent: 'Object'
 
 IAddr: ctypes.c_ulong
 IOCanReadHandler: ctypes.c_int
@@ -454,365 +454,365 @@ IOEventHandler: None
 IOMMUAccessFlags:ctypes.c_int
 IOMMUNotifierFlag:ctypes.c_int
 class IOMMUTLBEntry(CStructure):
-    target_as: ctypes._Pointer[AddressSpace]
-    iova: ctypes.c_ulong
-    translated_addr: ctypes.c_ulong
-    addr_mask: ctypes.c_ulong
-    perm: ctypes.c_int
+    target_as: 'ctypes._Pointer[AddressSpace]'
+    iova: 'ctypes.c_ulong'
+    translated_addr: 'ctypes.c_ulong'
+    addr_mask: 'ctypes.c_ulong'
+    perm: 'ctypes.c_int'
 
 IOReadHandler: None
 InsnFlag:ctypes.c_int
 Int128: ctypes.Array[ctypes.c_ubyte]
 LAddr: ctypes.c_ulong
 class ListHead(CStructure):
-    next: ctypes.c_ulong
-    prev: ctypes.c_ulong
+    next: 'ctypes.c_ulong'
+    prev: 'ctypes.c_ulong'
 
 class Location(CStructure):
-    num: ctypes.c_int
-    ptr: ctypes.c_void_p
-    prev: ctypes._Pointer[Location]
+    num: 'ctypes.c_int'
+    ptr: 'ctypes.c_void_p'
+    prev: 'ctypes._Pointer[Location]'
 
 MAddr: ctypes.c_ulong
 MMXReg: ctypes.Array[ctypes.c_ubyte]
 class MTRRVar(CStructure):
-    base: ctypes.c_ulong
-    mask: ctypes.c_ulong
+    base: 'ctypes.c_ulong'
+    mask: 'ctypes.c_ulong'
 
 class MachineState(CStructure):
-    parent_obj: Object
-    sysbus_notifier: Notifier
-    accel: ctypes._Pointer[ctypes.c_char]
-    kernel_irqchip_allowed: ctypes.c_bool
-    kernel_irqchip_required: ctypes.c_bool
-    kernel_irqchip_split: ctypes.c_bool
-    kvm_shadow_mem: ctypes.c_int
-    dtb: ctypes._Pointer[ctypes.c_char]
-    dumpdtb: ctypes._Pointer[ctypes.c_char]
-    phandle_start: ctypes.c_int
-    dt_compatible: ctypes._Pointer[ctypes.c_char]
-    dump_guest_core: ctypes.c_bool
-    mem_merge: ctypes.c_bool
-    usb: ctypes.c_bool
-    usb_disabled: ctypes.c_bool
-    igd_gfx_passthru: ctypes.c_bool
-    firmware: ctypes._Pointer[ctypes.c_char]
-    iommu: ctypes.c_bool
-    suppress_vmdesc: ctypes.c_bool
-    enforce_config_section: ctypes.c_bool
-    enable_graphics: ctypes.c_bool
-    board_id: ctypes.c_int
-    mem_map_str: ctypes._Pointer[ctypes.c_char]
-    ram_size: ctypes.c_ulong
-    maxram_size: ctypes.c_ulong
-    ram_slots: ctypes.c_ulong
-    boot_order: ctypes._Pointer[ctypes.c_char]
-    kernel_filename: ctypes._Pointer[ctypes.c_char]
-    kernel_cmdline: ctypes._Pointer[ctypes.c_char]
-    initrd_filename: ctypes._Pointer[ctypes.c_char]
-    cpu_model: ctypes._Pointer[ctypes.c_char]
-    accelerator: ctypes._Pointer[AccelState]
-    possible_cpus: ctypes._Pointer[ctypes.c_ulong]
+    parent_obj: 'Object'
+    sysbus_notifier: 'Notifier'
+    accel: 'ctypes._Pointer[ctypes.c_char]'
+    kernel_irqchip_allowed: 'ctypes.c_bool'
+    kernel_irqchip_required: 'ctypes.c_bool'
+    kernel_irqchip_split: 'ctypes.c_bool'
+    kvm_shadow_mem: 'ctypes.c_int'
+    dtb: 'ctypes._Pointer[ctypes.c_char]'
+    dumpdtb: 'ctypes._Pointer[ctypes.c_char]'
+    phandle_start: 'ctypes.c_int'
+    dt_compatible: 'ctypes._Pointer[ctypes.c_char]'
+    dump_guest_core: 'ctypes.c_bool'
+    mem_merge: 'ctypes.c_bool'
+    usb: 'ctypes.c_bool'
+    usb_disabled: 'ctypes.c_bool'
+    igd_gfx_passthru: 'ctypes.c_bool'
+    firmware: 'ctypes._Pointer[ctypes.c_char]'
+    iommu: 'ctypes.c_bool'
+    suppress_vmdesc: 'ctypes.c_bool'
+    enforce_config_section: 'ctypes.c_bool'
+    enable_graphics: 'ctypes.c_bool'
+    board_id: 'ctypes.c_int'
+    mem_map_str: 'ctypes._Pointer[ctypes.c_char]'
+    ram_size: 'ctypes.c_ulong'
+    maxram_size: 'ctypes.c_ulong'
+    ram_slots: 'ctypes.c_ulong'
+    boot_order: 'ctypes._Pointer[ctypes.c_char]'
+    kernel_filename: 'ctypes._Pointer[ctypes.c_char]'
+    kernel_cmdline: 'ctypes._Pointer[ctypes.c_char]'
+    initrd_filename: 'ctypes._Pointer[ctypes.c_char]'
+    cpu_model: 'ctypes._Pointer[ctypes.c_char]'
+    accelerator: 'ctypes._Pointer[AccelState]'
+    possible_cpus: 'ctypes._Pointer[ctypes.c_ulong]'
 
 class MemTxAttrs(CStructure):
-    unspecified: ctypes.c_uint
-    secure: ctypes.c_uint
-    user: ctypes.c_uint
-    requester_id: ctypes.c_uint
+    unspecified: 'ctypes.c_uint'
+    secure: 'ctypes.c_uint'
+    user: 'ctypes.c_uint'
+    requester_id: 'ctypes.c_uint'
 
 MemTxResult: ctypes.c_ulong
 class MemoryListener(CStructure):
-    begin: ctypes._CFunctionType
-    commit: ctypes._CFunctionType
-    region_add: ctypes._CFunctionType
-    region_del: ctypes._CFunctionType
-    region_nop: ctypes._CFunctionType
-    log_start: ctypes._CFunctionType
-    log_stop: ctypes._CFunctionType
-    log_sync: ctypes._CFunctionType
-    log_global_start: ctypes._CFunctionType
-    log_global_stop: ctypes._CFunctionType
-    eventfd_add: ctypes._CFunctionType
-    eventfd_del: ctypes._CFunctionType
-    coalesced_mmio_add: ctypes._CFunctionType
-    coalesced_mmio_del: ctypes._CFunctionType
-    priority: ctypes.c_uint
-    address_space: ctypes._Pointer[AddressSpace]
+    begin: 'ctypes._CFunctionType'
+    commit: 'ctypes._CFunctionType'
+    region_add: 'ctypes._CFunctionType'
+    region_del: 'ctypes._CFunctionType'
+    region_nop: 'ctypes._CFunctionType'
+    log_start: 'ctypes._CFunctionType'
+    log_stop: 'ctypes._CFunctionType'
+    log_sync: 'ctypes._CFunctionType'
+    log_global_start: 'ctypes._CFunctionType'
+    log_global_stop: 'ctypes._CFunctionType'
+    eventfd_add: 'ctypes._CFunctionType'
+    eventfd_del: 'ctypes._CFunctionType'
+    coalesced_mmio_add: 'ctypes._CFunctionType'
+    coalesced_mmio_del: 'ctypes._CFunctionType'
+    priority: 'ctypes.c_uint'
+    address_space: 'ctypes._Pointer[AddressSpace]'
     class internal_13(CStructure):
-        tqe_next: ctypes._Pointer[MemoryListener]
-        tqe_prev: ctypes._Pointer[ctypes._Pointer[MemoryListener]]
+        tqe_next: 'ctypes._Pointer[MemoryListener]'
+        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[MemoryListener]]'
 
-    link: internal_13
+    link: 'internal_13'
     class internal_14(CStructure):
-        tqe_next: ctypes._Pointer[MemoryListener]
-        tqe_prev: ctypes._Pointer[ctypes._Pointer[MemoryListener]]
+        tqe_next: 'ctypes._Pointer[MemoryListener]'
+        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[MemoryListener]]'
 
-    link_as: internal_14
+    link_as: 'internal_14'
 
 class MemoryRegion(CStructure):
-    parent_obj: Object
-    romd_mode: ctypes.c_bool
-    ram: ctypes.c_bool
-    subpage: ctypes.c_bool
-    readonly: ctypes.c_bool
-    rom_device: ctypes.c_bool
-    flush_coalesced_mmio: ctypes.c_bool
-    global_locking: ctypes.c_bool
-    dirty_log_mask: ctypes.c_ubyte
-    ram_block: ctypes._Pointer[RAMBlock]
-    owner: ctypes._Pointer[Object]
-    iommu_ops: ctypes._Pointer[MemoryRegionIOMMUOps]
-    ops: ctypes._Pointer[MemoryRegionOps]
-    opaque: ctypes.c_void_p
-    container: ctypes._Pointer[MemoryRegion]
-    size: ctypes.Array[ctypes.c_ubyte]
-    addr: ctypes.c_ulong
-    destructor: ctypes._CFunctionType
-    align: ctypes.c_ulong
-    terminates: ctypes.c_bool
-    ram_device: ctypes.c_bool
-    enabled: ctypes.c_bool
-    warning_printed: ctypes.c_bool
-    vga_logging_count: ctypes.c_ubyte
-    alias: ctypes._Pointer[MemoryRegion]
-    alias_offset: ctypes.c_ulong
-    priority: ctypes.c_int
-    subregions: subregions
+    parent_obj: 'Object'
+    romd_mode: 'ctypes.c_bool'
+    ram: 'ctypes.c_bool'
+    subpage: 'ctypes.c_bool'
+    readonly: 'ctypes.c_bool'
+    rom_device: 'ctypes.c_bool'
+    flush_coalesced_mmio: 'ctypes.c_bool'
+    global_locking: 'ctypes.c_bool'
+    dirty_log_mask: 'ctypes.c_ubyte'
+    ram_block: 'ctypes._Pointer[RAMBlock]'
+    owner: 'ctypes._Pointer[Object]'
+    iommu_ops: 'ctypes._Pointer[MemoryRegionIOMMUOps]'
+    ops: 'ctypes._Pointer[MemoryRegionOps]'
+    opaque: 'ctypes.c_void_p'
+    container: 'ctypes._Pointer[MemoryRegion]'
+    size: 'ctypes.Array[ctypes.c_ubyte]'
+    addr: 'ctypes.c_ulong'
+    destructor: 'ctypes._CFunctionType'
+    align: 'ctypes.c_ulong'
+    terminates: 'ctypes.c_bool'
+    ram_device: 'ctypes.c_bool'
+    enabled: 'ctypes.c_bool'
+    warning_printed: 'ctypes.c_bool'
+    vga_logging_count: 'ctypes.c_ubyte'
+    alias: 'ctypes._Pointer[MemoryRegion]'
+    alias_offset: 'ctypes.c_ulong'
+    priority: 'ctypes.c_int'
+    subregions: 'subregions'
     class internal_11(CStructure):
-        tqe_next: ctypes._Pointer[MemoryRegion]
-        tqe_prev: ctypes._Pointer[ctypes._Pointer[MemoryRegion]]
+        tqe_next: 'ctypes._Pointer[MemoryRegion]'
+        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[MemoryRegion]]'
 
-    subregions_link: internal_11
-    coalesced: coalesced_ranges
-    name: ctypes._Pointer[ctypes.c_char]
-    ioeventfd_nb: ctypes.c_uint
-    ioeventfds: ctypes._Pointer[MemoryRegionIoeventfd]
+    subregions_link: 'internal_11'
+    coalesced: 'coalesced_ranges'
+    name: 'ctypes._Pointer[ctypes.c_char]'
+    ioeventfd_nb: 'ctypes.c_uint'
+    ioeventfds: 'ctypes._Pointer[MemoryRegionIoeventfd]'
     class internal_12(CStructure):
-        lh_first: ctypes._Pointer[IOMMUNotifier]
+        lh_first: 'ctypes._Pointer[IOMMUNotifier]'
 
-    iommu_notify: internal_12
-    iommu_notify_flags: ctypes.c_int
+    iommu_notify: 'internal_12'
+    iommu_notify_flags: 'ctypes.c_int'
 
 class MemoryRegionIOMMUOps(CStructure):
-    translate: ctypes._CFunctionType
-    get_min_page_size: ctypes._CFunctionType
-    notify_flag_changed: ctypes._CFunctionType
+    translate: 'ctypes._CFunctionType'
+    get_min_page_size: 'ctypes._CFunctionType'
+    notify_flag_changed: 'ctypes._CFunctionType'
 
 class MemoryRegionIoeventfd(CStructure):
-    addr: AddrRange
-    match_data: ctypes.c_bool
-    data: ctypes.c_ulong
-    e: ctypes._Pointer[EventNotifier]
+    addr: 'AddrRange'
+    match_data: 'ctypes.c_bool'
+    data: 'ctypes.c_ulong'
+    e: 'ctypes._Pointer[EventNotifier]'
 
 class MemoryRegionMmio(CStructure):
-    read: ctypes.Array[ctypes._CFunctionType]
-    write: ctypes.Array[ctypes._CFunctionType]
+    read: 'ctypes.Array[ctypes._CFunctionType]'
+    write: 'ctypes.Array[ctypes._CFunctionType]'
 
 class MemoryRegionOps(CStructure):
-    read: ctypes._CFunctionType
-    write: ctypes._CFunctionType
-    read_with_attrs: ctypes._CFunctionType
-    write_with_attrs: ctypes._CFunctionType
-    endianness: ctypes.c_int
+    read: 'ctypes._CFunctionType'
+    write: 'ctypes._CFunctionType'
+    read_with_attrs: 'ctypes._CFunctionType'
+    write_with_attrs: 'ctypes._CFunctionType'
+    endianness: 'ctypes.c_int'
     class internal_9(CStructure):
-        min_access_size: ctypes.c_uint
-        max_access_size: ctypes.c_uint
-        unaligned: ctypes.c_bool
-        accepts: ctypes._CFunctionType
+        min_access_size: 'ctypes.c_uint'
+        max_access_size: 'ctypes.c_uint'
+        unaligned: 'ctypes.c_bool'
+        accepts: 'ctypes._CFunctionType'
 
-    valid: internal_9
+    valid: 'internal_9'
     class internal_10(CStructure):
-        min_access_size: ctypes.c_uint
-        max_access_size: ctypes.c_uint
-        unaligned: ctypes.c_bool
+        min_access_size: 'ctypes.c_uint'
+        max_access_size: 'ctypes.c_uint'
+        unaligned: 'ctypes.c_bool'
 
-    impl: internal_10
-    old_mmio: MemoryRegionMmio
+    impl: 'internal_10'
+    old_mmio: 'MemoryRegionMmio'
 
 class MemoryRegionSection(CStructure):
-    mr: ctypes._Pointer[MemoryRegion]
-    address_space: ctypes._Pointer[AddressSpace]
-    offset_within_region: ctypes.c_ulong
-    size: ctypes.Array[ctypes.c_ubyte]
-    offset_within_address_space: ctypes.c_ulong
-    readonly: ctypes.c_bool
+    mr: 'ctypes._Pointer[MemoryRegion]'
+    address_space: 'ctypes._Pointer[AddressSpace]'
+    offset_within_region: 'ctypes.c_ulong'
+    size: 'ctypes.Array[ctypes.c_ubyte]'
+    offset_within_address_space: 'ctypes.c_ulong'
+    readonly: 'ctypes.c_bool'
 
 class MmStruct(CStructure):
-    pgd: ctypes.c_uint
-    arg_start: ctypes.c_ulong
-    start_brk: ctypes.c_ulong
-    brk: ctypes.c_ulong
-    start_stack: ctypes.c_ulong
-    mmap: ctypes.c_ulong
+    pgd: 'ctypes.c_uint'
+    arg_start: 'ctypes.c_ulong'
+    start_brk: 'ctypes.c_ulong'
+    brk: 'ctypes.c_ulong'
+    start_stack: 'ctypes.c_ulong'
+    mmap: 'ctypes.c_ulong'
 
 class Monitor(CStructure):
-    chr: CharBackend
-    reset_seen: ctypes.c_int
-    flags: ctypes.c_int
-    suspend_cnt: ctypes.c_int
-    skip_flush: ctypes.c_bool
-    out_lock: QemuMutex
-    outbuf: ctypes._Pointer[QString]
-    out_watch: ctypes.c_uint
-    mux_out: ctypes.c_int
-    rs: ctypes._Pointer[ReadLineState]
-    qmp: ctypes.Array[ctypes.c_ubyte]
-    mon_cpu: ctypes._Pointer[CPUState]
-    password_completion_cb: ctypes._CFunctionType
-    password_opaque: ctypes.c_void_p
-    cmd_table: ctypes._Pointer[ctypes.Array[ctypes.c_ubyte]]
+    chr: 'CharBackend'
+    reset_seen: 'ctypes.c_int'
+    flags: 'ctypes.c_int'
+    suspend_cnt: 'ctypes.c_int'
+    skip_flush: 'ctypes.c_bool'
+    out_lock: 'QemuMutex'
+    outbuf: 'ctypes._Pointer[QString]'
+    out_watch: 'ctypes.c_uint'
+    mux_out: 'ctypes.c_int'
+    rs: 'ctypes._Pointer[ReadLineState]'
+    qmp: 'ctypes.Array[ctypes.c_ubyte]'
+    mon_cpu: 'ctypes._Pointer[CPUState]'
+    password_completion_cb: 'ctypes._CFunctionType'
+    password_opaque: 'ctypes.c_void_p'
+    cmd_table: 'ctypes._Pointer[ctypes.Array[ctypes.c_ubyte]]'
     class internal_19(CStructure):
-        lh_first: ctypes._Pointer[mon_fd_t]
+        lh_first: 'ctypes._Pointer[mon_fd_t]'
 
-    fds: internal_19
+    fds: 'internal_19'
     class internal_20(CStructure):
-        le_next: ctypes._Pointer[Monitor]
-        le_prev: ctypes._Pointer[ctypes._Pointer[Monitor]]
+        le_next: 'ctypes._Pointer[Monitor]'
+        le_prev: 'ctypes._Pointer[ctypes._Pointer[Monitor]]'
 
-    entry: internal_20
+    entry: 'internal_20'
 
 MonitorQMP: ctypes.Array[ctypes.c_ubyte]
 class Notifier(CStructure):
-    notify: ctypes._CFunctionType
+    notify: 'ctypes._CFunctionType'
     class internal_3(CStructure):
-        le_next: ctypes._Pointer[Notifier]
-        le_prev: ctypes._Pointer[ctypes._Pointer[Notifier]]
+        le_next: 'ctypes._Pointer[Notifier]'
+        le_prev: 'ctypes._Pointer[ctypes._Pointer[Notifier]]'
 
-    node: internal_3
+    node: 'internal_3'
 
 class Object(CStructure):
-    klass: ctypes.c_void_p
-    free: ctypes.c_void_p
-    properties: ctypes.c_void_p
-    ref: ctypes.c_uint
-    parent: ctypes.c_void_p
+    klass: 'ctypes.c_void_p'
+    free: 'ctypes.c_void_p'
+    properties: 'ctypes.c_void_p'
+    ref: 'ctypes.c_uint'
+    parent: 'ctypes.c_void_p'
 
 class OsiModule(CStructure):
-    modd: ctypes.c_ulong
-    base: ctypes.c_ulong
-    size: ctypes.c_ulong
-    file: ctypes._Pointer[ctypes.c_char]
-    name: ctypes._Pointer[ctypes.c_char]
-    offset: ctypes.c_ulong
-    flags: ctypes.c_ulong
+    modd: 'ctypes.c_ulong'
+    base: 'ctypes.c_ulong'
+    size: 'ctypes.c_ulong'
+    file: 'ctypes._Pointer[ctypes.c_char]'
+    name: 'ctypes._Pointer[ctypes.c_char]'
+    offset: 'ctypes.c_ulong'
+    flags: 'ctypes.c_ulong'
 
 class OsiPage(CStructure):
-    start: ctypes.c_ulong
-    len: ctypes.c_ulong
+    start: 'ctypes.c_ulong'
+    len: 'ctypes.c_ulong'
 
 class OsiProc(CStructure):
-    taskd: ctypes.c_ulong
-    pgd: ctypes.c_ulong
-    asid: ctypes.c_ulong
-    pid: ctypes.c_int
-    ppid: ctypes.c_int
-    name: ctypes._Pointer[ctypes.c_char]
-    pages: ctypes._Pointer[osi_page_struct]
-    create_time: ctypes.c_ulong
+    taskd: 'ctypes.c_ulong'
+    pgd: 'ctypes.c_ulong'
+    asid: 'ctypes.c_ulong'
+    pid: 'ctypes.c_int'
+    ppid: 'ctypes.c_int'
+    name: 'ctypes._Pointer[ctypes.c_char]'
+    pages: 'ctypes._Pointer[osi_page_struct]'
+    create_time: 'ctypes.c_ulong'
 
 class OsiProcHandle(CStructure):
-    taskd: ctypes.c_ulong
-    asid: ctypes.c_ulong
+    taskd: 'ctypes.c_ulong'
+    asid: 'ctypes.c_ulong'
 
 class OsiProcMem(CStructure):
-    start_brk: ctypes.c_ulong
-    brk: ctypes.c_ulong
+    start_brk: 'ctypes.c_ulong'
+    brk: 'ctypes.c_ulong'
 
 class OsiThread(CStructure):
-    pid: ctypes.c_int
-    tid: ctypes.c_int
+    pid: 'ctypes.c_int'
+    tid: 'ctypes.c_int'
 
 PAddr: ctypes.c_ulong
 PandaOsFamily:ctypes.c_int
 class Path(CStructure):
-    dentry: ctypes.c_ulong
-    mnt: ctypes.c_ulong
+    dentry: 'ctypes.c_ulong'
+    mnt: 'ctypes.c_ulong'
 
 QDict: ctypes.Array[ctypes.c_ubyte]
 QEMUClockType: ctypes.c_uint
 QEMUTimerCB: None
 QEMUTimerListNotifyCB: None
 class QObject(CStructure):
-    type: ctypes.c_uint
-    refcnt: ctypes.c_ulong
+    type: 'ctypes.c_uint'
+    refcnt: 'ctypes.c_ulong'
 
 class QString(CStructure):
-    base: QObject
-    string: ctypes._Pointer[ctypes.c_char]
-    length: ctypes.c_ulong
-    capacity: ctypes.c_ulong
+    base: 'QObject'
+    string: 'ctypes._Pointer[ctypes.c_char]'
+    length: 'ctypes.c_ulong'
+    capacity: 'ctypes.c_ulong'
 
 QType: ctypes.c_uint
 class QemuCond(CStructure):
-    cond: ctypes.Array[ctypes.c_ubyte]
+    cond: 'ctypes.Array[ctypes.c_ubyte]'
 
 class QemuMutex(CStructure):
-    lock: ctypes.Array[ctypes.c_ubyte]
+    lock: 'ctypes.Array[ctypes.c_ubyte]'
 
 class QemuOptDesc(CStructure):
-    name: ctypes._Pointer[ctypes.c_char]
-    type: ctypes.c_int
-    help: ctypes._Pointer[ctypes.c_char]
-    def_value_str: ctypes._Pointer[ctypes.c_char]
+    name: 'ctypes._Pointer[ctypes.c_char]'
+    type: 'ctypes.c_int'
+    help: 'ctypes._Pointer[ctypes.c_char]'
+    def_value_str: 'ctypes._Pointer[ctypes.c_char]'
 
 class QemuOptHead(CStructure):
-    tqh_first: ctypes._Pointer[QemuOpt]
-    tqh_last: ctypes._Pointer[ctypes._Pointer[QemuOpt]]
+    tqh_first: 'ctypes._Pointer[QemuOpt]'
+    tqh_last: 'ctypes._Pointer[ctypes._Pointer[QemuOpt]]'
 
 class QemuOpts(CStructure):
-    id: ctypes._Pointer[ctypes.c_char]
-    list: ctypes._Pointer[QemuOptsList]
-    loc: Location
-    head: QemuOptHead
+    id: 'ctypes._Pointer[ctypes.c_char]'
+    list: 'ctypes._Pointer[QemuOptsList]'
+    loc: 'Location'
+    head: 'QemuOptHead'
     class internal_15(CStructure):
-        tqe_next: ctypes._Pointer[QemuOpts]
-        tqe_prev: ctypes._Pointer[ctypes._Pointer[QemuOpts]]
+        tqe_next: 'ctypes._Pointer[QemuOpts]'
+        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[QemuOpts]]'
 
-    next: internal_15
+    next: 'internal_15'
 
 class QemuOptsList(CStructure):
-    name: ctypes._Pointer[ctypes.c_char]
-    implied_opt_name: ctypes._Pointer[ctypes.c_char]
-    merge_lists: ctypes.c_bool
+    name: 'ctypes._Pointer[ctypes.c_char]'
+    implied_opt_name: 'ctypes._Pointer[ctypes.c_char]'
+    merge_lists: 'ctypes.c_bool'
     class internal_8(CStructure):
-        tqh_first: ctypes._Pointer[QemuOpts]
-        tqh_last: ctypes._Pointer[ctypes._Pointer[QemuOpts]]
+        tqh_first: 'ctypes._Pointer[QemuOpts]'
+        tqh_last: 'ctypes._Pointer[ctypes._Pointer[QemuOpts]]'
 
-    head: internal_8
-    desc: ctypes.Array[QemuOptDesc]
+    head: 'internal_8'
+    desc: 'ctypes.Array[QemuOptDesc]'
 
 class QemuThread(CStructure):
-    thread: ctypes.c_ulong
+    thread: 'ctypes.c_ulong'
 
 class QueryResult(CStructure):
-    num_labels: ctypes.c_uint
-    ls: ctypes.c_void_p
-    it_end: ctypes.c_void_p
-    it_curr: ctypes.c_void_p
-    tcn: ctypes.c_uint
-    cb_mask: ctypes.c_ubyte
+    num_labels: 'ctypes.c_uint'
+    ls: 'ctypes.c_void_p'
+    it_end: 'ctypes.c_void_p'
+    it_curr: 'ctypes.c_void_p'
+    tcn: 'ctypes.c_uint'
+    cb_mask: 'ctypes.c_ubyte'
 
 class RAMBlock(CStructure):
-    rcu: rcu_head
-    mr: ctypes._Pointer[MemoryRegion]
-    host: ctypes._Pointer[ctypes.c_ubyte]
-    offset: ctypes.c_ulong
-    used_length: ctypes.c_ulong
-    max_length: ctypes.c_ulong
-    resized: ctypes._CFunctionType
-    flags: ctypes.c_uint
-    idstr: ctypes.Array[ctypes.c_char]
+    rcu: 'rcu_head'
+    mr: 'ctypes._Pointer[MemoryRegion]'
+    host: 'ctypes._Pointer[ctypes.c_ubyte]'
+    offset: 'ctypes.c_ulong'
+    used_length: 'ctypes.c_ulong'
+    max_length: 'ctypes.c_ulong'
+    resized: 'ctypes._CFunctionType'
+    flags: 'ctypes.c_uint'
+    idstr: 'ctypes.Array[ctypes.c_char]'
     class internal_1(CStructure):
-        le_next: ctypes._Pointer[RAMBlock]
-        le_prev: ctypes._Pointer[ctypes._Pointer[RAMBlock]]
+        le_next: 'ctypes._Pointer[RAMBlock]'
+        le_prev: 'ctypes._Pointer[ctypes._Pointer[RAMBlock]]'
 
-    next: internal_1
+    next: 'internal_1'
     class internal_2(CStructure):
-        lh_first: ctypes._Pointer[RAMBlockNotifier]
+        lh_first: 'ctypes._Pointer[RAMBlockNotifier]'
 
-    ramblock_notifiers: internal_2
-    fd: ctypes.c_int
-    page_size: ctypes.c_ulong
+    ramblock_notifiers: 'internal_2'
+    fd: 'ctypes.c_int'
+    page_size: 'ctypes.c_ulong'
 
 RCUCBFunc: None
 RRCTRL_ret:ctypes.c_int
@@ -823,90 +823,90 @@ ReadLineFlushFunc: None
 ReadLineFunc: None
 ReadLinePrintfFunc: None
 class ReadLineState(CStructure):
-    cmd_buf: ctypes.Array[ctypes.c_char]
-    cmd_buf_index: ctypes.c_int
-    cmd_buf_size: ctypes.c_int
-    last_cmd_buf: ctypes.Array[ctypes.c_char]
-    last_cmd_buf_index: ctypes.c_int
-    last_cmd_buf_size: ctypes.c_int
-    esc_state: ctypes.c_int
-    esc_param: ctypes.c_int
-    history: ctypes.Array[ctypes._Pointer[ctypes.c_char]]
-    hist_entry: ctypes.c_int
-    completion_finder: ctypes._CFunctionType
-    completions: ctypes.Array[ctypes._Pointer[ctypes.c_char]]
-    nb_completions: ctypes.c_int
-    completion_index: ctypes.c_int
-    readline_func: ctypes._CFunctionType
-    readline_opaque: ctypes.c_void_p
-    read_password: ctypes.c_int
-    prompt: ctypes.Array[ctypes.c_char]
-    printf_func: ctypes._CFunctionType
-    flush_func: ctypes._CFunctionType
-    opaque: ctypes.c_void_p
+    cmd_buf: 'ctypes.Array[ctypes.c_char]'
+    cmd_buf_index: 'ctypes.c_int'
+    cmd_buf_size: 'ctypes.c_int'
+    last_cmd_buf: 'ctypes.Array[ctypes.c_char]'
+    last_cmd_buf_index: 'ctypes.c_int'
+    last_cmd_buf_size: 'ctypes.c_int'
+    esc_state: 'ctypes.c_int'
+    esc_param: 'ctypes.c_int'
+    history: 'ctypes.Array[ctypes._Pointer[ctypes.c_char]]'
+    hist_entry: 'ctypes.c_int'
+    completion_finder: 'ctypes._CFunctionType'
+    completions: 'ctypes.Array[ctypes._Pointer[ctypes.c_char]]'
+    nb_completions: 'ctypes.c_int'
+    completion_index: 'ctypes.c_int'
+    readline_func: 'ctypes._CFunctionType'
+    readline_opaque: 'ctypes.c_void_p'
+    read_password: 'ctypes.c_int'
+    prompt: 'ctypes.Array[ctypes.c_char]'
+    printf_func: 'ctypes._CFunctionType'
+    flush_func: 'ctypes._CFunctionType'
+    opaque: 'ctypes.c_void_p'
 
 Ret: ctypes.c_ulong
 class SegmentCache(CStructure):
-    selector: ctypes.c_uint
-    base: ctypes.c_ulong
-    limit: ctypes.c_uint
-    flags: ctypes.c_uint
+    selector: 'ctypes.c_uint'
+    base: 'ctypes.c_ulong'
+    limit: 'ctypes.c_uint'
+    flags: 'ctypes.c_uint'
 
 class String(CStructure):
     pass
 
 class SymbolicBranchMeta(CStructure):
-    pc: ctypes.c_ulong
+    pc: 'ctypes.c_ulong'
 
 TCGMemOp: ctypes.c_uint
 class TCR(CStructure):
-    raw_tcr: ctypes.c_ulong
-    mask: ctypes.c_uint
-    base_mask: ctypes.c_uint
+    raw_tcr: 'ctypes.c_ulong'
+    mask: 'ctypes.c_uint'
+    base_mask: 'ctypes.c_uint'
 
 TPRAccess:ctypes.c_int
 TaintLabel: ctypes.c_uint
 class TaskStruct(CStructure):
-    tasks: ListHead
-    pid: ctypes.c_uint
-    tgid: ctypes.c_uint
-    group_leader: ctypes.c_ulong
-    thread_group: ctypes.c_ulong
-    real_parent: ctypes.c_ulong
-    parent: ctypes.c_ulong
-    mm: ctypes.c_ulong
-    stack: ctypes.c_ulong
-    real_cred: ctypes.c_ulong
-    cred: ctypes.c_ulong
-    comm: ctypes.Array[ctypes.c_ubyte]
-    files: ctypes.c_ulong
-    start_time: ctypes.c_ulong
-    children: ListHead
-    sibling: ListHead
+    tasks: 'ListHead'
+    pid: 'ctypes.c_uint'
+    tgid: 'ctypes.c_uint'
+    group_leader: 'ctypes.c_ulong'
+    thread_group: 'ctypes.c_ulong'
+    real_parent: 'ctypes.c_ulong'
+    parent: 'ctypes.c_ulong'
+    mm: 'ctypes.c_ulong'
+    stack: 'ctypes.c_ulong'
+    real_cred: 'ctypes.c_ulong'
+    cred: 'ctypes.c_ulong'
+    comm: 'ctypes.Array[ctypes.c_ubyte]'
+    files: 'ctypes.c_ulong'
+    start_time: 'ctypes.c_ulong'
+    children: 'ListHead'
+    sibling: 'ListHead'
 
 class TranslationBlock(CStructure):
-    pc: ctypes.c_ulong
-    cs_base: ctypes.c_ulong
-    flags: ctypes.c_uint
-    size: ctypes.c_ushort
-    icount: ctypes.c_ushort
-    cflags: ctypes.c_uint
-    invalid: ctypes.c_ushort
-    was_split: ctypes.c_ubyte
-    tc_ptr: ctypes.c_void_p
-    tc_search: ctypes._Pointer[ctypes.c_ubyte]
-    orig_tb: ctypes._Pointer[TranslationBlock]
-    page_next: ctypes.Array[ctypes._Pointer[TranslationBlock]]
-    page_addr: ctypes.Array[ctypes.c_ulong]
-    jmp_reset_offset: ctypes.Array[ctypes.c_ushort]
-    jmp_insn_offset: ctypes.Array[ctypes.c_ushort]
-    jmp_list_next: ctypes.Array[ctypes.c_ulong]
-    jmp_list_first: ctypes.c_ulong
-    llvm_tc_ptr: ctypes._Pointer[ctypes.c_ubyte]
-    llvm_tc_end: ctypes._Pointer[ctypes.c_ubyte]
-    llvm_tb_next: ctypes.Array[ctypes._Pointer[TranslationBlock]]
-    llvm_asm_ptr: ctypes._Pointer[ctypes.c_ubyte]
-    llvm_fn_name: ctypes.Array[ctypes.c_char]
+    pc: 'ctypes.c_ulong'
+    cs_base: 'ctypes.c_ulong'
+    flags: 'ctypes.c_uint'
+    size: 'ctypes.c_ushort'
+    icount: 'ctypes.c_ushort'
+    cflags: 'ctypes.c_uint'
+    invalid: 'ctypes.c_ushort'
+    was_split: 'ctypes.c_ubyte'
+    tc_ptr: 'ctypes.c_void_p'
+    tc_search: 'ctypes._Pointer[ctypes.c_ubyte]'
+    orig_tb: 'ctypes._Pointer[TranslationBlock]'
+    page_next: 'ctypes.Array[ctypes._Pointer[TranslationBlock]]'
+    page_addr: 'ctypes.Array[ctypes.c_ulong]'
+    jmp_reset_offset: 'ctypes.Array[ctypes.c_ushort]'
+    jmp_insn_offset: 'ctypes.Array[ctypes.c_ushort]'
+    jmp_list_next: 'ctypes.Array[ctypes.c_ulong]'
+    jmp_list_first: 'ctypes.c_ulong'
+    llvm_tc_ptr: 'ctypes._Pointer[ctypes.c_ubyte]'
+    llvm_tc_end: 'ctypes._Pointer[ctypes.c_ubyte]'
+    llvm_tb_next: 'ctypes.Array[ctypes._Pointer[TranslationBlock]]'
+    llvm_asm_ptr: 'ctypes._Pointer[ctypes.c_ubyte]'
+    llvm_fn_name: 'ctypes.Array[ctypes.c_char]'
 
 Unk: ctypes.c_ulong
 ValueUnion: ctypes.c_ulong
@@ -917,12 +917,12 @@ class Vec_CosiProc(CStructure):
     pass
 
 class VmAreaStruct(CStructure):
-    vm_mm: ctypes.c_ulong
-    vm_start: ctypes.c_ulong
-    vm_end: ctypes.c_ulong
-    vm_next: ctypes.c_ulong
-    vm_file: ctypes.c_ulong
-    vm_flags: ctypes.c_ulong
+    vm_mm: 'ctypes.c_ulong'
+    vm_start: 'ctypes.c_ulong'
+    vm_end: 'ctypes.c_ulong'
+    vm_next: 'ctypes.c_ulong'
+    vm_file: 'ctypes.c_ulong'
+    vm_flags: 'ctypes.c_ulong'
 
 class VolatilityBaseType(CStructure):
     pass
@@ -945,12 +945,12 @@ _add_hooks2_t: ctypes._CFunctionType
 _disable_hooks2_t: ctypes._CFunctionType
 _enable_hooks2_t: ctypes._CFunctionType
 class breakpoints_head(CStructure):
-    tqh_first: ctypes._Pointer[CPUBreakpoint]
-    tqh_last: ctypes._Pointer[ctypes._Pointer[CPUBreakpoint]]
+    tqh_first: 'ctypes._Pointer[CPUBreakpoint]'
+    tqh_last: 'ctypes._Pointer[ctypes._Pointer[CPUBreakpoint]]'
 
 class coalesced_ranges(CStructure):
-    tqh_first: ctypes._Pointer[CoalescedMemoryRange]
-    tqh_last: ctypes._Pointer[ctypes._Pointer[CoalescedMemoryRange]]
+    tqh_first: 'ctypes._Pointer[CoalescedMemoryRange]'
+    tqh_last: 'ctypes._Pointer[ctypes._Pointer[CoalescedMemoryRange]]'
 
 dcr_read_cb: ctypes._CFunctionType
 dcr_write_cb: ctypes._CFunctionType
@@ -960,18 +960,18 @@ flag: ctypes.c_char
 float32: ctypes.c_uint
 float64: ctypes.c_ulong
 class float_status(CStructure):
-    float_detect_tininess: ctypes.c_byte
-    float_rounding_mode: ctypes.c_byte
-    float_exception_flags: ctypes.c_ubyte
-    floatx80_rounding_precision: ctypes.c_byte
-    flush_to_zero: ctypes.c_char
-    flush_inputs_to_zero: ctypes.c_char
-    default_nan_mode: ctypes.c_char
-    snan_bit_is_one: ctypes.c_char
+    float_detect_tininess: 'ctypes.c_byte'
+    float_rounding_mode: 'ctypes.c_byte'
+    float_exception_flags: 'ctypes.c_ubyte'
+    floatx80_rounding_precision: 'ctypes.c_byte'
+    flush_to_zero: 'ctypes.c_char'
+    flush_inputs_to_zero: 'ctypes.c_char'
+    default_nan_mode: 'ctypes.c_char'
+    snan_bit_is_one: 'ctypes.c_char'
 
 class floatx80(CStructure):
-    low: ctypes.c_ulong
-    high: ctypes.c_ushort
+    low: 'ctypes.c_ulong'
+    high: 'ctypes.c_ushort'
 
 fpr_t: ctypes.Array[ctypes.c_ubyte]
 gchar: ctypes.c_char
@@ -982,43 +982,43 @@ class hax_global(CStructure):
     pass
 
 class hax_vcpu_state(CStructure):
-    fd: ctypes.c_ulong
-    vcpu_id: ctypes.c_int
-    tunnel: ctypes._Pointer[hax_tunnel]
-    iobuf: ctypes._Pointer[ctypes.c_ubyte]
+    fd: 'ctypes.c_ulong'
+    vcpu_id: 'ctypes.c_int'
+    tunnel: 'ctypes._Pointer[hax_tunnel]'
+    iobuf: 'ctypes._Pointer[ctypes.c_ubyte]'
 
 class hook(CStructure):
-    addr: ctypes.c_ulong
-    asid: ctypes.c_ulong
-    type: ctypes.c_int
-    cb: hooks_panda_cb
-    km: ctypes.c_int
-    enabled: ctypes.c_bool
-    sym: symbol
-    context: ctypes.c_void_p
+    addr: 'ctypes.c_ulong'
+    asid: 'ctypes.c_ulong'
+    type: 'ctypes.c_int'
+    cb: 'hooks_panda_cb'
+    km: 'ctypes.c_int'
+    enabled: 'ctypes.c_bool'
+    sym: 'symbol'
+    context: 'ctypes.c_void_p'
 
 hook_func_t: ctypes._CFunctionType
 hooks2_func_t: ctypes._CFunctionType
 class hooks_panda_cb(CUnion):
-    before_tcg_codegen: ctypes._CFunctionType
-    before_block_translate: ctypes._CFunctionType
-    after_block_translate: ctypes._CFunctionType
-    before_block_exec_invalidate_opt: ctypes._CFunctionType
-    before_block_exec: ctypes._CFunctionType
-    after_block_exec: ctypes._CFunctionType
-    start_block_exec: ctypes._CFunctionType
-    end_block_exec: ctypes._CFunctionType
+    before_tcg_codegen: 'ctypes._CFunctionType'
+    before_block_translate: 'ctypes._CFunctionType'
+    after_block_translate: 'ctypes._CFunctionType'
+    before_block_exec_invalidate_opt: 'ctypes._CFunctionType'
+    before_block_exec: 'ctypes._CFunctionType'
+    after_block_exec: 'ctypes._CFunctionType'
+    start_block_exec: 'ctypes._CFunctionType'
+    end_block_exec: 'ctypes._CFunctionType'
 
 hwaddr: ctypes.c_ulong
 hypercall_t: ctypes._CFunctionType
 class icount_decr_u16(CStructure):
-    low: ctypes.c_ushort
-    high: ctypes.c_ushort
+    low: 'ctypes.c_ushort'
+    high: 'ctypes.c_ushort'
 
 mem_hook_func_t: ctypes._CFunctionType
 class memory_listeners_as(CStructure):
-    tqh_first: ctypes._Pointer[MemoryListener]
-    tqh_last: ctypes._Pointer[ctypes._Pointer[MemoryListener]]
+    tqh_first: 'ctypes._Pointer[MemoryListener]'
+    tqh_last: 'ctypes._Pointer[ctypes._Pointer[MemoryListener]]'
 
 mon_cmd_t: ctypes.Array[ctypes.c_ubyte]
 on_NtAcceptConnectPort_enter_t: ctypes._CFunctionType
@@ -3333,137 +3333,137 @@ on_writev_return_t: ctypes._CFunctionType
 on_yield_enter_t: ctypes._CFunctionType
 on_yield_return_t: ctypes._CFunctionType
 class panda_arg(CStructure):
-    argptr: ctypes._Pointer[ctypes.c_char]
-    key: ctypes._Pointer[ctypes.c_char]
-    value: ctypes._Pointer[ctypes.c_char]
+    argptr: 'ctypes._Pointer[ctypes.c_char]'
+    key: 'ctypes._Pointer[ctypes.c_char]'
+    value: 'ctypes._Pointer[ctypes.c_char]'
 
 class panda_arg_list(CStructure):
-    nargs: ctypes.c_int
-    list: ctypes._Pointer[panda_arg]
-    plugin_name: ctypes._Pointer[ctypes.c_char]
+    nargs: 'ctypes.c_int'
+    list: 'ctypes._Pointer[panda_arg]'
+    plugin_name: 'ctypes._Pointer[ctypes.c_char]'
 
 class panda_cb(CUnion):
-    before_block_exec_invalidate_opt: ctypes._CFunctionType
-    before_tcg_codegen: ctypes._CFunctionType
-    before_block_exec: ctypes._CFunctionType
-    after_block_exec: ctypes._CFunctionType
-    before_block_translate: ctypes._CFunctionType
-    after_block_translate: ctypes._CFunctionType
-    after_cpu_exec_enter: ctypes._CFunctionType
-    before_cpu_exec_exit: ctypes._CFunctionType
-    insn_translate: ctypes._CFunctionType
-    insn_exec: ctypes._CFunctionType
-    after_insn_translate: ctypes._CFunctionType
-    after_insn_exec: ctypes._CFunctionType
-    virt_mem_before_read: ctypes._CFunctionType
-    virt_mem_before_write: ctypes._CFunctionType
-    phys_mem_before_read: ctypes._CFunctionType
-    phys_mem_before_write: ctypes._CFunctionType
-    virt_mem_after_read: ctypes._CFunctionType
-    virt_mem_after_write: ctypes._CFunctionType
-    phys_mem_after_read: ctypes._CFunctionType
-    phys_mem_after_write: ctypes._CFunctionType
-    mmio_after_read: ctypes._CFunctionType
-    mmio_before_write: ctypes._CFunctionType
-    hd_read: ctypes._CFunctionType
-    hd_write: ctypes._CFunctionType
-    guest_hypercall: ctypes._CFunctionType
-    monitor: ctypes._CFunctionType
-    qmp: ctypes._CFunctionType
-    cpu_restore_state: ctypes._CFunctionType
-    before_loadvm: ctypes._CFunctionType
-    asid_changed: ctypes._CFunctionType
-    replay_hd_transfer: ctypes._CFunctionType
-    replay_before_dma: ctypes._CFunctionType
-    replay_after_dma: ctypes._CFunctionType
-    replay_handle_packet: ctypes._CFunctionType
-    replay_net_transfer: ctypes._CFunctionType
-    replay_serial_receive: ctypes._CFunctionType
-    replay_serial_read: ctypes._CFunctionType
-    replay_serial_send: ctypes._CFunctionType
-    replay_serial_write: ctypes._CFunctionType
-    after_machine_init: ctypes._CFunctionType
-    after_loadvm: ctypes._CFunctionType
-    top_loop: ctypes._CFunctionType
-    during_machine_init: ctypes._CFunctionType
-    main_loop_wait: ctypes._CFunctionType
-    pre_shutdown: ctypes._CFunctionType
-    unassigned_io_read: ctypes._CFunctionType
-    unassigned_io_write: ctypes._CFunctionType
-    before_handle_exception: ctypes._CFunctionType
-    before_handle_interrupt: ctypes._CFunctionType
-    start_block_exec: ctypes._CFunctionType
-    end_block_exec: ctypes._CFunctionType
-    cbaddr: ctypes._CFunctionType
+    before_block_exec_invalidate_opt: 'ctypes._CFunctionType'
+    before_tcg_codegen: 'ctypes._CFunctionType'
+    before_block_exec: 'ctypes._CFunctionType'
+    after_block_exec: 'ctypes._CFunctionType'
+    before_block_translate: 'ctypes._CFunctionType'
+    after_block_translate: 'ctypes._CFunctionType'
+    after_cpu_exec_enter: 'ctypes._CFunctionType'
+    before_cpu_exec_exit: 'ctypes._CFunctionType'
+    insn_translate: 'ctypes._CFunctionType'
+    insn_exec: 'ctypes._CFunctionType'
+    after_insn_translate: 'ctypes._CFunctionType'
+    after_insn_exec: 'ctypes._CFunctionType'
+    virt_mem_before_read: 'ctypes._CFunctionType'
+    virt_mem_before_write: 'ctypes._CFunctionType'
+    phys_mem_before_read: 'ctypes._CFunctionType'
+    phys_mem_before_write: 'ctypes._CFunctionType'
+    virt_mem_after_read: 'ctypes._CFunctionType'
+    virt_mem_after_write: 'ctypes._CFunctionType'
+    phys_mem_after_read: 'ctypes._CFunctionType'
+    phys_mem_after_write: 'ctypes._CFunctionType'
+    mmio_after_read: 'ctypes._CFunctionType'
+    mmio_before_write: 'ctypes._CFunctionType'
+    hd_read: 'ctypes._CFunctionType'
+    hd_write: 'ctypes._CFunctionType'
+    guest_hypercall: 'ctypes._CFunctionType'
+    monitor: 'ctypes._CFunctionType'
+    qmp: 'ctypes._CFunctionType'
+    cpu_restore_state: 'ctypes._CFunctionType'
+    before_loadvm: 'ctypes._CFunctionType'
+    asid_changed: 'ctypes._CFunctionType'
+    replay_hd_transfer: 'ctypes._CFunctionType'
+    replay_before_dma: 'ctypes._CFunctionType'
+    replay_after_dma: 'ctypes._CFunctionType'
+    replay_handle_packet: 'ctypes._CFunctionType'
+    replay_net_transfer: 'ctypes._CFunctionType'
+    replay_serial_receive: 'ctypes._CFunctionType'
+    replay_serial_read: 'ctypes._CFunctionType'
+    replay_serial_send: 'ctypes._CFunctionType'
+    replay_serial_write: 'ctypes._CFunctionType'
+    after_machine_init: 'ctypes._CFunctionType'
+    after_loadvm: 'ctypes._CFunctionType'
+    top_loop: 'ctypes._CFunctionType'
+    during_machine_init: 'ctypes._CFunctionType'
+    main_loop_wait: 'ctypes._CFunctionType'
+    pre_shutdown: 'ctypes._CFunctionType'
+    unassigned_io_read: 'ctypes._CFunctionType'
+    unassigned_io_write: 'ctypes._CFunctionType'
+    before_handle_exception: 'ctypes._CFunctionType'
+    before_handle_interrupt: 'ctypes._CFunctionType'
+    start_block_exec: 'ctypes._CFunctionType'
+    end_block_exec: 'ctypes._CFunctionType'
+    cbaddr: 'ctypes._CFunctionType'
 
 class panda_cb_list(CStructure):
-    entry: panda_cb_with_context
-    owner: ctypes.c_void_p
-    next: ctypes._Pointer[_panda_cb_list]
-    prev: ctypes._Pointer[_panda_cb_list]
-    enabled: ctypes.c_bool
-    context: ctypes.c_void_p
+    entry: 'panda_cb_with_context'
+    owner: 'ctypes.c_void_p'
+    next: 'ctypes._Pointer[_panda_cb_list]'
+    prev: 'ctypes._Pointer[_panda_cb_list]'
+    enabled: 'ctypes.c_bool'
+    context: 'ctypes.c_void_p'
 
 panda_cb_type:ctypes.c_int
 class panda_cb_with_context(CUnion):
-    before_block_exec_invalidate_opt: ctypes._CFunctionType
-    before_tcg_codegen: ctypes._CFunctionType
-    before_block_exec: ctypes._CFunctionType
-    after_block_exec: ctypes._CFunctionType
-    before_block_translate: ctypes._CFunctionType
-    after_block_translate: ctypes._CFunctionType
-    after_cpu_exec_enter: ctypes._CFunctionType
-    before_cpu_exec_exit: ctypes._CFunctionType
-    insn_translate: ctypes._CFunctionType
-    insn_exec: ctypes._CFunctionType
-    after_insn_translate: ctypes._CFunctionType
-    after_insn_exec: ctypes._CFunctionType
-    virt_mem_before_read: ctypes._CFunctionType
-    virt_mem_before_write: ctypes._CFunctionType
-    phys_mem_before_read: ctypes._CFunctionType
-    phys_mem_before_write: ctypes._CFunctionType
-    virt_mem_after_read: ctypes._CFunctionType
-    virt_mem_after_write: ctypes._CFunctionType
-    phys_mem_after_read: ctypes._CFunctionType
-    phys_mem_after_write: ctypes._CFunctionType
-    mmio_after_read: ctypes._CFunctionType
-    mmio_before_write: ctypes._CFunctionType
-    hd_read: ctypes._CFunctionType
-    hd_write: ctypes._CFunctionType
-    guest_hypercall: ctypes._CFunctionType
-    monitor: ctypes._CFunctionType
-    qmp: ctypes._CFunctionType
-    cpu_restore_state: ctypes._CFunctionType
-    before_loadvm: ctypes._CFunctionType
-    asid_changed: ctypes._CFunctionType
-    replay_hd_transfer: ctypes._CFunctionType
-    replay_before_dma: ctypes._CFunctionType
-    replay_after_dma: ctypes._CFunctionType
-    replay_handle_packet: ctypes._CFunctionType
-    replay_net_transfer: ctypes._CFunctionType
-    replay_serial_receive: ctypes._CFunctionType
-    replay_serial_read: ctypes._CFunctionType
-    replay_serial_send: ctypes._CFunctionType
-    replay_serial_write: ctypes._CFunctionType
-    after_machine_init: ctypes._CFunctionType
-    after_loadvm: ctypes._CFunctionType
-    top_loop: ctypes._CFunctionType
-    during_machine_init: ctypes._CFunctionType
-    main_loop_wait: ctypes._CFunctionType
-    pre_shutdown: ctypes._CFunctionType
-    unassigned_io_read: ctypes._CFunctionType
-    unassigned_io_write: ctypes._CFunctionType
-    before_handle_exception: ctypes._CFunctionType
-    before_handle_interrupt: ctypes._CFunctionType
-    start_block_exec: ctypes._CFunctionType
-    end_block_exec: ctypes._CFunctionType
-    cbaddr: ctypes._CFunctionType
+    before_block_exec_invalidate_opt: 'ctypes._CFunctionType'
+    before_tcg_codegen: 'ctypes._CFunctionType'
+    before_block_exec: 'ctypes._CFunctionType'
+    after_block_exec: 'ctypes._CFunctionType'
+    before_block_translate: 'ctypes._CFunctionType'
+    after_block_translate: 'ctypes._CFunctionType'
+    after_cpu_exec_enter: 'ctypes._CFunctionType'
+    before_cpu_exec_exit: 'ctypes._CFunctionType'
+    insn_translate: 'ctypes._CFunctionType'
+    insn_exec: 'ctypes._CFunctionType'
+    after_insn_translate: 'ctypes._CFunctionType'
+    after_insn_exec: 'ctypes._CFunctionType'
+    virt_mem_before_read: 'ctypes._CFunctionType'
+    virt_mem_before_write: 'ctypes._CFunctionType'
+    phys_mem_before_read: 'ctypes._CFunctionType'
+    phys_mem_before_write: 'ctypes._CFunctionType'
+    virt_mem_after_read: 'ctypes._CFunctionType'
+    virt_mem_after_write: 'ctypes._CFunctionType'
+    phys_mem_after_read: 'ctypes._CFunctionType'
+    phys_mem_after_write: 'ctypes._CFunctionType'
+    mmio_after_read: 'ctypes._CFunctionType'
+    mmio_before_write: 'ctypes._CFunctionType'
+    hd_read: 'ctypes._CFunctionType'
+    hd_write: 'ctypes._CFunctionType'
+    guest_hypercall: 'ctypes._CFunctionType'
+    monitor: 'ctypes._CFunctionType'
+    qmp: 'ctypes._CFunctionType'
+    cpu_restore_state: 'ctypes._CFunctionType'
+    before_loadvm: 'ctypes._CFunctionType'
+    asid_changed: 'ctypes._CFunctionType'
+    replay_hd_transfer: 'ctypes._CFunctionType'
+    replay_before_dma: 'ctypes._CFunctionType'
+    replay_after_dma: 'ctypes._CFunctionType'
+    replay_handle_packet: 'ctypes._CFunctionType'
+    replay_net_transfer: 'ctypes._CFunctionType'
+    replay_serial_receive: 'ctypes._CFunctionType'
+    replay_serial_read: 'ctypes._CFunctionType'
+    replay_serial_send: 'ctypes._CFunctionType'
+    replay_serial_write: 'ctypes._CFunctionType'
+    after_machine_init: 'ctypes._CFunctionType'
+    after_loadvm: 'ctypes._CFunctionType'
+    top_loop: 'ctypes._CFunctionType'
+    during_machine_init: 'ctypes._CFunctionType'
+    main_loop_wait: 'ctypes._CFunctionType'
+    pre_shutdown: 'ctypes._CFunctionType'
+    unassigned_io_read: 'ctypes._CFunctionType'
+    unassigned_io_write: 'ctypes._CFunctionType'
+    before_handle_exception: 'ctypes._CFunctionType'
+    before_handle_interrupt: 'ctypes._CFunctionType'
+    start_block_exec: 'ctypes._CFunctionType'
+    end_block_exec: 'ctypes._CFunctionType'
+    cbaddr: 'ctypes._CFunctionType'
 
 class panda_plugin(CStructure):
-    name: ctypes._Pointer[ctypes.c_char]
-    plugin: ctypes.c_void_p
-    unload: ctypes.c_bool
-    exported_symbols: ctypes.c_bool
+    name: 'ctypes._Pointer[ctypes.c_char]'
+    plugin: 'ctypes.c_void_p'
+    unload: 'ctypes.c_bool'
+    exported_symbols: 'ctypes.c_bool'
 
 powerpc_excp_t: ctypes.c_uint
 powerpc_input_t: ctypes.c_uint
@@ -3474,46 +3474,46 @@ pthread_cond_t: ctypes.Array[ctypes.c_ubyte]
 pthread_mutex_t: ctypes.Array[ctypes.c_ubyte]
 pthread_t: ctypes.c_ulong
 class qemu_work_item(CStructure):
-    next: ctypes._Pointer[qemu_work_item]
-    func: ctypes.c_void_p
-    data: ctypes.c_ulong
-    free: ctypes.c_bool
-    exclusive: ctypes.c_bool
-    done: ctypes.c_bool
+    next: 'ctypes._Pointer[qemu_work_item]'
+    func: 'ctypes.c_void_p'
+    data: 'ctypes.c_ulong'
+    free: 'ctypes.c_bool'
+    exclusive: 'ctypes.c_bool'
+    done: 'ctypes.c_bool'
 
 ram_addr_t: ctypes.c_ulong
 class rcu_head(CStructure):
-    next: ctypes._Pointer[rcu_head]
-    func: ctypes._CFunctionType
+    next: 'ctypes._Pointer[rcu_head]'
+    func: 'ctypes._CFunctionType'
 
 run_on_cpu_data: ctypes.c_ulong
 run_on_cpu_func: ctypes.c_void_p
 sigjmp_buf: ctypes.Array[ctypes.c_ubyte]
 class subregions(CStructure):
-    tqh_first: ctypes._Pointer[MemoryRegion]
-    tqh_last: ctypes._Pointer[ctypes._Pointer[MemoryRegion]]
+    tqh_first: 'ctypes._Pointer[MemoryRegion]'
+    tqh_last: 'ctypes._Pointer[ctypes._Pointer[MemoryRegion]]'
 
 syscall_argtype_t:ctypes.c_int
 class syscall_ctx_t(CStructure):
-    no: ctypes.c_int
-    asid: ctypes.c_ulong
-    retaddr: ctypes.c_ulong
-    args: ctypes.Array[ctypes.Array[ctypes.c_ubyte]]
+    no: 'ctypes.c_int'
+    asid: 'ctypes.c_ulong'
+    retaddr: 'ctypes.c_ulong'
+    args: 'ctypes.Array[ctypes.Array[ctypes.c_ubyte]]'
 
 class syscall_info_t(CStructure):
-    no: ctypes.c_int
-    name: ctypes._Pointer[ctypes.c_char]
-    nargs: ctypes.c_int
-    argt: ctypes._Pointer[ctypes.c_int]
-    argsz: ctypes._Pointer[ctypes.c_ubyte]
-    argn: ctypes._Pointer[ctypes._Pointer[ctypes.c_char]]
-    argtn: ctypes._Pointer[ctypes._Pointer[ctypes.c_char]]
-    noreturn: ctypes.c_bool
+    no: 'ctypes.c_int'
+    name: 'ctypes._Pointer[ctypes.c_char]'
+    nargs: 'ctypes.c_int'
+    argt: 'ctypes._Pointer[ctypes.c_int]'
+    argsz: 'ctypes._Pointer[ctypes.c_ubyte]'
+    argn: 'ctypes._Pointer[ctypes._Pointer[ctypes.c_char]]'
+    argtn: 'ctypes._Pointer[ctypes._Pointer[ctypes.c_char]]'
+    noreturn: 'ctypes.c_bool'
 
 class syscall_meta_t(CStructure):
-    max: ctypes.c_uint
-    max_generic: ctypes.c_uint
-    max_args: ctypes.c_uint
+    max: 'ctypes.c_uint'
+    max_generic: 'ctypes.c_uint'
+    max_args: 'ctypes.c_uint'
 
 target_long: ctypes.c_long
 target_pid_t: ctypes.c_int
@@ -3522,8 +3522,8 @@ target_ulong: ctypes.c_ulong
 tb_page_addr_t: ctypes.c_ulong
 vaddr: ctypes.c_ulong
 class watchpoints_head(CStructure):
-    tqh_first: ctypes._Pointer[CPUWatchpoint]
-    tqh_last: ctypes._Pointer[ctypes._Pointer[CPUWatchpoint]]
+    tqh_first: 'ctypes._Pointer[CPUWatchpoint]'
+    tqh_last: 'ctypes._Pointer[ctypes._Pointer[CPUWatchpoint]]'
 
 class AddressSpaceDispatch(CStructure):
     pass
@@ -3556,71 +3556,71 @@ class _IO_FILE(CStructure):
     pass
 
 class _panda_cb_list(CStructure):
-    entry: panda_cb_with_context
-    owner: ctypes.c_void_p
-    next: ctypes._Pointer[_panda_cb_list]
-    prev: ctypes._Pointer[_panda_cb_list]
-    enabled: ctypes.c_bool
-    context: ctypes.c_void_p
+    entry: 'panda_cb_with_context'
+    owner: 'ctypes.c_void_p'
+    next: 'ctypes._Pointer[_panda_cb_list]'
+    prev: 'ctypes._Pointer[_panda_cb_list]'
+    enabled: 'ctypes.c_bool'
+    context: 'ctypes.c_void_p'
 
 class addr_struct(CStructure):
-    typ: ctypes.c_int
-    val: ctypes.c_ulong
-    off: ctypes.c_ushort
-    flag: ctypes.c_int
+    typ: 'ctypes.c_int'
+    val: 'ctypes.c_ulong'
+    off: 'ctypes.c_ushort'
+    flag: 'ctypes.c_int'
 
 class auxv_values(CStructure):
-    argc: ctypes.c_int
-    argv_ptr_ptr: ctypes.c_ulong
-    arg_ptr: ctypes.Array[ctypes.c_ulong]
-    argv: ctypes.Array[ctypes.Array[ctypes.c_char]]
-    envc: ctypes.c_int
-    env_ptr_ptr: ctypes.c_ulong
-    env_ptr: ctypes.Array[ctypes.c_ulong]
-    envp: ctypes.Array[ctypes.Array[ctypes.c_char]]
-    execfn_ptr: ctypes.c_ulong
-    execfn: ctypes.Array[ctypes.c_char]
-    phdr: ctypes.c_ulong
-    entry: ctypes.c_ulong
-    ehdr: ctypes.c_ulong
-    hwcap: ctypes.c_ulong
-    hwcap2: ctypes.c_ulong
-    pagesz: ctypes.c_ulong
-    clktck: ctypes.c_ulong
-    phent: ctypes.c_ulong
-    phnum: ctypes.c_ulong
-    base: ctypes.c_ulong
-    flags: ctypes.c_ulong
-    uid: ctypes.c_ulong
-    euid: ctypes.c_ulong
-    gid: ctypes.c_ulong
-    egid: ctypes.c_ulong
-    secure: ctypes.c_bool
-    random: ctypes.c_ulong
-    platform: ctypes.c_ulong
-    program_header: ctypes.c_ulong
-    minsigstksz: ctypes.c_ulong
+    argc: 'ctypes.c_int'
+    argv_ptr_ptr: 'ctypes.c_ulong'
+    arg_ptr: 'ctypes.Array[ctypes.c_ulong]'
+    argv: 'ctypes.Array[ctypes.Array[ctypes.c_char]]'
+    envc: 'ctypes.c_int'
+    env_ptr_ptr: 'ctypes.c_ulong'
+    env_ptr: 'ctypes.Array[ctypes.c_ulong]'
+    envp: 'ctypes.Array[ctypes.Array[ctypes.c_char]]'
+    execfn_ptr: 'ctypes.c_ulong'
+    execfn: 'ctypes.Array[ctypes.c_char]'
+    phdr: 'ctypes.c_ulong'
+    entry: 'ctypes.c_ulong'
+    ehdr: 'ctypes.c_ulong'
+    hwcap: 'ctypes.c_ulong'
+    hwcap2: 'ctypes.c_ulong'
+    pagesz: 'ctypes.c_ulong'
+    clktck: 'ctypes.c_ulong'
+    phent: 'ctypes.c_ulong'
+    phnum: 'ctypes.c_ulong'
+    base: 'ctypes.c_ulong'
+    flags: 'ctypes.c_ulong'
+    uid: 'ctypes.c_ulong'
+    euid: 'ctypes.c_ulong'
+    gid: 'ctypes.c_ulong'
+    egid: 'ctypes.c_ulong'
+    secure: 'ctypes.c_bool'
+    random: 'ctypes.c_ulong'
+    platform: 'ctypes.c_ulong'
+    program_header: 'ctypes.c_ulong'
+    minsigstksz: 'ctypes.c_ulong'
 
 class cred_info(CStructure):
-    uid_offset: ctypes.c_int
-    gid_offset: ctypes.c_int
-    euid_offset: ctypes.c_int
-    egid_offset: ctypes.c_int
+    uid_offset: 'ctypes.c_int'
+    gid_offset: 'ctypes.c_int'
+    euid_offset: 'ctypes.c_int'
+    egid_offset: 'ctypes.c_int'
 
 class dynamic_symbol_hook(CStructure):
-    library_name: ctypes.Array[ctypes.c_char]
-    symbol: ctypes.Array[ctypes.c_char]
-    cb: ctypes._CFunctionType
+    library_name: 'ctypes.Array[ctypes.c_char]'
+    symbol: 'ctypes.Array[ctypes.c_char]'
+    cb: 'ctypes._CFunctionType'
 
 class fs_info(CStructure):
-    f_path_dentry_offset: ctypes.c_int
-    f_dentry_offset: ctypes.c_int
-    f_path_mnt_offset: ctypes.c_int
-    f_vfsmnt_offset: ctypes.c_int
-    f_pos_offset: ctypes.c_int
-    fdt_offset: ctypes.c_int
-    fdtab_offset: ctypes.c_int
-    fd_offset: ctypes.c_int
+    f_path_dentry_offset: 'ctypes.c_int'
+    f_dentry_offset: 'ctypes.c_int'
+    f_path_mnt_offset: 'ctypes.c_int'
+    f_vfsmnt_offset: 'ctypes.c_int'
+    f_pos_offset: 'ctypes.c_int'
+    fdt_offset: 'ctypes.c_int'
+    fdtab_offset: 'ctypes.c_int'
+    fd_offset: 'ctypes.c_int'
 
 class hax_state(CStructure):
     pass
@@ -3629,183 +3629,183 @@ class hax_tunnel(CStructure):
     pass
 
 class hook_symbol_resolve(CStructure):
-    name: ctypes.Array[ctypes.c_char]
-    offset: ctypes.c_ulong
-    hook_offset: ctypes.c_bool
-    section: ctypes.Array[ctypes.c_char]
-    cb: ctypes._CFunctionType
-    enabled: ctypes.c_bool
-    id: ctypes.c_int
+    name: 'ctypes.Array[ctypes.c_char]'
+    offset: 'ctypes.c_ulong'
+    hook_offset: 'ctypes.c_bool'
+    section: 'ctypes.Array[ctypes.c_char]'
+    cb: 'ctypes._CFunctionType'
+    enabled: 'ctypes.c_bool'
+    id: 'ctypes.c_int'
 
 class kernelinfo(CStructure):
-    name: ctypes._Pointer[ctypes.c_char]
-    version: version
-    task: task_info
-    cred: cred_info
-    mm: mm_info
-    vma: vma_info
-    fs: fs_info
-    qstr: qstr_info
-    path: path_info
+    name: 'ctypes._Pointer[ctypes.c_char]'
+    version: 'version'
+    task: 'task_info'
+    cred: 'cred_info'
+    mm: 'mm_info'
+    vma: 'vma_info'
+    fs: 'fs_info'
+    qstr: 'qstr_info'
+    path: 'path_info'
 
 class kvm_run(CStructure):
     pass
 
 class memory_access_desc(CStructure):
-    pc: ctypes.c_ulong
-    addr: ctypes.c_ulong
-    size: ctypes.c_ulong
-    buf: ctypes._Pointer[ctypes.c_ubyte]
-    on_before: ctypes.c_bool
-    on_after: ctypes.c_bool
-    on_read: ctypes.c_bool
-    on_write: ctypes.c_bool
-    on_virtual: ctypes.c_bool
-    on_physical: ctypes.c_bool
-    hook: ctypes._Pointer[memory_hooks_region]
+    pc: 'ctypes.c_ulong'
+    addr: 'ctypes.c_ulong'
+    size: 'ctypes.c_ulong'
+    buf: 'ctypes._Pointer[ctypes.c_ubyte]'
+    on_before: 'ctypes.c_bool'
+    on_after: 'ctypes.c_bool'
+    on_read: 'ctypes.c_bool'
+    on_write: 'ctypes.c_bool'
+    on_virtual: 'ctypes.c_bool'
+    on_physical: 'ctypes.c_bool'
+    hook: 'ctypes._Pointer[memory_hooks_region]'
 
 class memory_hooks_region(CStructure):
-    start_address: ctypes.c_ulong
-    stop_address: ctypes.c_ulong
-    enabled: ctypes.c_bool
-    on_before: ctypes.c_bool
-    on_after: ctypes.c_bool
-    on_read: ctypes.c_bool
-    on_write: ctypes.c_bool
-    on_virtual: ctypes.c_bool
-    on_physical: ctypes.c_bool
-    cb: ctypes._CFunctionType
+    start_address: 'ctypes.c_ulong'
+    stop_address: 'ctypes.c_ulong'
+    enabled: 'ctypes.c_bool'
+    on_before: 'ctypes.c_bool'
+    on_after: 'ctypes.c_bool'
+    on_read: 'ctypes.c_bool'
+    on_write: 'ctypes.c_bool'
+    on_virtual: 'ctypes.c_bool'
+    on_physical: 'ctypes.c_bool'
+    cb: 'ctypes._CFunctionType'
 
 class mm_info(CStructure):
-    size: ctypes.c_ulong
-    mmap_offset: ctypes.c_int
-    pgd_offset: ctypes.c_int
-    arg_start_offset: ctypes.c_int
-    start_brk_offset: ctypes.c_int
-    brk_offset: ctypes.c_int
-    start_stack_offset: ctypes.c_int
+    size: 'ctypes.c_ulong'
+    mmap_offset: 'ctypes.c_int'
+    pgd_offset: 'ctypes.c_int'
+    arg_start_offset: 'ctypes.c_int'
+    start_brk_offset: 'ctypes.c_int'
+    brk_offset: 'ctypes.c_int'
+    start_stack_offset: 'ctypes.c_int'
 
 class mon_fd_t(CStructure):
     pass
 
 class osi_module_struct(CStructure):
-    modd: ctypes.c_ulong
-    base: ctypes.c_ulong
-    size: ctypes.c_ulong
-    file: ctypes._Pointer[ctypes.c_char]
-    name: ctypes._Pointer[ctypes.c_char]
-    offset: ctypes.c_ulong
-    flags: ctypes.c_ulong
+    modd: 'ctypes.c_ulong'
+    base: 'ctypes.c_ulong'
+    size: 'ctypes.c_ulong'
+    file: 'ctypes._Pointer[ctypes.c_char]'
+    name: 'ctypes._Pointer[ctypes.c_char]'
+    offset: 'ctypes.c_ulong'
+    flags: 'ctypes.c_ulong'
 
 class osi_page_struct(CStructure):
-    start: ctypes.c_ulong
-    len: ctypes.c_ulong
+    start: 'ctypes.c_ulong'
+    len: 'ctypes.c_ulong'
 
 class osi_proc_handle_struct(CStructure):
-    taskd: ctypes.c_ulong
-    asid: ctypes.c_ulong
+    taskd: 'ctypes.c_ulong'
+    asid: 'ctypes.c_ulong'
 
 class osi_proc_mem(CStructure):
-    start_brk: ctypes.c_ulong
-    brk: ctypes.c_ulong
+    start_brk: 'ctypes.c_ulong'
+    brk: 'ctypes.c_ulong'
 
 class osi_proc_struct(CStructure):
-    taskd: ctypes.c_ulong
-    pgd: ctypes.c_ulong
-    asid: ctypes.c_ulong
-    pid: ctypes.c_int
-    ppid: ctypes.c_int
-    name: ctypes._Pointer[ctypes.c_char]
-    pages: ctypes._Pointer[osi_page_struct]
-    create_time: ctypes.c_ulong
+    taskd: 'ctypes.c_ulong'
+    pgd: 'ctypes.c_ulong'
+    asid: 'ctypes.c_ulong'
+    pid: 'ctypes.c_int'
+    ppid: 'ctypes.c_int'
+    name: 'ctypes._Pointer[ctypes.c_char]'
+    pages: 'ctypes._Pointer[osi_page_struct]'
+    create_time: 'ctypes.c_ulong'
 
 class osi_thread_struct(CStructure):
-    pid: ctypes.c_int
-    tid: ctypes.c_int
+    pid: 'ctypes.c_int'
+    tid: 'ctypes.c_int'
 
 class path_info(CStructure):
-    d_name_offset: ctypes.c_int
-    d_iname_offset: ctypes.c_int
-    d_parent_offset: ctypes.c_int
-    d_op_offset: ctypes.c_int
-    d_dname_offset: ctypes.c_int
-    mnt_root_offset: ctypes.c_int
-    mnt_parent_offset: ctypes.c_int
-    mnt_mountpoint_offset: ctypes.c_int
+    d_name_offset: 'ctypes.c_int'
+    d_iname_offset: 'ctypes.c_int'
+    d_parent_offset: 'ctypes.c_int'
+    d_op_offset: 'ctypes.c_int'
+    d_dname_offset: 'ctypes.c_int'
+    mnt_root_offset: 'ctypes.c_int'
+    mnt_parent_offset: 'ctypes.c_int'
+    mnt_mountpoint_offset: 'ctypes.c_int'
 
 class qstr_info(CStructure):
-    size: ctypes.c_ulong
-    name_offset: ctypes.c_ulong
+    size: 'ctypes.c_ulong'
+    name_offset: 'ctypes.c_ulong'
 
 class query_result(CStructure):
-    num_labels: ctypes.c_uint
-    ls: ctypes.c_void_p
-    it_end: ctypes.c_void_p
-    it_curr: ctypes.c_void_p
-    tcn: ctypes.c_uint
-    cb_mask: ctypes.c_ubyte
+    num_labels: 'ctypes.c_uint'
+    ls: 'ctypes.c_void_p'
+    it_end: 'ctypes.c_void_p'
+    it_curr: 'ctypes.c_void_p'
+    tcn: 'ctypes.c_uint'
+    cb_mask: 'ctypes.c_ubyte'
 
 class symbol(CStructure):
-    address: ctypes.c_ulong
-    value: ctypes.c_ulong
-    symtab_idx: ctypes.c_int
-    reloc_type: ctypes.c_int
-    name: ctypes.Array[ctypes.c_char]
-    section: ctypes.Array[ctypes.c_char]
+    address: 'ctypes.c_ulong'
+    value: 'ctypes.c_ulong'
+    symtab_idx: 'ctypes.c_int'
+    reloc_type: 'ctypes.c_int'
+    name: 'ctypes.Array[ctypes.c_char]'
+    section: 'ctypes.Array[ctypes.c_char]'
 
 class symbol_hook(CStructure):
-    name: ctypes.Array[ctypes.c_char]
-    offset: ctypes.c_ulong
-    hook_offset: ctypes.c_bool
-    section: ctypes.Array[ctypes.c_char]
-    type: ctypes.c_int
-    cb: hooks_panda_cb
+    name: 'ctypes.Array[ctypes.c_char]'
+    offset: 'ctypes.c_ulong'
+    hook_offset: 'ctypes.c_bool'
+    section: 'ctypes.Array[ctypes.c_char]'
+    type: 'ctypes.c_int'
+    cb: 'hooks_panda_cb'
 
 class syscall_ctx(CStructure):
-    no: ctypes.c_int
-    asid: ctypes.c_ulong
-    retaddr: ctypes.c_ulong
-    args: ctypes.Array[ctypes.Array[ctypes.c_ubyte]]
+    no: 'ctypes.c_int'
+    asid: 'ctypes.c_ulong'
+    retaddr: 'ctypes.c_ulong'
+    args: 'ctypes.Array[ctypes.Array[ctypes.c_ubyte]]'
 
 class task_info(CStructure):
-    per_cpu_offsets_addr: ctypes.c_ulong
-    per_cpu_offset_0_addr: ctypes.c_ulong
-    switch_task_hook_addr: ctypes.c_ulong
-    current_task_addr: ctypes.c_ulong
-    init_addr: ctypes.c_ulong
-    size: ctypes.c_ulong
-    tasks_offset: ctypes.c_int
-    next_task_offset: ctypes.c_int
-    pid_offset: ctypes.c_int
-    tgid_offset: ctypes.c_int
-    group_leader_offset: ctypes.c_int
-    thread_group_offset: ctypes.c_int
-    real_parent_offset: ctypes.c_int
-    p_opptr_offset: ctypes.c_int
-    parent_offset: ctypes.c_int
-    p_pptr_offset: ctypes.c_int
-    mm_offset: ctypes.c_int
-    stack_offset: ctypes.c_int
-    real_cred_offset: ctypes.c_int
-    cred_offset: ctypes.c_int
-    comm_offset: ctypes.c_int
-    comm_size: ctypes.c_ulong
-    files_offset: ctypes.c_int
-    start_time_offset: ctypes.c_int
+    per_cpu_offsets_addr: 'ctypes.c_ulong'
+    per_cpu_offset_0_addr: 'ctypes.c_ulong'
+    switch_task_hook_addr: 'ctypes.c_ulong'
+    current_task_addr: 'ctypes.c_ulong'
+    init_addr: 'ctypes.c_ulong'
+    size: 'ctypes.c_ulong'
+    tasks_offset: 'ctypes.c_int'
+    next_task_offset: 'ctypes.c_int'
+    pid_offset: 'ctypes.c_int'
+    tgid_offset: 'ctypes.c_int'
+    group_leader_offset: 'ctypes.c_int'
+    thread_group_offset: 'ctypes.c_int'
+    real_parent_offset: 'ctypes.c_int'
+    p_opptr_offset: 'ctypes.c_int'
+    parent_offset: 'ctypes.c_int'
+    p_pptr_offset: 'ctypes.c_int'
+    mm_offset: 'ctypes.c_int'
+    stack_offset: 'ctypes.c_int'
+    real_cred_offset: 'ctypes.c_int'
+    cred_offset: 'ctypes.c_int'
+    comm_offset: 'ctypes.c_int'
+    comm_size: 'ctypes.c_ulong'
+    files_offset: 'ctypes.c_int'
+    start_time_offset: 'ctypes.c_int'
 
 class version(CStructure):
-    a: ctypes.c_int
-    b: ctypes.c_int
-    c: ctypes.c_int
+    a: 'ctypes.c_int'
+    b: 'ctypes.c_int'
+    c: 'ctypes.c_int'
 
 class vma_info(CStructure):
-    size: ctypes.c_ulong
-    vm_mm_offset: ctypes.c_int
-    vm_start_offset: ctypes.c_int
-    vm_end_offset: ctypes.c_int
-    vm_next_offset: ctypes.c_int
-    vm_file_offset: ctypes.c_int
-    vm_flags_offset: ctypes.c_int
+    size: 'ctypes.c_ulong'
+    vm_mm_offset: 'ctypes.c_int'
+    vm_start_offset: 'ctypes.c_int'
+    vm_end_offset: 'ctypes.c_int'
+    vm_next_offset: 'ctypes.c_int'
+    vm_file_offset: 'ctypes.c_int'
+    vm_flags_offset: 'ctypes.c_int'
 
 device_endian:ctypes.c_int
 QemuOptType:ctypes.c_int

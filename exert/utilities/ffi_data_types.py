@@ -164,7 +164,7 @@ def get_struct_union_definition(struct_type: CType, struct_name: str, prefix: st
             reserved_str += f'({struct_name}, "{field_name}", {field_python_type}())\n'
             reserved_attributes.append(reserved_str)
         else:
-            class_str += f'    {prefix}{field_name}: {field_python_type}\n'
+            class_str += f'    {prefix}{field_name}: \'{field_python_type}\'\n'
 
     for attribute in reserved_attributes:
         class_str += attribute
