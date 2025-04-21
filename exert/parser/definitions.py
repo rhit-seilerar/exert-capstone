@@ -3,9 +3,10 @@ import itertools
 from exert.parser import expressions
 from exert.parser.tokenmanager import TokenManager, tok_seq, mk_id, mk_op, mk_int
 from exert.utilities.debug import dprint
+from exert.utilities.types.global_types import TokenType
 
 class DefOption:
-    def __init__(self, tokens, params = None):
+    def __init__(self, tokens: list[TokenType], params = None):
         assert isinstance(tokens, list)
         self.tokens = tokens
         self.params = params
@@ -296,7 +297,7 @@ def substitute(tokmgr, defmap, replmap = None, keys = None):
         expansion_stack.append(name[1])
         # Recursively substitute each replacement
         for opt in opts:
-            tokens: list = []
+            tokens: list[TokenType] = []
             optmgr = TokenManager(opt.tokens)
             while optmgr.has_next():
                 tokens += subst(optmgr) or [optmgr.next()]
@@ -325,7 +326,7 @@ class DefEvaluator(expressions.Evaluator):
         super().__init__(bitsize)
         self.defs = defmap
 
-    def evaluate(self, tokens: list):
+    def evaluate(self, tokens: list[TokenType]):
         self.matches = DefMap(self.defs)
 
         # First we run through and replace all defined(MACRO) with a special

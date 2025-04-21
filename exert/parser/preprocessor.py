@@ -336,7 +336,7 @@ class Preprocessor(TokenManager):
         if not self.defs.is_skipping():
             self.defs.layers[-1].emitted += tokens
 
-    def preprocess(self, data: (str | tuple), cache: str, reset_cache: bool = False):
+    def preprocess(self, data: str, cache: str, reset_cache: bool = False):
         super().reset()
         self.conditions: list = []
         self.file = ''

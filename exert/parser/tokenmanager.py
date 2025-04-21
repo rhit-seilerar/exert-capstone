@@ -1,6 +1,6 @@
-def tok_str(token: (tuple[str, str | int, str | set] |
-                    tuple[str, str | int] |
-                    tuple[str, str, list]),
+from exert.utilities.types.global_types import TokenType
+
+def tok_str(token: TokenType,
             newlines: bool = False):
     n = token
 
@@ -45,7 +45,7 @@ def mk_str(string:str, suffix: str = '"'):
     return ('string', string, suffix)
 
 class TokenManager:
-    def __init__(self, tokens = None):
+    def __init__(self, tokens: (list[TokenType] | None) = None):
         self.reset()
         if tokens is not None:
             self.tokens = tokens

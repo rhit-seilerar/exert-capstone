@@ -55,7 +55,7 @@ def test_read_file():
 TK = Tokenizer()
 CACHE = './cache/test-preprocessor'
 
-def check(incls, defns, str_in, str_out):
+def check(incls, defns, str_in: str, str_out: str):
     pp = Preprocessor(TK, 32, incls, defns, filereader = dummy_reader)
     pp.preprocess(str_in, CACHE, reset_cache = True)
     pp.load(CACHE)
@@ -166,6 +166,7 @@ def test_blocks():
         #endif
         int C = 6;
     """, CACHE, True).load(CACHE)
+    assert len(pp.tokens[0]) > 2
     print([str(p) for p in pp.tokens[0][2]])
     assert pp.tokens == [
         ('any', '', {

@@ -8,6 +8,7 @@ from exert.parser.preprocessor import Preprocessor
 # from exert.usermode import rules
 from exert.utilities.debug import dprint
 from exert.utilities.command import run_command
+from exert.utilities.types.global_types import TokenType
 
 REPO_URL: str = 'git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git'
 VERSION_PATH: str = './cache/linux-version.txt'
@@ -69,12 +70,12 @@ def parse(filename: str, arch: str):
     parser.parse(preprocessor.tokens)
 
 class Parser(TokenManager):
-    def __init__(self, types: (dict | None) = None):
+    def __init__(self, types: (dict[str | int, int] | None) = None):
         super().__init__()
         self.chkptid = 0
         self.anydepth = 0
         self.in_typedef = False
-        self.staged_types: dict = {}
+        self.staged_types: dict[str | int, int] = {}
         self.types = types.copy() if types is not None else {}
 
 #     def add(self, values, key, value):
@@ -1550,7 +1551,7 @@ class Parser(TokenManager):
         dprint(3, 'parse_function_body')
         return self.parse_compound_statement, p, f
 
-    def parse(self, tokens: list):
+    def parse(self, tokens: list[TokenType]):
         super().reset()
         self.tokens = tokens
         self.len = len(tokens)

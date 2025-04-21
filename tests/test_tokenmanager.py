@@ -28,7 +28,7 @@ def test_tok_str():
 def test_reset():
     mgr = TokenManager()
     mgr.has_error = True
-    mgr.tokens = ["Howdy"]
+    mgr.tokens = [("Howdy", "Howdy")]
     mgr.index = 999
     mgr.len = 999
     mgr.tokens_consumed = 999
