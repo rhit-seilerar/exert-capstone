@@ -20,10 +20,10 @@ def test_tok_str():
     assert tok_str(('operator', '<<=')) == '<<= '
     assert tok_str(('operator', ';')) == '; '
     assert tok_str(('operator', ';'), True) == ';\n'
-    assert tok_str(('any', 'a2', [
-        Def(DefOption([('integer', 1, 'u')])),
-        Def(DefOption([('string', '123', '"')]))
-    ])) == '<ANY a2>[2]{ { 1u }, { "123" } } '
+    assert tok_str(('any', 'a2', {
+        DefOption([('integer', 1, 'u')]),
+        DefOption([('string', '123', '"')])
+    })) == '<ANY a2>[2]{ { 1u }, { "123" } } '
 
 def test_reset():
     mgr = TokenManager()

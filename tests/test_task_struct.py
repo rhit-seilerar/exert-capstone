@@ -4,6 +4,7 @@ from collections.abc import Callable
 from exert.usermode import plugin
 import exert.usermode.task_struct_stack as tss
 from exert.utilities.debug import RUN_PLUGIN_TESTS
+from exert.utilities.types.multi_arch import ExertCallable
 
 CALLED_BACK: bool = False
 def set_called_back(called_back: bool):
@@ -16,7 +17,7 @@ import exert.usermode.task_struct_stack as tss
 tests.test_task_struct.run_test('{}', {}, '{}', tss.{})
 """
 
-def do_test(test: Callable, arch: str, generic: bool = True,
+def do_test(test: ExertCallable, arch: str, generic: bool = True,
             kernel: (str | None) = None):
     if not RUN_PLUGIN_TESTS:
         return

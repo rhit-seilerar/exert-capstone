@@ -11,7 +11,7 @@ from exert.utilities.command import run_command, get_stdout
 PANDA_CONTAINER = 'pandare/panda'
 XMAKE_CONTAINER = 'ghcr.io/panda-re/embedded-toolchains'
 def command_dict(command: str, capture_output: bool = False, check: bool = True):
-    cd = {'comm' : command, 'cap': capture_output, 'chk' : check}
+    cd: dict[str, (str | bool)] = {'comm' : command, 'cap': capture_output, 'chk' : check}
     return cd
 
 def main():

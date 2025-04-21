@@ -7,12 +7,13 @@ from pandare import PyPlugin, Panda
 from exert.usermode import task_struct_stack
 from exert.utilities.command import run_command
 from exert.utilities import version as ver
+from exert.utilities.types.multi_arch import ExertCallable
 
 
 class Exert(PyPlugin):
     """The Exert plugin"""
     # pylint: disable=attribute-defined-outside-init
-    def __preinit__(self, pypluginmgr, args: dict[str, Callable]):
+    def __preinit__(self, pypluginmgr, args: dict[str, ExertCallable]):
         self.pypluginmgr = pypluginmgr
         self.args = args
         self.callback = args['callback'] if 'callback' in args else None
@@ -23,7 +24,7 @@ class Exert(PyPlugin):
         self.called_back = False
 
         @panda.ppp('syscalls2', 'on_sys_execve_enter')
-        def hook_syscall(cpu, pc, filename: str, argv: list, envp):
+        def hook_syscall(cpu, pc, filename: str, argv: list[str], envp):
             if self.called_back:
                 return
             print('Hooking into sys_execve...')
@@ -52,10 +53,10 @@ class Exert(PyPlugin):
         panda.disable_callback('single_step')
         panda.disable_callback('hypercall')
 
-def run(arch: str = 'i386', callback: (Callable | None) = None,
+def run(arch: str = 'i386', callback: (ExertCallable | None) = None,
         generic: bool = True, kernel: (str | None) = None, usermode: (str | None) = None,
         command: (str | None) = None,
-        hypercall_callback: (Callable | None) = None):
+        hypercall_callback: (ExertCallable | None) = None):
     panda = None
     if generic:
         panda = Panda(generic = arch)
