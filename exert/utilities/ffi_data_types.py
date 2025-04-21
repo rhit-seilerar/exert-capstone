@@ -129,7 +129,7 @@ def get_struct_union_definition(struct_type: CType, struct_name: str, prefix: st
     else:
         class_str = f'{prefix}class {struct_name}(CStructure):\n'
 
-    reserved_attributes = []
+    # reserved_attributes = []
 
     if (struct_type.fields is None or len(struct_type.fields) == 0):
         class_str += '    pass\n'
@@ -166,8 +166,8 @@ def get_struct_union_definition(struct_type: CType, struct_name: str, prefix: st
         if not field_reserved:
             class_str += f'    {prefix}{field_name}: \'{field_python_type}\'\n'
 
-    for attribute in reserved_attributes:
-        class_str += attribute
+    # for attribute in reserved_attributes:
+    #     class_str += attribute
 
     return class_str
 
