@@ -1,7 +1,9 @@
+from typing import Literal
+from pandare import Panda
 from exert.usermode.context import Context
-
-class DummyPanda:
-    def __init__(self, buf = b'', endianness = 'little', bits = 32):
+class DummyPanda(Panda):
+    def __init__(self, buf: bytes = b'', # pylint: disable=W0231
+                 endianness: Literal['little', 'big'] = 'little',  bits: int = 32):
         self.buf = buf
         self.endianness = endianness
         self.bits = bits
@@ -9,13 +11,15 @@ class DummyPanda:
     def get_cpu(self):
         return None
 
-    def virtual_memory_read(self, cpu, address, size):
-        if address is None or address + size > len(self.buf):
+    def virtual_memory_read(self, cpu, addr: int, length: int,
+                            fmt: str = 'bytearray'):
+        if addr is None or addr + length > len(self.buf):
             raise ValueError
-        return self.buf[address:address+size]
+        return self.buf[addr:addr+length]
 
 class DummyContext(Context):
-    def __init__(self, buf = b'', endianness = 'little', bits = 32):
+    def __init__(self, buf: bytes = b'', endianness: Literal['little', 'big'] = 'little',
+                 bits: int = 32):
         super().__init__(DummyPanda(buf, endianness, bits))
 
 def test_read():

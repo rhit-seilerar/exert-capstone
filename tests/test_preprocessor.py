@@ -3,7 +3,7 @@ import exert.parser.tokenmanager as tm
 from exert.parser.tokenizer import Tokenizer
 from exert.parser.preprocessor import Preprocessor, read_file
 
-FILES = {
+FILES: dict[str, str] = {
     'base.h': """
         #ifndef _BASE_H
         #define _BASE_H

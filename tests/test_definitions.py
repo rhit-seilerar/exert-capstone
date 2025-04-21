@@ -231,7 +231,8 @@ def test_defmap_lookup():
     assert defmap['ghi'] == abc
     assert parent['ghi'] == ghi
     try:
-        defmap['abc'] = 'abc'
+        defmap['abc'] = 'abc' # type: ignore
+        # As can clearly be seen below, this is an intentional type error
         assert False
     except TypeError:
         pass
@@ -329,6 +330,7 @@ def test_substitute():
     assert defstate.substitute(tm.mk_id('STRING')) == []
 
     defstate.on_undef('STRING')
+    assert defstate.layers[-1].current is not None
     defstate.layers[-1].current['STRING'] = Def()
     assert defstate.substitute(tm.mk_id('STRING')) == [tm.mk_id('STRING')]
     defstate.layers[-1].current['STRING'] = Def(undefined = True)
@@ -421,6 +423,7 @@ def test_deflayer_first():
     dl = DefLayer(parent, 32, False)
     dl.add_map(TK.tokenize('defined abc'))
     assert dl.cond_acc == TK.tokenize('!(defined abc)')
+    assert dl.current is not None
     assert dl.current['abc'] == Def(DefOption([tm.mk_int(1)]), DefOption([tm.mk_int(2)]))
     assert not dl.current.skipping
     assert not dl.skip_rest
@@ -429,6 +432,7 @@ def test_deflayer_first():
     dl = DefLayer(parent, 32, False)
     dl.add_map(TK.tokenize('abc == 3'))
     assert dl.cond_acc == TK.tokenize('!(abc == 3)')
+    assert dl.current is not None
     assert dl.current.skipping
     assert not dl.skip_rest
     assert not dl.closed
@@ -445,6 +449,7 @@ def test_deflayer_next():
     assert dl.cond == TK.tokenize('!(defined abc) && (!defined abc)')
     assert dl.cond_acc == TK.tokenize('!(defined abc) && !(!defined abc)')
     assert dl.accumulator['abc'] == Def(DefOption([tm.mk_int(1)]), DefOption([tm.mk_int(2)]))
+    assert dl.current is not None
     assert dl.current['abc'] == Def(undefined = True)
     assert not dl.current.skipping
     assert dl.skip_rest
@@ -453,6 +458,7 @@ def test_deflayer_next():
     dl = DefLayer(parent, 32, False)
     dl.add_map(TK.tokenize('1'))
     assert dl.cond_acc == TK.tokenize('!(1)')
+    assert dl.current is not None
     assert not dl.current.skipping
     assert dl.skip_rest
     assert dl.closed

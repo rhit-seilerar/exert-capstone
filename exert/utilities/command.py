@@ -1,9 +1,9 @@
 """Some useful command utilities for the pyton scripts"""
-
 import subprocess
 import re
 
-def run_command(command, capture_output=False, check=True, cwd=None):
+def run_command(command: str, capture_output: bool=False,
+                check: bool=True, cwd=None):
     """Run a command in a forked child and return the stdout"""
     pattern = re.compile('("[^"]+"|[^\\s"]+)')
     args = [arg.replace('"', '') for arg in re.findall(pattern, command)]

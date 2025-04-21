@@ -17,15 +17,15 @@ class Tokenizer:
     def has_next(self):
         return self.index < self.len
 
-    def peek(self, size = 1, offset = 0):
+    def peek(self, size: int = 1, offset: int = 0):
         if size == 1 and self.index + offset < self.len:
             return self.data[self.index + offset]
         return self.data[self.index+offset:self.index+offset+size]
 
-    def bump(self, dist = 1):
+    def bump(self, dist: int = 1):
         self.index += dist
 
-    def consume(self, *strings):
+    def consume(self, *strings: str):
         for string in strings:
             dist = len(string)
             if self.peek(dist) == string:
@@ -80,7 +80,7 @@ class Tokenizer:
             radix = 8
 
         if not self.peek().lower() in digits:
-            self.index = start
+            self.index: int = start
             return None
 
         num = 0
@@ -143,7 +143,7 @@ class Tokenizer:
                 return ('directive', '(')
 
             if self.can_be_directive and op1 == '#':
-                self.in_directive = True
+                self.in_directive: bool = True
                 return ('directive', '#')
 
             return ('operator', op1)
@@ -160,14 +160,14 @@ class Tokenizer:
         token = token or self.parse_operator()
         return token
 
-    def tokenize(self, data):
+    def tokenize(self, data: str):
         self.data = data
         self.len = len(data)
         self.index = 0
         self.in_directive = False
         self.can_be_directive = True
         self.next_parenthesis_is_directive = False
-        self.tokens = []
+        self.tokens: list = []
 
         while self.has_next():
             if self.consume(' ', '\t'):

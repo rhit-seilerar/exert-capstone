@@ -1,5 +1,6 @@
 __pycache__/
 .pytest_cache/
+.mypy_cache
 cache/*
 !cache/rootfs
 cache/rootfs/user_prog
@@ -17,3 +18,5 @@ cache/rootfs/dev/fd
 cache/rootfs/dev/stderr
 cache/rootfs/dev/stdin
 cache/rootfs/dev/stdout
+.vscode/
+.venv

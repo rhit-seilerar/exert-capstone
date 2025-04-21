@@ -1,3 +1,11 @@
+apt-get update
+apt-get upgrade -y
+apt-get install -y software-properties-common
+add-apt-repository -y ppa:deadsnakes/ppa
+apt-get install -y python3.13 python3.13-dev python3.13-venv
+python3.13 -m venv /mount/.venv
+source /mount/.venv/bin/activate
+
 # Install some useful programs on the container
 apt-get install -y cpio xz-utils make
 
@@ -39,8 +47,8 @@ cd ..
 cd ..
 
 # Install some pip dependencies
-python3 -m pip install --upgrade pip
-pip install --upgrade ipython pytest pytest-cov
+python -m pip install --upgrade pip
+pip install --upgrade ipython pytest pytest-cov pandare
 
 chmod +x /mount/make_initrd.sh
 
@@ -51,3 +59,5 @@ rootfsLoc=/mount/cache/rootfs
 if [[ ! -d $pandaLoc ]]; then mkdir $pandaLoc; fi
 if [[ -L /root/.panda ]]; then rm /root/.panda; fi
 ln -sf $pandaLoc /root/.panda
+
+echo "source /mount/.venv/bin/activate" >> ~/.bashrc

@@ -1,4 +1,5 @@
 import subprocess
+from pandare import Panda
 import exert.usermode.task_struct_stack as tss
 from exert.usermode import plugin
 from exert.usermode.context import Context
@@ -7,31 +8,31 @@ from exert.utilities.debug import RUN_PLUGIN_TESTS
 
 # Kernel info taken from https://panda.re/kernelinfos/ubuntu:4.4.0-170-generic:32.conf
 
-CALLED_BACK = False
-def set_called_back(called_back):
+CALLED_BACK: bool = False
+def set_called_back(called_back: bool):
     global CALLED_BACK
     CALLED_BACK = called_back
 
-TEST_PREFIX = """
+TEST_PREFIX: str = """
 import tests.test_plugin
 tests.test_plugin.run_test('{}', {}, '{}', tests.test_plugin.{})
 """
-def do_test(test, arch, generic = True, kernel = None):
+def do_test(test, arch: str, generic: bool = True, kernel: (str | None) = None):
     if not RUN_PLUGIN_TESTS:
         return
     formatted = TEST_PREFIX.format(arch, generic, kernel, test.__name__)
     print(formatted)
     subprocess.run(['python'], input = formatted, check = True, text = True)
 
-def run_test(arch, generic, kernel, test):
+def run_test(arch: str, generic: bool, kernel: str, test):
     set_called_back(False)
-    def callback(panda, cpu):
+    def callback(panda: Panda, cpu):
         set_called_back(True)
         test(panda, cpu)
     plugin.run(arch = arch, generic = generic, kernel = kernel, callback = callback)
     assert CALLED_BACK
 
-def callback_test_ground_truth_tasklist(panda, cpu):
+def callback_test_ground_truth_tasklist(panda: Panda, cpu):
     init_addr = 0xc1b1da80
     parent_offset = 804
 
@@ -42,7 +43,7 @@ def callback_test_ground_truth_tasklist(panda, cpu):
 def test_ground_truth_tasklist():
     do_test(callback_test_ground_truth_tasklist, 'i386')
 
-def callback_test_get_task_from_current(panda, cpu):
+def callback_test_get_task_from_current(panda: Panda, cpu):
     task_addr = tss.task_address_arm_callback(panda, cpu)
     context = Context(panda)
     results = TASK_STRUCT.test(context, task_addr)
@@ -50,7 +51,7 @@ def callback_test_get_task_from_current(panda, cpu):
 def test_get_task_from_current():
     do_test(callback_test_get_task_from_current, 'arm')
 
-def callback_test_nongeneric_kernel(panda, cpu):
+def callback_test_nongeneric_kernel(panda: Panda, cpu):
     pass
 
     # assert context.read(0x4, 4) is None

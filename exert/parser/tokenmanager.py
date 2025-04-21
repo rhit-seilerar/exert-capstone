@@ -1,5 +1,13 @@
-def tok_str(token, newlines = False):
+def tok_str(token: (tuple[str, str | int, str | set] |
+                    tuple[str, str | int] |
+                    tuple[str, str, list]),
+            newlines: bool = False):
     n = token
+
+    if len(token) == 2:
+        n = token + ('',)
+
+    assert len(n) != 2
     string = '<NONE> ' if n is None \
         else n[1] if n[0] == 'directive' \
         else f'{n[1]}\n' if n[0] == 'operator' and n[1] in [';', '{', '}'] \
@@ -12,13 +20,16 @@ def tok_str(token, newlines = False):
         else str(n[1])
     if newlines:
         return string
+
+    assert isinstance(string, str)
     return string.replace('\n', ' ')
 
-def tok_seq(tokens, newlines = False):
+def tok_seq(tokens: list[tuple[str, str | int] | tuple[str, str | int, str | set]],
+            newlines: bool = False):
     return ''.join(tok_str(n, newlines) for n in tokens).strip() \
         if isinstance(tokens, list) else tokens
 
-def mk_int(num, suffix = ''):
+def mk_int(num: int, suffix: str = ''):
     return ('integer', num, suffix)
 
 def mk_id(sym):
@@ -30,7 +41,7 @@ def mk_kw(sym):
 def mk_op(op):
     return ('operator', op)
 
-def mk_str(string, suffix = '"'):
+def mk_str(string:str, suffix: str = '"'):
     return ('string', string, suffix)
 
 class TokenManager:
@@ -56,15 +67,15 @@ class TokenManager:
         self.tokens_consumed += 1
         self.index += 1
 
-    def peek(self, offset = 0):
+    def peek(self, offset: int = 0):
         if 0 <= self.index + offset and self.index + offset < self.len:
             return self.tokens[self.index+offset]
         return None
 
-    def peek_type(self, offset = 0):
+    def peek_type(self, offset: int = 0):
         return tok[0] if (tok := self.peek(offset)) else None
 
-    def next(self, offset = 0):
+    def next(self, offset: int = 0):
         if (token := self.peek(offset)):
             self.bump()
             return token
@@ -73,21 +84,21 @@ class TokenManager:
     def consume_type(self, typ):
         return self.next() if (token := self.peek()) and token[0] == typ else None
 
-    def consume(self, token):
+    def consume(self, token: tuple):
         if self.peek() == token:
             return self.next()
         return None
 
-    def consume_directive(self, name):
+    def consume_directive(self, name: str):
         return self.consume(('directive', name))
 
-    def consume_operator(self, name):
+    def consume_operator(self, name: str):
         return self.consume(('operator', name))
 
-    def consume_keyword(self, name):
+    def consume_keyword(self, name: str):
         return self.consume(('keyword', name))
 
-    def consume_identifier(self, name):
+    def consume_identifier(self, name: str):
         return self.consume(('identifier', name))
 
     def parse_identifier(self):
@@ -97,10 +108,12 @@ class TokenManager:
 
     def parse_ident_or_keyword(self):
         if (self.peek_type() in ['identifier', 'keyword']):
-            return self.next()[1]
+            res = self.next()
+            assert res is not None
+            return res[1]
         return ''
 
-    def print_current(self, width = 5, fancy_print = True):
+    def print_current(self, width: int = 5, fancy_print: bool = True):
         low = max(self.index - width, 0)
         high = min(self.index + width + 1, self.len + 1)
         context = self.tokens[low:high]
@@ -133,7 +146,7 @@ class TokenManager:
             return out
         return ''
 
-    def err(self, *message):
+    def err(self, *message: object):
         print(*message)
         self.print_current()
         assert False

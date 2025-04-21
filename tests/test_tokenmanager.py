@@ -27,8 +27,8 @@ def test_tok_str():
 
 def test_reset():
     mgr = TokenManager()
-    mgr.has_error = 999
-    mgr.tokens = 999
+    mgr.has_error = True
+    mgr.tokens = ["Howdy"]
     mgr.index = 999
     mgr.len = 999
     mgr.tokens_consumed = 999
@@ -36,7 +36,7 @@ def test_reset():
     mgr.progress_counter = 999
     mgr.reset()
     assert not mgr.has_error
-    assert mgr.tokens == []
+    assert not mgr.tokens
     assert mgr.index == 0
     assert mgr.len == 0
     assert mgr.tokens_consumed == 0

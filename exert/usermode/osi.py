@@ -2,7 +2,7 @@
 # This isn't very optimized but hopefully this should give a good idea of what to expect?
 # First line thing
 class HeaderLine():
-    def __init__(self, header_line = '[ubuntu:4.4.0-98-generic:64]'):
+    def __init__(self, header_line: str = '[ubuntu:4.4.0-98-generic:64]'):
         self.header_line = header_line
 
     def to_string(self):
@@ -11,7 +11,7 @@ class HeaderLine():
 #name
 class Name():
     def __init__(self,
-                 name = '4.4.0-98-generic|#121-Ubuntu SMP Tue Oct 10 14:24:03 UTC 2017|x86_64'):
+            name: str = '4.4.0-98-generic|#121-Ubuntu SMP Tue Oct 10 14:24:03 UTC 2017|x86_64'):
         self.name = name
 
     def to_string(self):
@@ -19,7 +19,7 @@ class Name():
 
 #version
 class Version():
-    def __init__(self, a = 4, b = 4, c = 0):
+    def __init__(self, a: int = 4, b: int = 4, c: int = 0):
         self.a = a
         self.b = b
         self.c = c
@@ -31,26 +31,26 @@ class Version():
 class Task():
     def __init__(self,
                  *,
-                 per_cpu_offsets_addr = 18446744071594801600,
-                 per_cpu_offset_0_addr = 18446744071594856448,
-                 current_task_addr = 54272,
-                 init_addr = 18446744071593596160,
-                 size = 6848,
-                 tasks_offset = 848,
-                 pid_offset = 1096,
-                 tgid_offset = 1100,
-                 group_leader_offset = 1160,
-                 thread_group_offset = 1272,
-                 real_parent_offset = 1112,
-                 parent_offset = 1120,
-                 mm_offset = 928,
-                 stack_offset = 8,
-                 real_cred_offset = 1520,
-                 cred_offset = 1528,
-                 comm_offset = 1536,
-                 comm_size = 16,
-                 files_offset = 1600,
-                 start_time_offset = 1408):
+                 per_cpu_offsets_addr: int | None = 18446744071594801600,
+                 per_cpu_offset_0_addr: int | None = 18446744071594856448,
+                 current_task_addr: int | None = 54272,
+                 init_addr: int | None = 18446744071593596160,
+                 size: int | None = 6848,
+                 tasks_offset: int | None = 848,
+                 pid_offset: int | None = 1096,
+                 tgid_offset: int | None = 1100,
+                 group_leader_offset: int | None = 1160,
+                 thread_group_offset: int | None = 1272,
+                 real_parent_offset: int | None = 1112,
+                 parent_offset: int | None = 1120,
+                 mm_offset: int | None = 928,
+                 stack_offset: int | None = 8,
+                 real_cred_offset: int | None = 1520,
+                 cred_offset: int | None = 1528,
+                 comm_offset: int | None = 1536,
+                 comm_size: int | None = 16,
+                 files_offset: int | None = 1600,
+                 start_time_offset: int | None = 1408):
         self.per_cpu_offsets_addr = per_cpu_offsets_addr
         self.per_cpu_offset_0_addr = per_cpu_offset_0_addr
         self.current_task_addr = current_task_addr
@@ -96,7 +96,11 @@ task.start_time_offset = {self.start_time_offset}\n'''
 
 #cred
 class Cred():
-    def __init__(self, uid_offset = 4, gid_offset = 8, euid_offset = 20, egid_offset = 24):
+    def __init__(self,
+                 uid_offset: int | None = 4,
+                 gid_offset: int | None = 8,
+                 euid_offset: int | None = 20,
+                 egid_offset: int | None = 24):
         self.uid_offset = uid_offset
         self.gid_offset = gid_offset
         self.euid_offset = euid_offset
@@ -112,13 +116,13 @@ cred.egid_offset = {self.egid_offset}\n'''
 class MM():
     def __init__(self,
                  *,
-                 size = 460,
-                 mmap_offset = 0,
-                 pgd_offset = 32,
-                 arg_start_offset = 156,
-                 start_brk_offset = 144,
-                 brk_offset = 148,
-                 start_stack_offset = 152):
+                 size: int | None = 460,
+                 mmap_offset: int | None = 0,
+                 pgd_offset: int | None = 32,
+                 arg_start_offset: int | None = 156,
+                 start_brk_offset: int | None = 144,
+                 brk_offset: int | None = 148,
+                 start_stack_offset: int | None = 152):
         self.size = size
         self.mmap_offset = mmap_offset
         self.pgd_offset = pgd_offset
@@ -140,13 +144,13 @@ mm.start_stack_offset = {self.start_stack_offset}\n'''
 class VMA():
     def __init__(self,
                  *,
-                 size = 100,
-                 vm_mm_offset = 32,
-                 vm_start_offset = 0,
-                 vm_end_offset = 4,
-                 vm_next_offset = 8,
-                 vm_flags_offset = 44,
-                 vm_file_offset = 84):
+                 size: int | None = 100,
+                 vm_mm_offset: int | None = 32,
+                 vm_start_offset: int | None = 0,
+                 vm_end_offset: int | None = 4,
+                 vm_next_offset: int | None = 8,
+                 vm_flags_offset: int | None = 44,
+                 vm_file_offset: int | None = 84):
         self.size = size
         self.vm_mm_offset = vm_mm_offset
         self.vm_start_offset = vm_start_offset
@@ -168,12 +172,12 @@ vma.vm_file_offset = {self.vm_file_offset}\n'''
 class FS():
     def __init__(self,
     *,
-    f_path_dentry_offset = 12,
-    f_path_mnt_offset = 8,
-    f_pos_offset = 64,
-    fdt_offset = 20,
-    fdtab_offset = 24,
-    fd_offset = 4):
+    f_path_dentry_offset: int | None = 12,
+    f_path_mnt_offset: int | None = 8,
+    f_pos_offset: int | None = 64,
+    fdt_offset: int | None = 20,
+    fdtab_offset: int | None = 24,
+    fd_offset: int | None = 4):
         self.f_path_dentry_offset = f_path_dentry_offset
         self.f_path_mnt_offset = f_path_mnt_offset
         self.f_pos_offset = f_pos_offset
@@ -192,7 +196,9 @@ fs.fd_offset = {self.fd_offset}\n'''
 
 #qstr
 class QSTR():
-    def __init__(self, size = 12, name_offset = 8):
+    def __init__(self,
+                 size: int | None = 12,
+                 name_offset: int | None = 8):
         self.size = size
         self.name_offset = name_offset
 
@@ -203,14 +209,14 @@ class QSTR():
 class Path():
     def __init__(self,
                  *,
-                 d_name_offset = 20,
-                 d_iname_offset = 36,
-                 d_parent_offset = 16,
-                 d_op_offset = 80,
-                 d_dname_offset = 32,
-                 mnt_root_offset = 0,
-                 mnt_parent_offset = -8,
-                 mnt_mountpoint_offset = -4):
+                 d_name_offset: int | None = 20,
+                 d_iname_offset: int | None = 36,
+                 d_parent_offset: int | None = 16,
+                 d_op_offset: int | None = 80,
+                 d_dname_offset: int | None = 32,
+                 mnt_root_offset: int | None = 0,
+                 mnt_parent_offset: int | None = -8,
+                 mnt_mountpoint_offset: int | None = -4):
         self.d_name_offset = d_name_offset
         self.d_iname_offset = d_iname_offset
         self.d_parent_offset = d_parent_offset
@@ -230,7 +236,8 @@ path.mnt_root_offset = {self.mnt_root_offset}
 path.mnt_parent_offset = {self.mnt_parent_offset}
 path.mnt_mountpoint_offset = {self.mnt_mountpoint_offset}\n'''
 
-def main(*, header_line, osi_name, osi_version, task, cred, mm, vma, fs, qstr, osi_path, demo_path):
+def main(*, header_line: HeaderLine, osi_name: Name, osi_version: Version, task: Task, cred: Cred,
+         mm: MM, vma: VMA, fs: FS, qstr: QSTR, osi_path: Path, demo_path: str):
     with open(demo_path, "w", encoding='utf-8') as f:
         f.write(header_line.to_string())
         f.write(osi_name.to_string())

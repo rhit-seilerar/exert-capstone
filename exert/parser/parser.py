@@ -5,16 +5,16 @@ import glob
 from exert.parser.tokenizer import Tokenizer
 from exert.parser.tokenmanager import tok_seq, mk_kw, mk_op, mk_id, TokenManager
 from exert.parser.preprocessor import Preprocessor
-from exert.usermode import rules
+# from exert.usermode import rules
 from exert.utilities.debug import dprint
 from exert.utilities.command import run_command
 
-REPO_URL = 'git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git'
-VERSION_PATH = './cache/linux-version.txt'
-SOURCE_PATH = './cache/linux'
-PARSE_CACHE = './cache/parsed'
+REPO_URL: str = 'git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git'
+VERSION_PATH: str = './cache/linux-version.txt'
+SOURCE_PATH: str = './cache/linux'
+PARSE_CACHE: str = './cache/parsed'
 
-def generate(version, arch):
+def generate(version: str, arch: str):
     switch_to_version(version)
     print('Parsing files...')
     if not os.path.exists(PARSE_CACHE):
@@ -24,7 +24,7 @@ def generate(version, arch):
 def get_files():
     return glob.glob(f'{SOURCE_PATH}/include/linux/**/*.h', recursive = True)
 
-def switch_to_version(version):
+def switch_to_version(version: str):
     old_version = None
     try:
         with open(VERSION_PATH, 'r', encoding = 'utf-8') as file:
@@ -43,7 +43,7 @@ SOURCE = """
 
 PREPROCESSOR_CACHE = './cache/linux-preprocessor'
 
-def parse(filename, arch):
+def parse(filename: str, arch: str):
     tokenizer = Tokenizer()
 
     preprocessor = Preprocessor(
@@ -69,12 +69,12 @@ def parse(filename, arch):
     parser.parse(preprocessor.tokens)
 
 class Parser(TokenManager):
-    def __init__(self, types = None):
+    def __init__(self, types: (dict | None) = None):
         super().__init__()
         self.chkptid = 0
         self.anydepth = 0
         self.in_typedef = False
-        self.staged_types = {}
+        self.staged_types: dict = {}
         self.types = types.copy() if types is not None else {}
 
 #     def add(self, values, key, value):
@@ -94,7 +94,7 @@ class Parser(TokenManager):
 #     def has(self, values, key):
 #         return key in values
 
-    def unwrap(self, k):
+    def unwrap(self, k: tuple):
         dprint(3, 'unwrap.start')
         while isinstance(k, tuple) and len(k) == 3:
             if self.time + 10 < time.time():
@@ -116,7 +116,7 @@ class Parser(TokenManager):
                 dprint(3.5, f'chkpt.env.pop({idt}): {self.index} -> {index}')
                 self.index = index
                 return f
-            return clause, p, (pop, p, f)
+            return clause, p, (pop, p,f)
         return env
 
     def opt(self, clause):
@@ -125,13 +125,13 @@ class Parser(TokenManager):
 
     def pnot(self, clause):
         dprint(5, 'pnot', clause)
-        return lambda p, f: (clause, p, f)
+        return lambda p, f: (clause, p,f)
 
     def por(self, *clauses):
         dprint(5, 'por')
         def start(p, f):
             dprint(4, 'por.start')
-            def getnext(p1, f1, rest):
+            def getnext(p1, f1, rest: tuple):
                 dprint(5, 'por.getnext')
                 def nex(p2, f2):
                     dprint(4, 'por.next')
@@ -146,7 +146,7 @@ class Parser(TokenManager):
         dprint(5, 'pand', clauses)
         def start(p, f):
             dprint(4, 'pand.start')
-            def getnext(p1, f1, rest):
+            def getnext(p1, f1, rest: tuple):
                 dprint(5, 'pand.getnext')
                 def nex(p2, f2):
                     dprint(4, 'pand.next')
@@ -165,6 +165,7 @@ class Parser(TokenManager):
             result = False
             # Parse the rest of the file with each option
             anytok = self.peek()
+            assert anytok is not None
             for opt in anytok[2]:
                 # Back up state and insert the option
                 index = self.index
@@ -173,7 +174,7 @@ class Parser(TokenManager):
                 dprint(2, '    !!TOKENS!!  ', tok_seq(self.tokens))
 
                 # Try it out
-                if self.unwrap((self.check_for_any, p, f)):
+                if self.unwrap((self.check_for_any, p,f)):
                     result = True
                 self.index = index
                 dprint(2, '    Result:', result)
@@ -204,18 +205,18 @@ class Parser(TokenManager):
         dprint(4, 'tok')
         return lambda p, f: (self.ptok(tok), (self.pbump, p, f), f)
 
-    def ptyp(self, typ):
+    def ptyp(self, typ: str):
         dprint(4, 'ptyp')
         def intl(p, f):
             dprint(3, 'ptyp.intl', typ, self.peek())
             if self.peek_type() == typ:
                 return p
             return f
-        return lambda p, f: (self.check_for_any, (intl, p, f), f)
+        return lambda p, f: (self.check_for_any, (intl, p,f), f)
 
-    def typ(self, typ):
+    def typ(self, typ: str):
         dprint(4, 'typ')
-        return lambda p, f: (self.ptyp(typ), (self.pbump, p, f), f)
+        return lambda p, f: (self.ptyp(typ), (self.pbump, p,f), f)
 
     # ===== Alternate Spellings & Misc =====
 
@@ -258,10 +259,12 @@ class Parser(TokenManager):
         dprint(3, 'maybe_typedef_name')
         def addname(p, f):
             if self.in_typedef:
-                dprint(1.5, f'Staging: {self.peek()[1]}: {1}')
-                self.staged_types[self.peek()[1]] = 1
+                staged_types = self.peek()
+                assert staged_types is not None
+                dprint(1.5, f'Staging: {staged_types[1]}: {1}')
+                self.staged_types[staged_types[1]] = 1
             return p
-        return self.ptyp('identifier'), (addname, (self.pbump, p, f), f), f
+        return self.ptyp('identifier'), (addname, (self.pbump, p,f), f), f
 
     def parse_typedef_declarator_list(self, p, f):
         dprint(3, 'parse_typedef_declarator_list')
@@ -303,7 +306,7 @@ class Parser(TokenManager):
             self.opt(self.parse_attribute_specifier_sequence),
             self.parse_typedef_declarator_list,
             self.tok(mk_op(';'))
-        ), (commit, p, f), (rollback, p, f)
+        ), (commit, p,f), (rollback, p,f)
 
     # ===== A.2.5 Constants =====
 
@@ -1547,7 +1550,7 @@ class Parser(TokenManager):
         dprint(3, 'parse_function_body')
         return self.parse_compound_statement, p, f
 
-    def parse(self, tokens):
+    def parse(self, tokens: list):
         super().reset()
         self.tokens = tokens
         self.len = len(tokens)

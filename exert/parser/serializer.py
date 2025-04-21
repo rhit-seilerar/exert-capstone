@@ -1,25 +1,26 @@
+from io import BufferedReader, BufferedWriter
 from exert.parser.definitions import DefOption
 
-TOK_TYPES = [
+TOK_TYPES: list[str] = [
     'string', 'integer', 'identifier', 'keyword',
     'operator', 'directive', 'any'
 ]
 
-def write_number(file, number, length = 8, signed = False):
+def write_number(file: BufferedWriter, number: int, length: int = 8, signed: bool = False):
     file.write(number.to_bytes(length = length, byteorder = 'little', signed = signed))
 
-def write_string(file, string, sizelength = 4):
+def write_string(file: BufferedWriter, string: str, sizelength: int = 4):
     write_number(file, len(string), length = sizelength)
     file.write(string.encode('utf-8'))
 
-def read_number(file, length = 8, signed = False):
+def read_number(file: BufferedReader, length: int = 8, signed: bool = False):
     return int.from_bytes(file.read(length), byteorder = 'little', signed = signed)
 
-def read_string(file, sizelength = 4):
+def read_string(file: BufferedReader, sizelength: int = 4):
     length = read_number(file, length = sizelength)
     return file.read(length).decode('utf-8')
 
-def read_token(file):
+def read_token(file: BufferedReader):
     tok_id = read_number(file, length = 1)
     if tok_id < len(TOK_TYPES):
         tok_type = TOK_TYPES[tok_id]
@@ -54,7 +55,7 @@ def read_token(file):
             return (tok_type, name, options)
     assert False
 
-def read_tokens(path):
+def read_tokens(path: str):
     tokens = []
     with open(path, 'rb') as file:
         file.seek(0, 2)
@@ -65,7 +66,7 @@ def read_tokens(path):
         file.close()
     return tokens
 
-def write_tokens(file, tokens):
+def write_tokens(file: BufferedWriter, tokens: list):
     for token in tokens:
         write_number(file, TOK_TYPES.index(token[0]), length = 1)
         if token[0] == 'string':

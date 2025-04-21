@@ -1,15 +1,15 @@
 from exert.usermode.context import Context
 
 class Rule:
-    _cache = {}
+    _cache: dict[str, set[int]] = {}
 
     def __init__(self):
         self.key = None
 
-    def test(self, context, address, clear_cache = False):
+    def test(self, context: Context, address: int, clear_cache: bool = False):
         return self.test_all(context, {address}, clear_cache)
 
-    def test_all(self, context, addresses, clear_cache = False):
+    def test_all(self, context: Context, addresses: set[int], clear_cache: bool = False):
         assert isinstance(context, Context)
         assert isinstance(addresses, set)
 
@@ -32,7 +32,7 @@ class Rule:
 
         return results
 
-    def _test(self, context, address):
+    def _test(self, context: Context, address: int):
         return {address}
 
     def _get_key(self):
@@ -51,12 +51,13 @@ class Any(Rule):
     def _get_key(self):
         return f"Any({', '.join(str(r) for r in self.rules)})"
 
-    def _test(self, context, address):
+    def _test(self, context: Context, address: int):
         #TODO
         return {address}
 
 class Int(Rule):
-    def __init__(self, size = 4, signed = True, min_value = None, max_value = None):
+    def __init__(self, size = 4, signed: bool = True,
+                 min_value: (int | None) = None, max_value: (int | None) = None):
         super().__init__()
         self.size = size
         self.signed = signed
@@ -66,7 +67,7 @@ class Int(Rule):
     def _get_key(self):
         return f'Int({self.size}, {self.signed}, {self.min_value}, {self.max_value})'
 
-    def _test(self, context, address):
+    def _test(self, context: Context, address: int):
         size = context.word_size if self.size is None else self.size
         val, address = context.next_int(address, size, self.signed)
         if val is None:
@@ -85,21 +86,45 @@ class Bool(Int):
         return 'Bool'
 
 class Pointer(Rule):
-    def __init__(self, rule = None):
+    def __init__(self, rule: (Rule | None) = None):
         super().__init__()
         self.rule = rule
 
     def _get_key(self):
         return f'Pointer({str(self.rule)})'
 
-    def _test(self, context, address):
+    def _test(self, context: Context, address: int):
         pointer, address = context.next_pointer(address)
         if pointer is None or (self.rule and not self.rule.test(context, pointer)):
             return set()
         return {address}
 
+class Union(Rule):
+    def __init__(self, name, rules):
+        self.name = name
+        self.rules = rules
+        super().__init__()
+
+    def _test(self, context, address):
+        results: set[int] = set()
+
+        for rule in self.rules:
+            results = results | rule.test(context, address)
+
+        return results
+
+    def _get_key(self):
+        rule_string = '['
+
+        for rule in self.rules:
+            rule_string = rule_string + str(rule) + ', '
+
+        rule_string = rule_string + ']'
+
+        return f'Union({self.name}, [{rule_string}])'
+
 class Array(Rule):
-    def __init__(self, rule, count_min, count_max):
+    def __init__(self, rule: Rule, count_min: int, count_max: int):
         super().__init__()
         self.rule = rule
         self.count_min = count_min
@@ -120,7 +145,7 @@ class Array(Rule):
         return passing
 
 class Field(Rule):
-    def __init__(self, name, rule):
+    def __init__(self, name: str, rule: Rule):
         super().__init__()
         self.name = name
         self.rule = rule
@@ -128,20 +153,24 @@ class Field(Rule):
     def _get_key(self):
         return f"Field('{self.name}', {str(self.rule)})"
 
-    def _test(self, context, address):
+    def _test(self, context: Context, address: int):
         return self.rule.test(context, address)
 
 class FieldGroup:
-    def __init__(self, fields, condition=None):
+    def __init__(self, fields: list[Field], condition: (str | None) = None):
         self.fields = fields
         for field in self.fields:
             assert isinstance(field, Field)
         self.condition = condition
+        self.fields_addresses: dict[str, set[int]] = {}
 
-    def test_all(self, context, addresses):
+    def test_all(self, context: Context, addresses: set[int]):
+        self.fields_addresses = {}
         passing = set()
         for field in self.fields:
-            passing |= field.test_all(context, addresses)
+            field_addresses = field.test_all(context, addresses)
+            self.fields_addresses.update({str(field): field_addresses})
+            passing |= field_addresses
         return passing
 
     def __str__(self):
@@ -149,26 +178,49 @@ class FieldGroup:
         cond_str = 'None' if self.condition is None else f"'{self.condition}'"
         return f'FieldGroup([{fields_str}], {cond_str})'
 
+    def get_field_addresses(self, context: Context, address: int):
+        if self.fields_addresses:
+            return self.fields_addresses
+
+        self.test_all(context, {address})
+        return self.fields_addresses
+
 class Struct(Rule):
-    def __init__(self, name, field_groups):
+    def __init__(self, name: str, field_groups: list[FieldGroup]):
         super().__init__()
         self.name = name
         self.field_groups = field_groups
+        self.fields_addresses: dict[str, set[int]] = {}
 
     def _get_key(self):
         groups_str = ', '.join([str(g) for g in self.field_groups])
         return f"Struct('{self.name}', [{groups_str}])"
 
-    def _test(self, context, address):
+    def _test(self, context:Context, address:int):
         passing = {address}
+        self.fields_addresses = {}
         for group in self.field_groups:
             if group.condition:
                 passing |= group.test_all(context, passing)
+                self.fields_addresses.update(group.get_field_addresses(context, address))
             else:
                 passing = group.test_all(context, passing)
+                self.fields_addresses.update(group.get_field_addresses(context, address))
         return passing
 
+    def get_field_addresses(self, context:Context, address:int):
+        if self.fields_addresses:
+            return self.fields_addresses
+
+        self._test(context, address)
+        assert self.fields_addresses is not None
+        return self.fields_addresses
+
 class _Struct(Struct):
+    def _get_key(self):
+        return f'{self.__class__.__name__}'
+
+class _Union(Union):
     def _get_key(self):
         return f'{self.__class__.__name__}'
 
@@ -222,7 +274,7 @@ class _ListHead(_Struct):
             Field('prev', Pointer(self))
         ])])
 
-    def _test(self, context, address):
+    def _test(self, context:Context, address:int):
         original = address
         next_pointer, address = context.next_pointer(address)
         if next_pointer is None:
@@ -565,20 +617,11 @@ SCHED_DL_ENTITY = _SchedDLEntity()
 class _CpuMask(_Struct):
     def __init__(self):
         super().__init__('cpumask_t', [FieldGroup([
-            # TODO What if there are more than 64?
-            # maybe we use some kind of callback to generate more?
-            # Or just make it a user parameter
-            Field('bits', Array(Int(size = None, signed = False), 1, 64))
+            # Might still be good as a user parameter.
+            # Even still, 8192 is the max
+            Field('bits', Array(Int(size = None, signed = False), 1, 8192))
         ])])
 CPUMASK = _CpuMask()
-
-class _LoadWeight(_Struct):
-    def __init__(self):
-        super().__init__('load_weight', [FieldGroup([
-            Field('weight', Int(size = None, signed = False)),
-            Field('inv_weight', Int(size = 4, signed = False))
-        ])])
-LOAD_WEIGHT = _LoadWeight()
 
 class _RBRoot(_Struct):
     def __init__(self):
@@ -660,6 +703,21 @@ class _CFSRQ(_Struct):
         ])
 CFSRQ = _CFSRQ()
 
+class _RcuSpecial(_Union):
+    def __init__(self, name):
+        super().__init__(name, [
+            _Struct('b', [
+                FieldGroup([
+                    Field('blocked', Int(size=1, signed=False)),
+                    Field('need_qs', Int(size=1, signed=False)),
+                    Field('exp_need_qs', Int(size=1, signed=False)),
+                    Field('pad', Int(size=1, signed=False))
+                ])
+            ]),
+            Int(size=4, signed=False)
+        ])
+RCU_READ_UNLOCK_SPECIAL=_RcuSpecial('rcu_read_unlock_special')
+
 class _TaskStruct(_Struct):
     def __init__(self):
         super().__init__('task_struct', [
@@ -707,8 +765,7 @@ class _TaskStruct(_Struct):
             ]),
             FieldGroup([
                 Field('rcu_read_lock_nesting', Int()),
-                #TODO this should be 'union rcu_special'
-                Field('rcu_read_unlock_special', Int(signed = False)),
+                Field('rcu_read_unlock_special', RCU_READ_UNLOCK_SPECIAL),
                 Field('rcu_node_entry', LIST_HEAD),
                 Field('rcu_blocked_node', Pointer()) #struct rcu_node*
             ], 'CONFIG_PREEMPT_RCU'),
@@ -726,3 +783,15 @@ class _TaskStruct(_Struct):
             ])
         ])
 TASK_STRUCT = _TaskStruct()
+
+def test_list_head(context: Context, address: int, offset: int):
+    # Assumes that the address is a valid list head
+    # prev_pointer = context.read_pointer(address)
+    # prev_task = prev_pointer + offset
+
+    # results = TASK_STRUCT.test(context, prev_task, True)
+
+    # if (len(results) == 0):
+    #     return False
+
+    return True

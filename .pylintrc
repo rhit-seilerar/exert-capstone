@@ -1,6 +1,6 @@
 [MAIN]
 
-ignore=cache
+ignore=cache,typings,types
 
 disable=
     unused-argument,
@@ -20,4 +20,5 @@ disable=
     too-many-instance-attributes,
     too-many-locals,
     too-many-positional-arguments,
-    anomalous-backslash-in-string
+    anomalous-backslash-in-string,
+    too-many-lines

@@ -1,6 +1,7 @@
 """The core file for the plugin component of the EXERT system"""
 
 import sys
+from collections.abc import Callable
 import IPython
 from pandare import PyPlugin, Panda
 from exert.usermode import task_struct_stack
@@ -11,18 +12,18 @@ from exert.utilities import version as ver
 class Exert(PyPlugin):
     """The Exert plugin"""
     # pylint: disable=attribute-defined-outside-init
-    def __preinit__(self, pypluginmgr, args):
+    def __preinit__(self, pypluginmgr, args: dict[str, Callable]):
         self.pypluginmgr = pypluginmgr
         self.args = args
         self.callback = args['callback'] if 'callback' in args else None
         self.hypercall_callback = args['hypercall_callback'] \
             if 'hypercall_callback' in args else None
 
-    def __init__(self, panda):
+    def __init__(self, panda: Panda):
         self.called_back = False
 
         @panda.ppp('syscalls2', 'on_sys_execve_enter')
-        def hook_syscall(cpu, pc, filename, argv, envp):
+        def hook_syscall(cpu, pc, filename: str, argv: list, envp):
             if self.called_back:
                 return
             print('Hooking into sys_execve...')
@@ -51,8 +52,10 @@ class Exert(PyPlugin):
         panda.disable_callback('single_step')
         panda.disable_callback('hypercall')
 
-def run(arch = 'i386', callback = None, generic = True, kernel = None,
-    usermode = None, command = None, hypercall_callback = None):
+def run(arch: str = 'i386', callback: (Callable | None) = None,
+        generic: bool = True, kernel: (str | None) = None, usermode: (str | None) = None,
+        command: (str | None) = None,
+        hypercall_callback: (Callable | None) = None):
     panda = None
     if generic:
         panda = Panda(generic = arch)
@@ -67,7 +70,7 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None,
         mem_use = "256M"
         hardware_args = ''
         console_ver = "ttyAMA0"
-        expect_prompt_entry = '\/ # '
+        expect_prompt_entry = r'\/ # '
         os_ver_entry = 'linux-32-generic'
         if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
             hardware_args = '-machine versatilepb'
@@ -104,7 +107,7 @@ def run(arch = 'i386', callback = None, generic = True, kernel = None,
 
     panda.run()
 
-def get_task_address(kernel, arch, version):
+def get_task_address(kernel: str, arch: str, version: str):
     version_supported = False
 
     ver_entry = ver.version_from_string(version)

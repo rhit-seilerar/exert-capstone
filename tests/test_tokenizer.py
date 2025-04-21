@@ -3,7 +3,7 @@ from exert.parser.tokenizer import Tokenizer
 
 TK = Tokenizer()
 
-def roundtrip(string, out = None):
+def roundtrip(string: str, out: (str | None) = None):
     assert tm.tok_seq(TK.tokenize(string)) == (string if out is None else out)
 
 def test():

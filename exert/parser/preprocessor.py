@@ -10,13 +10,14 @@ TODO There are still a number of optimizations that can be done for better resul
 
 import os
 import types
-
+from collections.abc import Callable
 from exert.parser.tokenmanager import mk_int, tok_seq, TokenManager
 from exert.parser.definitions import DefState, Def, DefOption
 from exert.parser.serializer import write_tokens, read_tokens
+from exert.parser.tokenizer import Tokenizer
 from exert.utilities.debug import dprint
 
-def read_file(path):
+def read_file(path: str):
     try:
         with open(path, 'r', encoding = 'utf-8') as file:
             return file.read()
@@ -24,15 +25,16 @@ def read_file(path):
         return None
 
 class Preprocessor(TokenManager):
-    def __init__(self, tokenizer, bitsize, includes, defns, filereader = read_file):
+    def __init__(self, tokenizer: Tokenizer, bitsize: int,
+                 includes: list[str | Callable], defns: dict[str, str],
+                 filereader: Callable[[str], str | None] = read_file):
         super().__init__()
         self.tokenizer = tokenizer
         self.includes = includes
         self.filereader = filereader
-        self.invalid_paths = set()
-        self.tokenized_cache = {}
-        self.unresolved = []
-
+        self.invalid_paths: set[str] = set()
+        self.tokenized_cache: dict[str, str] = {}
+        self.unresolved: list[str] = []
         initdefs = {
             key: Def(DefOption(tokenizer.tokenize(defns[key]))) for key in defns
         }
@@ -46,7 +48,7 @@ class Preprocessor(TokenManager):
         initdefs['__STDC_VERSION__'] = Def(DefOption([mk_int(202311, 'L')]))
         self.defs = DefState(bitsize, initial = initdefs)
 
-    def load_file(self, path, is_relative):
+    def load_file(self, path: str, is_relative: bool):
         if self.defs.is_skipping():
             dprint(1.5, '  ' * self.defs.depth() + f'::Skipping {path}')
             return True
@@ -60,21 +62,25 @@ class Preprocessor(TokenManager):
             if isinstance(include, types.FunctionType):
                 load_path = include(path)
             else:
+                assert isinstance(include, str)
                 load_path = os.path.join(include, path)
 
             if load_path is None:
                 continue
 
-            data = ''
+            data: str = ''
             if load_path in self.tokenized_cache:
-                data = self.tokenized_cache.get(load_path)
+                res = self.tokenized_cache.get(load_path)
+                assert res is not None
+                data = res
                 dprint(1.5, '  ' * self.defs.depth() + f'::Reusing {load_path}')
             else:
                 dprint(4, f'::Testing {load_path}')
-                data = self.filereader(load_path)
-                if data is None:
+                file_read = self.filereader(load_path)
+                if file_read is None:
                     continue
 
+                data = file_read
                 if not self.defs.is_skipping():
                     dprint(1, '  ' * self.defs.depth() + f'::Included {load_path}')
 
@@ -90,7 +96,7 @@ class Preprocessor(TokenManager):
         self.invalid_paths.add(path)
         return True
 
-    def package_emissions(self, is_start = False, is_end = False):
+    def package_emissions(self, is_start: bool = False, is_end: bool = False):
         if is_start:
             self.defs.layers[-1].blocks = []
             self.defs.layers[-1].emitted = []
@@ -118,7 +124,7 @@ class Preprocessor(TokenManager):
                 self.defs.layers[-2].emitted.append(('any', '',
                     {DefOption(b) for b in blocks}))
 
-    def skip_to_newline(self, offset = 0):
+    def skip_to_newline(self, offset: int = 0):
         tokens = []
         while not self.peek_type() == 'newline':
             tokens.append(self.next())
@@ -268,7 +274,7 @@ class Preprocessor(TokenManager):
         return self.skip_to_newline()
 
     def parse_directive(self):
-        result = None
+        result: (bool | list) = False
         if self.consume(('identifier', 'line')):
             result = self.handle_line()
         elif self.consume_identifier('include'):
@@ -301,9 +307,10 @@ class Preprocessor(TokenManager):
             result = self.handle_pragma()
         elif not self.consume_type('newline'):
             return self.err(f'Unexpected token after directive: {self.peek()}')
+
         return result
 
-    def insert(self, tokens):
+    def insert(self, tokens: (str | tuple | list[tuple])):
         if isinstance(tokens, str):
             tokens = self.tokenizer.tokenize(tokens)
         if isinstance(tokens, tuple):
@@ -312,6 +319,7 @@ class Preprocessor(TokenManager):
         prefix = self.tokens[:self.index]
         suffix = self.tokens[self.index:]
         size = len(tokens)
+        assert isinstance(tokens, list)
         self.tokens = prefix + tokens + suffix
         self.len += size
         self.tokens_added += size
@@ -323,13 +331,13 @@ class Preprocessor(TokenManager):
             dprint(3, f"::Substituting {tok[0]} '{tok[1]}': {tok_seq(result)}")
         self.emit_tokens(result)
 
-    def emit_tokens(self, tokens):
+    def emit_tokens(self, tokens: list):
         if not self.defs.is_skipping():
             self.defs.layers[-1].emitted += tokens
 
-    def preprocess(self, data, cache, reset_cache = False):
+    def preprocess(self, data: (str | tuple), cache: str, reset_cache: bool = False):
         super().reset()
-        self.conditions = []
+        self.conditions: list = []
         self.file = ''
         self.insert(data)
 
@@ -380,7 +388,7 @@ class Preprocessor(TokenManager):
 
         return self
 
-    def load(self, cache):
+    def load(self, cache: str):
         self.tokens = read_tokens(cache)
         return self
 
