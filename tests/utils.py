@@ -1,4 +1,6 @@
-def expect_error(func, error = AssertionError):
+from collections.abc import Callable
+
+def expect_error(func: Callable[[], None], error = AssertionError):
     try:
         func()
         assert False

@@ -9,8 +9,8 @@ def run_command(command: str, capture_output: bool=False,
     args = [arg.replace('"', '') for arg in re.findall(pattern, command)]
     return subprocess.run(args, capture_output = capture_output, check = check, cwd = cwd)
 
-def get_stdout(result):
+def get_stdout(result: subprocess.CompletedProcess[bytes]):
     return result.stdout.decode()
 
-def get_stderr(result):
+def get_stderr(result: subprocess.CompletedProcess[bytes]):
     return result.stderr.decode()

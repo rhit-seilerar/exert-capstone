@@ -1,5 +1,7 @@
+from pandare import Panda
+
 class Context:
-    def __init__(self, panda):
+    def __init__(self, panda: Panda):
         self.panda = panda
         self.endianness = panda.endianness
         self.word_size = panda.bits // 8

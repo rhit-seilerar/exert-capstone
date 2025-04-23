@@ -19,7 +19,7 @@ def roundtrip(expr:str, bitsize:int, expected:(str | None) = None):
     assert str(parsed) == expected
 
 def test_base():
-    utils.expect_error(lambda: expressions.Expression().evaluate(32))
+    utils.expect_error(lambda: expressions.Expression().evaluate(32)) # type: ignore
     assert str(expressions.Expression()) == '<err>'
 
 def test_parse():

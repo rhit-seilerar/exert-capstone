@@ -32,13 +32,13 @@ def tok_seq(tokens: list[TokenType],
 def mk_int(num: int, suffix: str = ''):
     return ('integer', num, suffix)
 
-def mk_id(sym):
+def mk_id(sym: str | int):
     return ('identifier', sym)
 
-def mk_kw(sym):
+def mk_kw(sym: str):
     return ('keyword', sym)
 
-def mk_op(op):
+def mk_op(op: str):
     return ('operator', op)
 
 def mk_str(string:str, suffix: str = '"'):
@@ -51,7 +51,7 @@ class TokenManager:
             self.tokens = tokens
             self.len = len(tokens)
 
-    def reset(self):
+    def reset(self) -> None:
         self.has_error = False
         self.tokens = []
         self.index = 0
@@ -60,10 +60,10 @@ class TokenManager:
         self.tokens_added = 0
         self.progress_counter = 0
 
-    def has_next(self):
+    def has_next(self) -> bool:
         return self.index < self.len
 
-    def bump(self):
+    def bump(self) -> None:
         self.tokens_consumed += 1
         self.index += 1
 
@@ -81,7 +81,7 @@ class TokenManager:
             return token
         return None
 
-    def consume_type(self, typ):
+    def consume_type(self, typ: str):
         return self.next() if (token := self.peek()) and token[0] == typ else None
 
     def consume(self, token: TokenType):
@@ -101,15 +101,16 @@ class TokenManager:
     def consume_identifier(self, name: str):
         return self.consume(('identifier', name))
 
-    def parse_identifier(self):
+    def parse_identifier(self) -> (str | int):
         if (token := self.consume_type('identifier')):
             return token[1]
         return ''
 
-    def parse_ident_or_keyword(self):
+    def parse_ident_or_keyword(self) -> str:
         if (self.peek_type() in ['identifier', 'keyword']):
             res = self.next()
             assert res is not None
+            assert type(res) == str
             return res[1]
         return ''
 
@@ -135,7 +136,7 @@ class TokenManager:
         print(out)
         return out
 
-    def print_progress(self):
+    def print_progress(self) -> str:
         self.progress_counter += 1
         if self.progress_counter % 2000 == 0:
             out = f'Processed {self.tokens_consumed} of {self.tokens_added} tokens ' \

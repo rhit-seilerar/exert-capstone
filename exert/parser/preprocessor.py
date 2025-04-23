@@ -133,7 +133,7 @@ class Preprocessor(TokenManager):
             return self.err('Directives must end with a linebreak')
         return tokens
 
-    def handle_line(self):
+    def handle_line(self) -> bool:
         if not (line := self.consume_type('integer')):
             return self.err('#line must be followed by a line number')
         if (file := self.consume_type('string')):
@@ -143,7 +143,7 @@ class Preprocessor(TokenManager):
         dprint(3, '  ' * self.defs.depth() + "#line", line[1], f'"{file[1]}"' if file else '')
         return True
 
-    def handle_include(self):
+    def handle_include(self) -> bool:
         if not (file := self.consume_type('string')):
             return self.err('#include must be followed by a path')
         if file[2] not in ['', '<']:
@@ -154,7 +154,7 @@ class Preprocessor(TokenManager):
             f'<{file[1]}>' if file[2] == '<' else f'"{file[1]}"')
         return self.load_file(file[1], file[2] != '<')
 
-    def handle_define(self):
+    def handle_define(self) -> bool:
         if not (name := self.parse_ident_or_keyword()):
             return self.err('#define must be followed by an identifier')
         params = None
@@ -186,7 +186,7 @@ class Preprocessor(TokenManager):
         self.defs.on_define(name, tokens, params)
         return True
 
-    def handle_undef(self):
+    def handle_undef(self) -> bool:
         if not (name := self.parse_ident_or_keyword()):
             return self.err('#undef must be followed by an identifier')
         if not self.consume_type('newline'):
@@ -194,7 +194,7 @@ class Preprocessor(TokenManager):
         self.defs.on_undef(name)
         return True
 
-    def handle_ifdef(self):
+    def handle_ifdef(self) -> bool:
         if not (name := self.parse_ident_or_keyword()):
             return self.err('#ifdef must be followed by an identifier')
         if not self.consume_type('newline'):
@@ -203,7 +203,7 @@ class Preprocessor(TokenManager):
         self.package_emissions(is_start = True)
         return True
 
-    def handle_ifndef(self):
+    def handle_ifndef(self) -> bool:
         if not (name := self.parse_ident_or_keyword()):
             return self.err('#ifndef must be followed by an identifier')
         if not self.consume_type('newline'):
@@ -212,14 +212,14 @@ class Preprocessor(TokenManager):
         self.package_emissions(is_start = True)
         return True
 
-    def handle_if(self):
+    def handle_if(self) -> bool:
         if not (tokens := self.skip_to_newline()):
             return False
         self.defs.on_if(tokens)
         self.package_emissions(is_start = True)
         return True
 
-    def handle_elifdef(self):
+    def handle_elifdef(self) -> bool:
         if not (name := self.parse_ident_or_keyword()):
             return self.err('#elifdef must be followed by an identifier')
         if not self.consume_type('newline'):
@@ -228,7 +228,7 @@ class Preprocessor(TokenManager):
         self.defs.on_elifdef(name)
         return True
 
-    def handle_elifndef(self):
+    def handle_elifndef(self) -> bool:
         if not (name := self.parse_ident_or_keyword()):
             return self.err('#elifndef must be followed by an identifier')
         if not self.consume_type('newline'):
@@ -237,45 +237,45 @@ class Preprocessor(TokenManager):
         self.defs.on_elifndef(name)
         return True
 
-    def handle_elif(self):
+    def handle_elif(self) -> bool:
         if not (tokens := self.skip_to_newline()):
             return False
         self.package_emissions()
         self.defs.on_elif(tokens)
         return True
 
-    def handle_else(self):
+    def handle_else(self) -> bool:
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         self.package_emissions()
         self.defs.on_else()
         return True
 
-    def handle_endif(self):
+    def handle_endif(self) -> bool:
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         self.package_emissions(is_end = True)
         self.defs.on_endif()
         return True
 
-    def handle_error(self):
+    def handle_error(self) -> list[TokenType]:
         if not self.defs.is_skipping():
             dprint(2, '  ' * self.defs.depth() + '#error')
         assert self.defs.layers[-1].current is not None
         self.defs.layers[-1].current.skipping = True
         return self.skip_to_newline()
 
-    def handle_warning(self):
+    def handle_warning(self) -> list[TokenType]:
         if not self.defs.is_skipping():
             dprint(2, '  ' * self.defs.depth() + '#warning')
         return self.skip_to_newline()
 
-    def handle_pragma(self):
+    def handle_pragma(self) -> list[TokenType]:
         if not self.defs.is_skipping():
             dprint(2, '  ' * self.defs.depth() + '#pragma')
         return self.skip_to_newline()
 
-    def parse_directive(self):
+    def parse_directive(self) -> (bool | list[TokenType]):
         result: (bool | list[TokenType]) = False
         if self.consume(('identifier', 'line')):
             result = self.handle_line()
@@ -326,7 +326,7 @@ class Preprocessor(TokenManager):
         self.len += size
         self.tokens_added += size
 
-    def substitute(self):
+    def substitute(self) -> None:
         tok = self.peek()
         result = self.defs.substitute(self)
         if result != [tok]:

@@ -3,8 +3,8 @@ from exert.usermode.context import Context
 class Rule:
     _cache: dict[str, set[int]] = {}
 
-    def __init__(self):
-        self.key = None
+    def __init__(self) -> None:
+        self.key: (str | None) = None
 
     def test(self, context: Context, address: int, clear_cache: bool = False):
         return self.test_all(context, {address}, clear_cache)
@@ -35,16 +35,16 @@ class Rule:
     def _test(self, context: Context, address: int):
         return {address}
 
-    def _get_key(self):
+    def _get_key(self) -> str:
         return 'Rule'
 
-    def __str__(self):
+    def __str__(self) -> str:
         if not self.key:
             self.key = self._get_key()
         return self.key
 
 class Any(Rule):
-    def __init__(self, *rules):
+    def __init__(self, *rules: Rule):
         super().__init__()
         self.rules = rules
 
@@ -79,7 +79,7 @@ class Int(Rule):
         return {address}
 
 class Bool(Int):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(size = 1, min_value = 0, max_value = 1)
 
     def _get_key(self):
@@ -100,7 +100,7 @@ class Pointer(Rule):
         return {address}
 
 class Union(Rule):
-    def __init__(self, name, rules):
+    def __init__(self, name: str, rules: list[Rule]):
         self.name = name
         self.rules = rules
         super().__init__()
@@ -217,22 +217,22 @@ class Struct(Rule):
         return self.fields_addresses
 
 class _Struct(Struct):
-    def _get_key(self):
+    def _get_key(self) -> str:
         return f'{self.__class__.__name__}'
 
 class _Union(Union):
-    def _get_key(self):
+    def _get_key(self) -> str:
         return f'{self.__class__.__name__}'
 
 class _Atomic(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('atomic_t', [FieldGroup([
             Field('counter', Int())
         ])])
 ATOMIC = _Atomic()
 
 class _LoadWeight(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('load_weight', [FieldGroup([
             Field('weight', Int(size = None, signed = False)),
             Field('inv_weight', Int(signed = False))
@@ -240,7 +240,7 @@ class _LoadWeight(_Struct):
 LOAD_WEIGHT = _LoadWeight()
 
 class _RBNode(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('rb_node', [FieldGroup([
             Field('__rb_parent_color', Int(size = None, signed = False)),
             Field('rb_right', Pointer(self)),
@@ -249,14 +249,14 @@ class _RBNode(_Struct):
 RB_NODE = _RBNode()
 
 class _LListNode(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('llist_node', [FieldGroup([
             Field('next', Pointer(self))
         ])])
 LLIST_NODE = _LListNode()
 
 class _SchedAvg(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('sched_avg', [FieldGroup([
             Field('last_update_time', Int(size = 8, signed = False)),
             Field('load_sum', Int(size = 8, signed = False)),
@@ -268,7 +268,7 @@ class _SchedAvg(_Struct):
 SCHED_AVG = _SchedAvg()
 
 class _ListHead(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('list_head', [FieldGroup([
             Field('next', Pointer(self)),
             Field('prev', Pointer(self))
@@ -296,7 +296,7 @@ class _ListHead(_Struct):
 LIST_HEAD = _ListHead()
 
 class _SchedInfo(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('sched_info', [FieldGroup([
                 Field('pcount', Int(size = None, signed = False)),
                 Field('run_delay', Int(size = 8, signed = False)),
@@ -306,7 +306,7 @@ class _SchedInfo(_Struct):
 SCHED_INFO = _SchedInfo()
 
 class _SchedStatistics(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('sched_statistics', [FieldGroup([
             Field('wait_start', Int(size = 8, signed = False)),
             Field('wait_max', Int(size = 8, signed = False)),
@@ -339,7 +339,7 @@ class _SchedStatistics(_Struct):
 SCHED_STATISTICS = _SchedStatistics()
 
 class _KTimeT(_Struct): #supposed to be a union
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('timerqueue_node', [
             FieldGroup([
                 Field('tv64', Int(size = 8))
@@ -348,7 +348,7 @@ class _KTimeT(_Struct): #supposed to be a union
 KTIME_T = _KTimeT()
 
 class _HListNode(_Struct): #supposed to be a union
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('hlist_node', [
             FieldGroup([
 	        Field('next', Pointer(self)),
@@ -358,7 +358,7 @@ class _HListNode(_Struct): #supposed to be a union
 HLIST_NODE = _HListNode()
 
 class _HListHead(_Struct): #supposed to be a union
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('hlist_head', [
             FieldGroup([
 	        Field('first', Pointer(HLIST_NODE)) #struct hlist_node *first;
@@ -367,7 +367,7 @@ class _HListHead(_Struct): #supposed to be a union
 HLIST_HEAD = _HListHead()
 
 class _TimerQueueNode(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('timerqueue_node', [FieldGroup([
             Field('node', RB_NODE),
             Field('expires', KTIME_T)
@@ -375,21 +375,21 @@ class _TimerQueueNode(_Struct):
 TIMERQUEUENODE = _TimerQueueNode()
 
 class _LockdepSubclassKey(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('lockdep_subclass_key', [FieldGroup([
             Field('__one_byte', Int(size = 1))
         ])])
 LOCKDEP_SUBCLASS_KEY = _LockdepSubclassKey() #TODO  __attribute__ ((__packed__));
 
 class _LockClassKey(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('lock_class_key', [FieldGroup([
             Field('subkeys', Array(LOCKDEP_SUBCLASS_KEY, 8, 8))
         ])])
 LOCK_CLASS_KEY = _LockClassKey()
 
 class _StackTrace(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('stack_trace', [
             FieldGroup([
                 Field('nr_entries', Int(signed = False)),
@@ -401,7 +401,7 @@ class _StackTrace(_Struct):
 STACK_TRACE = _StackTrace()
 
 class _LockClass(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('lock_class', [
             FieldGroup([
                 Field('hash_entry', LIST_HEAD),
@@ -427,7 +427,7 @@ class _LockClass(_Struct):
 LOCK_CLASS = _LockClass()
 
 class _LockdepMap(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('lockdep_map', [
             FieldGroup([
                 Field('key', Pointer(LOCK_CLASS_KEY)),
@@ -442,7 +442,7 @@ class _LockdepMap(_Struct):
 LOCKDEP_MAP = _LockdepMap()
 
 class _ArchSpinlockT(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('arch_spinlock_t', [
              FieldGroup([
                 Field('slock', Int(signed = False))
@@ -451,7 +451,7 @@ class _ArchSpinlockT(_Struct):
 ARCH_SPINLOCK_T = _ArchSpinlockT()
 
 class _RawSpinlockT(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('raw_spinlock_t', [
             FieldGroup([
                 Field('raw_lock', ARCH_SPINLOCK_T)
@@ -471,7 +471,7 @@ class _RawSpinlockT(_Struct):
 RAW_SPINLOCK_T = _RawSpinlockT()
 
 class _SeqCountT(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('seqcount_t', [
             FieldGroup([
                 Field('sequence', Int(signed = False))
@@ -483,7 +483,7 @@ class _SeqCountT(_Struct):
 SEQCOUNT_T = _SeqCountT() # seqcount_t
 
 class _HRTimerClockBase(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('hrtimer_clock_base', [
             FieldGroup([
                 # Field('cpu_base', Pointer(HRTIMER_CPU_BASE)),
@@ -498,7 +498,7 @@ class _HRTimerClockBase(_Struct):
 HRTIMER_CLOCK_BASE = _HRTimerClockBase()
 
 class _HRTimer(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('hrtimer', [
             FieldGroup([
                 Field('node', TIMERQUEUENODE),
@@ -517,7 +517,7 @@ class _HRTimer(_Struct):
 HRTIMER = _HRTimer()
 
 class _HrTimerCpuBase(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('hrtimer_cpu_base', [
             FieldGroup([
                 Field('lock', RAW_SPINLOCK_T),
@@ -547,7 +547,7 @@ class _HrTimerCpuBase(_Struct):
 HRTIMER_CPU_BASE = _HrTimerCpuBase() #TODO this is an  ____cacheline_aligned;
 
 class _SchedEntity(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('sched_entity', [
             FieldGroup([
                 Field('load', LOAD_WEIGHT),
@@ -576,7 +576,7 @@ class _SchedEntity(_Struct):
 SCHED_ENTITY = _SchedEntity()
 
 class _SchedRTEntity(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('sched_rt_entity', [
             FieldGroup([
                 Field('run_list', LIST_HEAD),
@@ -594,7 +594,7 @@ class _SchedRTEntity(_Struct):
 SCHED_RT_ENTITY = _SchedRTEntity()
 
 class _SchedDLEntity(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('sched_dl_entity', [
             FieldGroup([
             	Field('rb_node', RB_NODE),
@@ -615,7 +615,7 @@ class _SchedDLEntity(_Struct):
 SCHED_DL_ENTITY = _SchedDLEntity()
 
 class _CpuMask(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('cpumask_t', [FieldGroup([
             # Might still be good as a user parameter.
             # Even still, 8192 is the max
@@ -624,14 +624,14 @@ class _CpuMask(_Struct):
 CPUMASK = _CpuMask()
 
 class _RBRoot(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('rb_root', [FieldGroup([
             Field('rb_node', Pointer(RB_NODE))
         ])])
 RB_ROOT = _RBRoot()
 
 class _CFSRQ(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('cfs_rq', [
             FieldGroup([
                 Field('load', LOAD_WEIGHT),
@@ -704,7 +704,7 @@ class _CFSRQ(_Struct):
 CFSRQ = _CFSRQ()
 
 class _RcuSpecial(_Union):
-    def __init__(self, name):
+    def __init__(self, name: str):
         super().__init__(name, [
             _Struct('b', [
                 FieldGroup([
@@ -719,7 +719,7 @@ class _RcuSpecial(_Union):
 RCU_READ_UNLOCK_SPECIAL=_RcuSpecial('rcu_read_unlock_special')
 
 class _TaskStruct(_Struct):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('task_struct', [
             FieldGroup([
                 Field('state', Int(size = None)), # -1 unrunnable, 0 runnable, >0 stopped

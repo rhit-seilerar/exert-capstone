@@ -4,7 +4,7 @@ from exert.parser.definitions import DefOption, Def
 from exert.utilities.types.global_types import TokenType, ExpressionTypes
 
 class Expression:
-    def evaluate(self, evaluator):
+    def evaluate(self, evaluator: 'Evaluator'):
         assert False
 
     def __str__(self):

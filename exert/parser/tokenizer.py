@@ -2,7 +2,7 @@ import exert.parser.tokenmanager as tm
 from exert.utilities.types.global_types import TokenType
 
 class Tokenizer:
-    def __init__(self):
+    def __init__(self) -> None:
         self.keywords = [
             'alignas', 'alignof', 'auto', 'bool', 'break', 'case', 'char',
             'const', 'constexpr', 'continue', 'default', 'do', 'double',
@@ -15,7 +15,7 @@ class Tokenizer:
             '_Decimal64', '_Generic', '_Imaginary', '_Noreturn'
         ]
 
-    def has_next(self):
+    def has_next(self) -> bool:
         return self.index < self.len
 
     def peek(self, size: int = 1, offset: int = 0):
@@ -34,7 +34,7 @@ class Tokenizer:
                 return string
         return None
 
-    def consume_comment(self):
+    def consume_comment(self) -> bool:
         if self.consume('//'):
             while self.has_next() and not self.peek() == '\n' \
                 and not self.peek(2) == '\r\n':
@@ -49,7 +49,7 @@ class Tokenizer:
             return True
         return False
 
-    def parse_identifier(self):
+    def parse_identifier(self) -> (TokenType | None):
         start = self.index
         if self.peek().isalpha() or self.peek() == '_':
             self.bump()
@@ -64,7 +64,7 @@ class Tokenizer:
             return ('identifier', value)
         return None
 
-    def parse_integer(self):
+    def parse_integer(self) -> (TokenType | None):
         start = self.index
 
         digits = '0123456789'
@@ -99,7 +99,7 @@ class Tokenizer:
 
         return ('integer', num, '')
 
-    def parse_string(self):
+    def parse_string(self) -> (TokenType | None):
         old = self.index
         modifier = self.consume('u8', 'u', 'U', 'L') or ''
         delim = self.consume('"')
@@ -117,7 +117,7 @@ class Tokenizer:
         self.index = old
         return None
 
-    def parse_operator(self):
+    def parse_operator(self) -> (TokenType | None):
         if self.consume('%:%:'):
             return ('operator', '##')
 
@@ -151,7 +151,7 @@ class Tokenizer:
 
         return None
 
-    def parse_token(self):
+    def parse_token(self) -> TokenType | None:
         token = None
         token = token or self.parse_string()
         token = token or self.parse_identifier()

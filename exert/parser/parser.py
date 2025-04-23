@@ -9,13 +9,16 @@ from exert.parser.preprocessor import Preprocessor
 from exert.utilities.debug import dprint
 from exert.utilities.command import run_command
 from exert.utilities.types.global_types import TokenType
+from typing import Protocol
 from collections.abc import Callable
-from typing import Any
 
 REPO_URL: str = 'git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git'
 VERSION_PATH: str = './cache/linux-version.txt'
 SOURCE_PATH: str = './cache/linux'
 PARSE_CACHE: str = './cache/parsed'
+
+class Continuation(Protocol):
+    def __call__(self, p: bool, f: bool) -> 'tuple[Continuation, bool, bool]': ...
 
 def generate(version: str, arch: str):
     switch_to_version(version)
@@ -97,7 +100,7 @@ class Parser(TokenManager):
 #     def has(self, values, key):
 #         return key in values
 
-    def unwrap(self, k):
+    def unwrap(self, k: tuple[Continuation, bool, bool]):
         dprint(3, 'unwrap.start')
         while isinstance(k, tuple) and len(k) == 3:
             if self.time + 10 < time.time():
@@ -108,7 +111,7 @@ class Parser(TokenManager):
         dprint(3, 'unwrap.end')
         return k
 
-    def chkpt(self, clause):
+    def chkpt(self, clause: Continuation):
         dprint(5, 'chkpt', clause)
         def env(p, f):
             index = self.index
@@ -122,19 +125,19 @@ class Parser(TokenManager):
             return clause, p, (pop, p,f)
         return env
 
-    def opt(self, clause):
+    def opt(self, clause: Continuation):
         dprint(5, 'opt', clause)
         return lambda p, f: (clause, p, p)
 
-    def pnot(self, clause):
+    def pnot(self, clause: Continuation):
         dprint(5, 'pnot', clause)
         return lambda p, f: (clause, p,f)
 
-    def por(self, *clauses):
+    def por(self, *clauses: Continuation):
         dprint(5, 'por')
-        def start(p, f):
+        def start(p: bool, f: bool):
             dprint(4, 'por.start')
-            def getnext(p1, f1, rest):
+            def getnext(p1: bool, f1: bool, rest: tuple[Continuation, ...]):
                 dprint(5, 'por.getnext')
                 def nex(p2, f2):
                     dprint(4, 'por.next')
@@ -145,11 +148,11 @@ class Parser(TokenManager):
             return getnext(p, f, clauses)
         return start
 
-    def pand(self, *clauses):
+    def pand(self, *clauses: Continuation):
         dprint(5, 'pand', clauses)
-        def start(p, f):
+        def start(p: bool, f: bool):
             dprint(4, 'pand.start')
-            def getnext(p1, f1, rest):
+            def getnext(p1: bool, f1: bool, rest: tuple[Continuation, ...]):
                 dprint(5, 'pand.getnext')
                 def nex(p2, f2):
                     dprint(4, 'pand.next')
@@ -195,7 +198,7 @@ class Parser(TokenManager):
         self.bump()
         return p
 
-    def ptok(self, tok):
+    def ptok(self, tok: TokenType):
         dprint(4, 'ptok')
         def intl(p, f):
             dprint(3, 'tok.intl', tok, self.peek())
@@ -204,7 +207,7 @@ class Parser(TokenManager):
             return f
         return lambda p, f: (self.check_for_any, (intl, p, f), f)
 
-    def tok(self, tok):
+    def tok(self, tok: TokenType):
         dprint(4, 'tok')
         return lambda p, f: (self.ptok(tok), (self.pbump, p, f), f)
 

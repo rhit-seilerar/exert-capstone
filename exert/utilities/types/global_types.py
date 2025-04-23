@@ -5,5 +5,3 @@ from typing import TypeVar
 type TokenType = (tuple[str, str | int] | tuple[str, str | int, str | set[DefOption]])
 
 type ExpressionTypes = (Expression | str | int)
-
-ExpressionInstance = TypeVar('ExpressionInstance', bound=Expression)

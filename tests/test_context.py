@@ -20,6 +20,7 @@ class DummyPanda(Panda):
 class DummyContext(Context):
     def __init__(self, buf: bytes = b'', endianness: Literal['little', 'big'] = 'little',
                  bits: int = 32):
+        self.panda: DummyPanda = DummyPanda(buf, endianness, bits)
         super().__init__(DummyPanda(buf, endianness, bits))
 
 def test_read():

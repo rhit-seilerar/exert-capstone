@@ -35,7 +35,7 @@ def test_defoption_str():
     assert str(DefOption([])) == ''
     assert str(DefOption([('identifier', 'a'), ('identifier', 'b')])) == 'a b'
 
-def make_def_variants():
+def make_def_variants() -> list[Def]:
     option1 = DefOption([('number', 1)])
     option2 = DefOption([('number', 2)])
     return [
@@ -71,7 +71,7 @@ def test_def_copy():
         assert new_def.defined == defn.defined
         assert new_def.undefined == defn.undefined
         assert new_def.options == defn.options
-        new_def.options |= {5}
+        new_def.options |= {5} # type: ignore
         assert new_def.options != defn.options
 
 def test_def_invalid():
@@ -98,7 +98,7 @@ def test_def_undefine():
 def test_def_define():
     defs1 = make_def_variants()
     try:
-        assert defs1[0].define('abc')
+        assert defs1[0].define('abc') # type: ignore
     except TypeError:
         pass
     option = DefOption([('integer', 4, '')])
@@ -130,7 +130,7 @@ def test_def_combine():
     replace_defs = make_def_variants()
     other_defs = make_def_variants()
     try:
-        replace_defs[0].combine('abc', replace = True)
+        replace_defs[0].combine('abc', replace = True) # type: ignore
         assert False
     except TypeError:
         pass
@@ -183,7 +183,7 @@ def test_def_matches():
     assert defs[3].matches(others[3])
     assert defs[2].matches(Def(defined = True))
     try:
-        defs[0].matches('123')
+        defs[0].matches('123') # type: ignore
         assert False
     except TypeError:
         pass
@@ -271,7 +271,7 @@ def test_defmap_combine():
     assert defmap['abc'].defined
     assert len(defmap['abc']) == 1
     try:
-        defmap.combine(defn, replace = True)
+        defmap.combine(defn, replace = True) # type: ignore
         assert False
     except TypeError:
         pass
@@ -346,6 +346,8 @@ def test_substitute():
         defined = True)
     result = defstate.substitute(tm.mk_id('STRING'))
     assert len(result) == 1
+    assert result[0] is not None
+    assert len(result[0]) > 2
     assert result[0][0] == 'any'
     assert result[0][1] == 'STRING'
     assert isinstance(result[0][2], set)
@@ -358,7 +360,10 @@ def test_substitute():
         DefOption([tm.mk_int(0)]),
         DefOption([tm.mk_int(1)]),
     )
-    assert defstate.substitute(tm.mk_id('SECOND'))[0][0] == 'any'
+
+    new_result = defstate.substitute(tm.mk_id('SECOND'))
+    assert new_result[0] is not None
+    assert new_result[0][0] == 'any'
 
 def test_substitute_func():
     defstate = DefState(64)
