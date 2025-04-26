@@ -16,7 +16,8 @@ from exert.parser.definitions import DefState, Def, DefOption
 from exert.parser.serializer import write_tokens, read_tokens
 from exert.parser.tokenizer import Tokenizer
 from exert.utilities.debug import dprint
-from exert.utilities.types.global_types import TokenType
+from exert.utilities.types.global_types import TokenType, TokenType3
+from typing import cast
 
 def read_file(path: str):
     try:
@@ -128,16 +129,17 @@ class Preprocessor(TokenManager):
     def skip_to_newline(self, offset: int = 0):
         tokens: list[TokenType] = []
         while not self.peek_type() == 'newline':
-            tokens.append(self.next())
+            tokens.append(cast(TokenType, self.next()))
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         return tokens
 
     def handle_line(self) -> bool:
         if not (line := self.consume_type('integer')):
-            return self.err('#line must be followed by a line number')
+            self.err('#line must be followed by a line number')
+            return
         if (file := self.consume_type('string')):
-            self.file = file[1]
+            self.file = cast(str, file[1])
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         dprint(3, '  ' * self.defs.depth() + "#line", line[1], f'"{file[1]}"' if file else '')
@@ -146,13 +148,14 @@ class Preprocessor(TokenManager):
     def handle_include(self) -> bool:
         if not (file := self.consume_type('string')):
             return self.err('#include must be followed by a path')
+        assert len(file) > 2
         if file[2] not in ['', '<']:
             return self.err('#include cannot have string literal modifiers')
         if not self.consume_type('newline'):
             return self.err('Directives must end with a linebreak')
         dprint(2, '  ' * self.defs.depth() + '#include',
             f'<{file[1]}>' if file[2] == '<' else f'"{file[1]}"')
-        return self.load_file(file[1], file[2] != '<')
+        return self.load_file(cast(str, file[1]), file[2] != '<')
 
     def handle_define(self) -> bool:
         if not (name := self.parse_ident_or_keyword()):
@@ -328,6 +331,7 @@ class Preprocessor(TokenManager):
 
     def substitute(self) -> None:
         tok = self.peek()
+        assert tok is not None
         result = self.defs.substitute(self)
         if result != [tok]:
             dprint(3, f"::Substituting {tok[0]} '{tok[1]}': {tok_seq(result)}")
@@ -373,18 +377,18 @@ class Preprocessor(TokenManager):
                     continue
 
                 if self.peek_type(-1) == 'string' and self.peek_type() == 'string':
-                    prev = self.peek(-1)
+                    prev = cast(TokenType3, self.peek(-1))
                     if prev[2] != '<':
-                        curr = self.next()
+                        curr = cast(TokenType3, self.next())
                         if curr[2] and prev[2] and curr[2] != prev[2]:
                             self.err(f'String concatenation of different encodings! \
                                 ({prev[2]} and {curr[2]})')
                             continue
-                        newstr = ('string', prev[1] + curr[1], prev[2] or curr[2])
+                        newstr = ('string', cast(str, prev[1]) + cast(str, curr[1]), prev[2] or curr[2])
                         self.defs.layers[-1].emitted[-1] = newstr
                         continue
 
-                self.emit_tokens([self.next()])
+                self.emit_tokens([cast(TokenType, self.next())])
 
             write_tokens(file, self.defs.layers[-1].emitted)
 

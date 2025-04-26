@@ -4,16 +4,16 @@ import sys
 from collections.abc import Callable
 import IPython
 from pandare import PyPlugin, Panda
+from pandare.pypluginmanager import PyPluginManager
 from exert.usermode import task_struct_stack
 from exert.utilities.command import run_command
 from exert.utilities import version as ver
-from exert.utilities.types.multi_arch import ExertCallable
-
+from exert.utilities.types.multi_arch import ExertCallable, CPUState
 
 class Exert(PyPlugin):
     """The Exert plugin"""
     # pylint: disable=attribute-defined-outside-init
-    def __preinit__(self, pypluginmgr, args: dict[str, ExertCallable]):
+    def __preinit__(self, pypluginmgr: PyPluginManager, args: dict[str, ExertCallable]) -> None:
         self.pypluginmgr = pypluginmgr
         self.args = args
         self.callback = args['callback'] if 'callback' in args else None
@@ -24,7 +24,7 @@ class Exert(PyPlugin):
         self.called_back = False
 
         @panda.ppp('syscalls2', 'on_sys_execve_enter')
-        def hook_syscall(cpu, pc, filename: str, argv: list[str], envp):
+        def hook_syscall(cpu: CPUState, pc: int, filename: str, argv: list[str], envp: int) -> None:
             if self.called_back:
                 return
             print('Hooking into sys_execve...')
@@ -56,7 +56,7 @@ class Exert(PyPlugin):
 def run(arch: str = 'i386', callback: (ExertCallable | None) = None,
         generic: bool = True, kernel: (str | None) = None, usermode: (str | None) = None,
         command: (str | None) = None,
-        hypercall_callback: (ExertCallable | None) = None):
+        hypercall_callback: (ExertCallable | None) = None) -> None:
     panda = None
     if generic:
         panda = Panda(generic = arch)
@@ -108,7 +108,7 @@ def run(arch: str = 'i386', callback: (ExertCallable | None) = None,
 
     panda.run()
 
-def get_task_address(kernel: str, arch: str, version: str):
+def get_task_address(kernel: str, arch: str, version: str) -> None:
     version_supported = False
 
     ver_entry = ver.version_from_string(version)

@@ -7,7 +7,7 @@ from exert.utilities.debug import RUN_PLUGIN_TESTS
 from exert.utilities.types.multi_arch import ExertCallable
 
 CALLED_BACK: bool = False
-def set_called_back(called_back: bool):
+def set_called_back(called_back: bool) -> None:
     global CALLED_BACK
     CALLED_BACK = called_back
 
@@ -18,14 +18,14 @@ tests.test_task_struct.run_test('{}', {}, '{}', tss.{})
 """
 
 def do_test(test: ExertCallable, arch: str, generic: bool = True,
-            kernel: (str | None) = None):
+            kernel: (str | None) = None) -> None:
     if not RUN_PLUGIN_TESTS:
         return
     formatted = TEST_PREFIX.format(arch, generic, kernel, test.__name__)
     print(formatted)
     subprocess.run(['python'], input = formatted, check = True, text = True)
 
-def run_test(arch: str, generic: bool, kernel: str, test):
+def run_test(arch: str, generic: bool, kernel: str, test: ExertCallable) -> None:
     set_called_back(False)
     def callback(panda, cpu):
         set_called_back(True)

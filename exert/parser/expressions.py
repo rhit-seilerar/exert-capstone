@@ -2,9 +2,10 @@ from collections.abc import Callable
 import exert.parser.tokenmanager as tm
 from exert.parser.definitions import DefOption, Def
 from exert.utilities.types.global_types import TokenType, ExpressionTypes
+from typing import NoReturn
 
 class Expression:
-    def evaluate(self, evaluator: 'Evaluator'):
+    def evaluate(self, evaluator: 'Evaluator') -> 'Expression':
         assert False
 
     def __str__(self):
@@ -15,7 +16,7 @@ class Integer(Expression):
         self.value = value
         self.unsigned = unsigned
 
-    def evaluate(self, evaluator):
+    def evaluate(self, evaluator) -> 'Integer':
         base = 1 << evaluator.bitsize
         value = self.value % base
         if not self.unsigned and value >= base / 2:
@@ -61,7 +62,7 @@ class UnaryOperator(Operator):
         self.signop = (lambda asig: asig) if signop is None else signop
 
     def evaluate(self, evaluator):
-        assert isinstance(self.a, Expression)
+        assert isinstance(self.a, Integer)
         aint = self.a.evaluate(evaluator)
         if isinstance(aint, Wildcard):
             aint.options = set()
@@ -92,6 +93,8 @@ class BinaryOperator(Operator):
         if isinstance(bint, Wildcard):
             bint.options = set()
             return bint
+        assert isinstance(aint, Integer)
+        assert isinstance(bint, Integer)
         unsigned = self.signop(aint.unsigned, bint.unsigned)
         assert self.op is not None
         return Integer(self.op(aint.value, bint.value), unsigned)
@@ -171,6 +174,8 @@ class LeftShift(BinaryOperator):
         if isinstance(bint, Wildcard):
             bint.options = set()
             return bint
+        assert isinstance(aint, Integer)
+        assert isinstance(bint, Integer)
         unsigned = aint.unsigned
         return Integer(0 if bint.value < 0 or bint.value >= evaluator.bitsize
             else aint.value << bint.value, unsigned)
@@ -188,6 +193,8 @@ class RightShift(BinaryOperator):
         if isinstance(bint, Wildcard):
             bint.options = set()
             return bint
+        assert isinstance(aint, Integer)
+        assert isinstance(bint, Integer)
         unsigned = aint.unsigned
         return Integer(0 if bint.value < 0
             else -1 if bint.value >= evaluator.bitsize and aint.value < 0
@@ -252,6 +259,9 @@ class Conditional(Operator):
         if isinstance(cint, Wildcard):
             cint.options = set()
             return cint
+        assert isinstance(bint, Integer)
+        assert isinstance(cint, Integer)
+        assert isinstance(aint, Integer)
         unsigned = bint.unsigned or cint.unsigned
         return Integer(bint.value if aint.value else cint.value, unsigned)
 

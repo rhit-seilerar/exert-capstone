@@ -4,7 +4,7 @@ import time
 import glob
 from exert.parser.tokenizer import Tokenizer
 from exert.parser.tokenmanager import tok_seq, mk_kw, mk_op, mk_id, TokenManager
-from exert.parser.preprocessor import Preprocessor
+from exert.parser.preprocessor import Preprocessor, DefOption
 # from exert.usermode import rules
 from exert.utilities.debug import dprint
 from exert.utilities.command import run_command
@@ -172,10 +172,12 @@ class Parser(TokenManager):
             # Parse the rest of the file with each option
             anytok = self.peek()
             assert anytok is not None
+            assert len(anytok) > 2
             for opt in anytok[2]:
                 # Back up state and insert the option
                 index = self.index
                 self.len += len(opt) - 1
+                assert isinstance(opt, DefOption)
                 self.tokens[index:index+1] = opt.tokens
                 dprint(2, '    !!TOKENS!!  ', tok_seq(self.tokens))
 

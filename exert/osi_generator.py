@@ -6,6 +6,7 @@ from pandare import Panda
 from exert.utilities import version as ver
 from exert.usermode import osi, rules, context
 from exert.usermode import task_struct_stack as tss
+from exert.utilities.types.multi_arch import CPUState
 
 PANDA_PLUGIN_PREFIX:str = """
 from exert.usermode import plugin
@@ -16,10 +17,10 @@ plugin.run(arch='{}', generic={}, kernel='{}',
            callback={}, hypercall_callback={})
 """
 
-def empty_callback(panda:Panda, cpu): # pragma: no cover
+def empty_callback(panda:Panda, cpu: CPUState) -> None: # pragma: no cover
     return
 
-def get_data_addresses(panda:Panda, cpu): # pragma: no cover
+def get_data_addresses(panda:Panda, cpu: CPUState) -> None: # pragma: no cover
     magic = panda.arch.get_arg(cpu, 0, convention='syscall')
     string_address = panda.arch.get_arg(cpu, 1, convention='syscall')
     assert magic == 204
@@ -37,7 +38,7 @@ def get_data_addresses(panda:Panda, cpu): # pragma: no cover
     with open("tmp_data", "wb") as data:
         data.write(address_bytes)
 
-def get_task_struct_size(panda:Panda, cpu): # pragma: no cover
+def get_task_struct_size(panda:Panda, cpu: CPUState) -> bytes: # pragma: no cover
     magic = panda.arch.get_arg(cpu, 0, convention='syscall')
     string_address = panda.arch.get_arg(cpu, 1, convention='syscall')
     assert magic == 204
@@ -51,7 +52,7 @@ def get_task_struct_size(panda:Panda, cpu): # pragma: no cover
 
     return size_bytes
 
-def get_tasks_offset(panda:Panda, cpu):
+def get_tasks_offset(panda: Panda, cpu: CPUState) -> None:
     task_address = None
     if panda.arch_name == 'arm':
         task_address = tss.task_address_arm_callback(panda, cpu)
@@ -82,7 +83,7 @@ def get_tasks_offset(panda:Panda, cpu):
     with open("tmp_data", "wb") as data:
         data.write(valid_offsets)
 
-def get_osi_info(kernel: str, arch: str, version: str):
+def get_osi_info(kernel: str, arch: str, version: str) -> None:
     version_supported = False
 
     ver_entry = ver.version_from_string(version)

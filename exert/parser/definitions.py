@@ -39,7 +39,7 @@ class Def:
     [  defined,  undefined, options ]: This was defined in one sub-scope and undefined in another
     """
 
-    def __init__(self, *options: DefOption, defined = False, undefined = False):
+    def __init__(self, *options: DefOption, defined = False, undefined = False) -> None:
         self.options: set[DefOption] = set()
         self.undefined = undefined
         self.defined = defined
@@ -241,6 +241,7 @@ def substitute(tokmgr: TokenManager, defmap, replmap = None, keys = None):
         if tokmgr.peek_type() not in ['identifier', 'keyword']:
             return None, []
         name = tokmgr.next()
+        assert name is not None
         if not defmap[name[1]].defined:
             tokmgr.index = bindex
             return None, []
