@@ -2,7 +2,7 @@ from cffi.backend_ctypes import CTypesBackend
 from _cffi_backend import CType
 from pandare import Panda
 
-def get_ffi_datatypes(panda: Panda):
+def get_ffi_datatypes(panda: Panda) -> (Exception | str):
     data_types_tuple: tuple[list[str], list[str], list[str]] = panda.ffi.list_types()
     data_types_tuple[2].append("enum device_endian")
     data_types_tuple[2].append("enum QemuOptType")
@@ -11,26 +11,26 @@ def get_ffi_datatypes(panda: Panda):
     declared_data_types: set[str] = set()
 
     python_file_str: str = 'from enum import IntEnum\n'
-    # python_file_str += "from collections.abc import Callable\n"
+    python_file_str += "from collections.abc import Callable\n"
     python_file_str += 'import ctypes\n'
-    python_file_str += 'from typing import TYPE_CHECKING\n\n'
+    # python_file_str += 'from typing import TYPE_CHECKING\n\n'
 
-    python_file_str += 'if TYPE_CHECKING:\n'
-    python_file_str += '    Function = ctypes._CFunctionType\n'
-    python_file_str += 'else:\n'
-    python_file_str += '    Function = ctypes._CFuncPtr\n\n'
+    # python_file_str += 'if TYPE_CHECKING:\n'
+    # python_file_str += '    Function = ctypes._CFunctionType\n'
+    # python_file_str += 'else:\n'
+    # python_file_str += '    Function = ctypes._CFuncPtr\n\n'
 
-    python_file_str += "class CStructure(ctypes.Structure):\n"
-    python_file_str += "    def __init__(self):\n"
-    python_file_str += "        self.fields = []\n"
-    python_file_str += "        for key in self.__annotations__:\n"
-    python_file_str += "            self.fields.append((key, self.__annotations__[key]))\n\n"
+    # python_file_str += "class CStructure(ctypes.Structure):\n"
+    # python_file_str += "    def __init__(self):\n"
+    # python_file_str += "        self.fields = []\n"
+    # python_file_str += "        for key in self.__annotations__:\n"
+    # python_file_str += "            self.fields.append((key, self.__annotations__[key]))\n\n"
 
-    python_file_str += "class CUnion(ctypes.Union):\n"
-    python_file_str += "    def __init__(self):\n"
-    python_file_str += "        self.fields = []\n"
-    python_file_str += "        for key in self.__annotations__:\n"
-    python_file_str += "            self.fields.append((key, self.__annotations__[key]))\n\n"
+    # python_file_str += "class CUnion(ctypes.Union):\n"
+    # python_file_str += "    def __init__(self):\n"
+    # python_file_str += "        self.fields = []\n"
+    # python_file_str += "        for key in self.__annotations__:\n"
+    # python_file_str += "            self.fields.append((key, self.__annotations__[key]))\n\n"
 
     for data_types_list in data_types_tuple:
 
@@ -59,12 +59,12 @@ def get_ffi_datatypes(panda: Panda):
                 else:
                     data_name = data_type.split()[1]
 
-                python_file_str += f'{data_name}:ctypes.c_int\n'
+                python_file_str += f'class {data_name}(IntEnum):\n'
 
-                # for key in c_data_type.elements.keys():
-                #     python_file_str += f'    {c_data_type.elements[key]} = {str(key)}\n'
+                for key in c_data_type.elements.keys():
+                    python_file_str += f'    {c_data_type.elements[key]} = {str(key)}\n'
 
-                # python_file_str += '\n'
+                python_file_str += '\n'
                 continue
 
             if c_data_type.kind == 'struct':
@@ -127,13 +127,13 @@ def get_ffi_datatypes(panda: Panda):
 
     return python_file_str
 
-def get_struct_union_definition(struct_type: CType, struct_name: str, prefix: str, is_union: bool):
+def get_struct_union_definition(struct_type: CType, struct_name: str, prefix: str, is_union: bool) -> str:
     class_str = ''
 
     if is_union:
-        class_str = f'{prefix}class {struct_name}(CUnion):\n'
+        class_str = f'{prefix}class {struct_name}:\n'
     else:
-        class_str = f'{prefix}class {struct_name}(CStructure):\n'
+        class_str = f'{prefix}class {struct_name}:\n'
 
     # reserved_attributes = []
 
@@ -153,7 +153,7 @@ def get_struct_union_definition(struct_type: CType, struct_name: str, prefix: st
         field_python_type = get_python_type(field_type.type, struct_name, field_name)
 
         if field_python_type.find('$') != -1:
-            field_python_type = 'internal_' + field_python_type.replace('$', '')
+            field_python_type = 'internal_' + field_python_type.replace('$', '').replace("'", "")
 
             local_is_union = False
             if field_type.type.kind == 'union':
@@ -164,13 +164,13 @@ def get_struct_union_definition(struct_type: CType, struct_name: str, prefix: st
                                                      '    ',
                                                      local_is_union)
             class_str += '\n'
-
+        
         # if field_reserved:
             # reserved_str = f'{prefix}setattr'
             # reserved_str += f'({struct_name}, "{field_name}", {field_python_type}())\n'
             # reserved_attributes.append(reserved_str)
         if not field_reserved:
-            class_str += f'    {prefix}{field_name}: \'{field_python_type}\'\n'
+            class_str += f'    {prefix}{field_name}: {field_python_type}\n'
 
     # for attribute in reserved_attributes:
     #     class_str += attribute
@@ -179,7 +179,7 @@ def get_struct_union_definition(struct_type: CType, struct_name: str, prefix: st
 
 
 def get_python_type(c_data_type: CType, struct_type: (str | None) = None,
-                    field_name: (str | None) = None):
+                    field_name: (str | None) = None) -> str:
     c_data_type_kind = c_data_type.kind
     c_data_type_name = c_data_type.cname
 
@@ -187,38 +187,40 @@ def get_python_type(c_data_type: CType, struct_type: (str | None) = None,
         return get_primitive_type_name(c_data_type_name)
 
     if c_data_type_kind == 'struct':
-        return get_struct_type_name(c_data_type_name)
+        return f'\'{get_struct_type_name(c_data_type_name)}\''
 
     if c_data_type_kind == 'enum':
-        # return get_enum_type_name(c_data_type_name)
-        return 'ctypes.c_int'
+        return f'\'{get_enum_type_name(c_data_type_name)}\''
 
     if c_data_type_kind == 'array':
         array_type = get_python_type(c_data_type.item, struct_type, field_name)
-        return f'ctypes.Array[{array_type}]'
+        return f'list[{array_type}]'
 
     if c_data_type_kind == 'pointer':
         if c_data_type.item.kind == 'void':
             return 'ctypes.c_void_p'
 
         pointer_type = get_python_type(c_data_type.item, struct_type, field_name)
-        return f'ctypes._Pointer[{pointer_type}]'
+        return f'{pointer_type}'
 
     if c_data_type_kind == 'union':
-        return get_union_type_name(c_data_type_name)
+        return f'\'{get_union_type_name(c_data_type_name)}\''
 
     if c_data_type_kind == 'function':
-        # restype = get_python_type(c_data_type.result, struct_type, field_name)
+        restype = get_python_type(c_data_type.result, struct_type, field_name)
 
-        # args = ''
-        # for index, value in enumerate(c_data_type.args):
-        #     python_arg_type = get_python_type(value)
-        #     if index == (len(c_data_type.args) - 1):
-        #         args += python_arg_type
-        #     else:
-        #         args += python_arg_type + ', '
+        args = ''
+        for index, value in enumerate(c_data_type.args):
+            python_arg_type = get_python_type(value)
+            if index == (len(c_data_type.args) - 1):
+                args += f'{python_arg_type}'
+            else:
+                args += f'{python_arg_type}, '
 
-        return 'Function'
+        if args == '':
+            return f'Callable[[], {restype}]'
+        else:
+            return f'Callable[[{args}], {restype}]'
 
     if c_data_type_kind == 'void':
         return 'None'
@@ -227,14 +229,48 @@ def get_python_type(c_data_type: CType, struct_type: (str | None) = None,
     print(field_name)
     assert False, c_data_type_kind
 
-def get_primitive_type_name(prim_name: str):
+def get_primitive_type_name(prim_name: str) -> str:
+    ctype: str = ''
     for (key, value) in CTypesBackend.PRIMITIVE_TYPES.items():
         if key == prim_name:
-            return "ctypes." + value.__name__
+            ctype = value.__name__
+            break
+    
+    if ctype == '':
+        assert False, prim_name
+    else:
+        if ctype == 'c_char':
+            return 'bytes'
+        elif ctype == 'c_short':
+            return 'int'
+        elif ctype == 'c_int':
+            return 'int'
+        elif ctype == 'c_long':
+            return 'int'
+        elif ctype == 'c_longlong':
+            return 'int'
+        elif ctype == 'c_byte':
+            return 'int'
+        elif ctype == 'c_ubyte':
+            return 'int'
+        elif ctype == 'c_ushort':
+            return 'int'
+        elif ctype == 'c_uint':
+            return 'int'
+        elif ctype == 'c_ulong':
+            return 'int'
+        elif ctype == 'c_ulonglong':
+            return 'int'
+        elif ctype == 'c_float':
+            return 'float'
+        elif ctype == 'c_double':
+            return 'float'
+        elif ctype == 'c_bool':
+            return 'bool'
+        else:
+            assert False, prim_name
 
-    assert False, prim_name
-
-def get_struct_type_name(struct_name: str):
+def get_struct_type_name(struct_name: str) -> str:
     struct_names = struct_name.split()
 
     if len(struct_names) == 1:
@@ -246,7 +282,7 @@ def get_struct_type_name(struct_name: str):
 
     assert False, struct_name
 
-def get_union_type_name(union_name: str):
+def get_union_type_name(union_name: str) -> str:
     union_names = union_name.split()
 
     if len(union_names) == 1:
@@ -258,7 +294,7 @@ def get_union_type_name(union_name: str):
 
     assert False, union_name
 
-def get_enum_type_name(enum_name: str):
+def get_enum_type_name(enum_name: str) -> str:
     union_names = enum_name.split()
 
     if len(union_names) == 1:
@@ -270,6 +306,6 @@ def get_enum_type_name(enum_name: str):
 
     assert False, enum_name
 
-def write_into_file(python_str: str, path: str):
+def write_into_file(python_str: str, path: str) -> None:
     with open(path, 'wt', encoding="utf-8") as file:
         file.write(python_str)

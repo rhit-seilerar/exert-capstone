@@ -1,6 +1,6 @@
 from collections.abc import Callable
 import exert.parser.tokenmanager as tm
-from exert.parser.definitions import DefOption, Def
+from exert.parser.definitions import DefOption, Def, DefMap
 from exert.utilities.types.global_types import TokenType, ExpressionTypes
 from typing import NoReturn
 
@@ -16,7 +16,7 @@ class Integer(Expression):
         self.value = value
         self.unsigned = unsigned
 
-    def evaluate(self, evaluator) -> 'Integer':
+    def evaluate(self, evaluator: 'Evaluator') -> 'Integer':
         base = 1 << evaluator.bitsize
         value = self.value % base
         if not self.unsigned and value >= base / 2:
@@ -318,7 +318,7 @@ PRECEDENCE_MAP: list[dict[str, tuple[int, type[Operator]]]] = [
     }
 ]
 
-def parse_expression(tokens: list[TokenType]):
+def parse_expression(tokens: list[TokenType]) -> Expression:
     assert len(tokens) > 0
 
     # Handle groups, identifiers, defined(), and terminals
@@ -414,9 +414,11 @@ class Evaluator:
         self.lookup: (dict[str | int, Def] | None) = None
         self.defines: (dict[Expression | str, bool] | None) = None
 
-    def evaluate(self, tokens: list[TokenType]):
+    def evaluate(self, tokens: list[TokenType]) -> (Wildcard | tuple[int, bool] | tuple[bool, bool, DefMap]):
         parsed = parse_expression(tokens)
         result = parsed.evaluate(self).evaluate(self)
         if isinstance(result, Wildcard):
             return result
+        
+        assert isinstance(result, Integer)
         return result.value, result.unsigned

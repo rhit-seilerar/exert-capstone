@@ -7,21 +7,21 @@ TOK_TYPES: list[str] = [
     'operator', 'directive', 'any'
 ]
 
-def write_number(file: BufferedWriter, number: int, length: int = 8, signed: bool = False):
+def write_number(file: BufferedWriter, number: int, length: int = 8, signed: bool = False) -> None:
     file.write(number.to_bytes(length = length, byteorder = 'little', signed = signed))
 
-def write_string(file: BufferedWriter, string: str, sizelength: int = 4):
+def write_string(file: BufferedWriter, string: str, sizelength: int = 4) -> None:
     write_number(file, len(string), length = sizelength)
     file.write(string.encode('utf-8'))
 
-def read_number(file: BufferedReader, length: int = 8, signed: bool = False):
+def read_number(file: BufferedReader, length: int = 8, signed: bool = False) -> int:
     return int.from_bytes(file.read(length), byteorder = 'little', signed = signed)
 
-def read_string(file: BufferedReader, sizelength: int = 4):
+def read_string(file: BufferedReader, sizelength: int = 4) -> str:
     length = read_number(file, length = sizelength)
     return file.read(length).decode('utf-8')
 
-def read_token(file: BufferedReader):
+def read_token(file: BufferedReader) -> TokenType:
     tok_id = read_number(file, length = 1)
     if tok_id < len(TOK_TYPES):
         tok_type = TOK_TYPES[tok_id]
@@ -56,7 +56,7 @@ def read_token(file: BufferedReader):
             return (tok_type, name, options)
     assert False
 
-def read_tokens(path: str):
+def read_tokens(path: str) -> list[TokenType]:
     tokens = []
     with open(path, 'rb') as file:
         file.seek(0, 2)
@@ -67,7 +67,7 @@ def read_tokens(path: str):
         file.close()
     return tokens
 
-def write_tokens(file: BufferedWriter, tokens: list[TokenType]):
+def write_tokens(file: BufferedWriter, tokens: list[TokenType]) -> None:
     for token in tokens:
         write_number(file, TOK_TYPES.index(token[0]), length = 1)
         if token[0] == 'string':

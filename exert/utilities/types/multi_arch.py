@@ -7,4 +7,4 @@ type CPUState = (aarch64_types.CPUState |
                  i386_types.CPUState |
                  x86_64_types.CPUState)
 
-type ExertCallable = Callable[[Panda, CPUState], None]
+type ExertCallable = Callable[[Panda, CPUState], (int | None)]

@@ -2,6 +2,7 @@ import exert.parser.definitions as dm
 import exert.parser.tokenmanager as tm
 from exert.parser.tokenizer import Tokenizer
 from exert.parser.preprocessor import Preprocessor, read_file
+from collections.abc import Callable
 
 FILES: dict[str, str] = {
     'base.h': """
@@ -55,7 +56,7 @@ def test_read_file():
 TK = Tokenizer()
 CACHE = './cache/test-preprocessor'
 
-def check(incls, defns, str_in: str, str_out: str):
+def check(incls: list[str | Callable[[str], (str | None)]], defns: dict[str, str], str_in: str, str_out: str) -> None:
     pp = Preprocessor(TK, 32, incls, defns, filereader = dummy_reader)
     pp.preprocess(str_in, CACHE, reset_cache = True)
     pp.load(CACHE)

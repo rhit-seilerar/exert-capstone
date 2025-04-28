@@ -2,7 +2,7 @@ from exert.usermode import rules
 from exert.usermode.rules import Rule, Bool, Int, Pointer, Array, Field, FieldGroup, Struct
 from tests.test_context import DummyContext
 
-def results(rule: Rule, buf: bytes = b'', address: int = 0x0, bits: int = 32):
+def results(rule: Rule, buf: bytes = b'', address: int = 0x0, bits: int = 32) -> set[int]:
     return rule.test(DummyContext(buf, bits = bits), address, True)
 
 def test_base():

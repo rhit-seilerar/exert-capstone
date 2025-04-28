@@ -17,10 +17,12 @@ VERSION_PATH: str = './cache/linux-version.txt'
 SOURCE_PATH: str = './cache/linux'
 PARSE_CACHE: str = './cache/parsed'
 
-class Continuation(Protocol):
-    def __call__(self, p: bool, f: bool) -> 'tuple[Continuation, bool, bool]': ...
+type ContinuationTuple = 'tuple[Continuation, bool | ContinuationTuple, bool | ContinuationTuple]'
 
-def generate(version: str, arch: str):
+class Continuation(Protocol):
+    def __call__(self, p: bool | ContinuationTuple, f: bool | ContinuationTuple) -> 'ContinuationTuple | bool': ...
+
+def generate(version: str, arch: str) -> None:
     switch_to_version(version)
     print('Parsing files...')
     if not os.path.exists(PARSE_CACHE):
@@ -30,7 +32,7 @@ def generate(version: str, arch: str):
 def get_files():
     return glob.glob(f'{SOURCE_PATH}/include/linux/**/*.h', recursive = True)
 
-def switch_to_version(version: str):
+def switch_to_version(version: str) -> None:
     old_version = None
     try:
         with open(VERSION_PATH, 'r', encoding = 'utf-8') as file:
@@ -49,7 +51,7 @@ SOURCE = """
 
 PREPROCESSOR_CACHE = './cache/linux-preprocessor'
 
-def parse(filename: str, arch: str):
+def parse(filename: str, arch: str) -> None:
     tokenizer = Tokenizer()
 
     preprocessor = Preprocessor(
@@ -100,7 +102,7 @@ class Parser(TokenManager):
 #     def has(self, values, key):
 #         return key in values
 
-    def unwrap(self, k: tuple[Continuation, bool, bool]):
+    def unwrap(self, k: ContinuationTuple | bool) -> ContinuationTuple | bool:
         dprint(3, 'unwrap.start')
         while isinstance(k, tuple) and len(k) == 3:
             if self.time + 10 < time.time():
@@ -111,33 +113,33 @@ class Parser(TokenManager):
         dprint(3, 'unwrap.end')
         return k
 
-    def chkpt(self, clause: Continuation):
+    def chkpt(self, clause: Continuation) -> Continuation:
         dprint(5, 'chkpt', clause)
-        def env(p, f):
+        def env(p: (bool | ContinuationTuple), f: (bool | ContinuationTuple)) -> ContinuationTuple:
             index = self.index
             idt = self.chkptid
             self.chkptid += 1
             dprint(3.5, f'chkpt.env.push({idt}): {index}')
-            def pop(p, f):
+            def pop(p: (bool | ContinuationTuple), f: (bool | ContinuationTuple)) -> (bool | ContinuationTuple):
                 dprint(3.5, f'chkpt.env.pop({idt}): {self.index} -> {index}')
                 self.index = index
                 return f
             return clause, p, (pop, p,f)
         return env
 
-    def opt(self, clause: Continuation):
+    def opt(self, clause: Continuation) -> Continuation:
         dprint(5, 'opt', clause)
         return lambda p, f: (clause, p, p)
 
-    def pnot(self, clause: Continuation):
+    def pnot(self, clause: Continuation) -> Continuation:
         dprint(5, 'pnot', clause)
         return lambda p, f: (clause, p,f)
 
-    def por(self, *clauses: Continuation):
+    def por(self, *clauses: Continuation) -> Continuation:
         dprint(5, 'por')
-        def start(p: bool, f: bool):
+        def start(p: (bool | ContinuationTuple), f: (bool | ContinuationTuple)) -> (ContinuationTuple | bool):
             dprint(4, 'por.start')
-            def getnext(p1: bool, f1: bool, rest: tuple[Continuation, ...]):
+            def getnext(p1: (bool | ContinuationTuple), f1: (bool | ContinuationTuple), rest: tuple[Continuation, ...]) -> (bool | ContinuationTuple):
                 dprint(5, 'por.getnext')
                 def nex(p2, f2):
                     dprint(4, 'por.next')
@@ -148,11 +150,11 @@ class Parser(TokenManager):
             return getnext(p, f, clauses)
         return start
 
-    def pand(self, *clauses: Continuation):
+    def pand(self, *clauses: Continuation) -> Continuation:
         dprint(5, 'pand', clauses)
-        def start(p: bool, f: bool):
+        def start(p: (bool | ContinuationTuple), f: (bool | ContinuationTuple)) -> (bool | ContinuationTuple):
             dprint(4, 'pand.start')
-            def getnext(p1: bool, f1: bool, rest: tuple[Continuation, ...]):
+            def getnext(p1: (bool | ContinuationTuple), f1: (bool | ContinuationTuple), rest: tuple[Continuation, ...]) -> (bool | ContinuationTuple):
                 dprint(5, 'pand.getnext')
                 def nex(p2, f2):
                     dprint(4, 'pand.next')
@@ -200,7 +202,7 @@ class Parser(TokenManager):
         self.bump()
         return p
 
-    def ptok(self, tok: TokenType):
+    def ptok(self, tok: TokenType) -> Continuation:
         dprint(4, 'ptok')
         def intl(p, f):
             dprint(3, 'tok.intl', tok, self.peek())
@@ -209,11 +211,11 @@ class Parser(TokenManager):
             return f
         return lambda p, f: (self.check_for_any, (intl, p, f), f)
 
-    def tok(self, tok: TokenType):
+    def tok(self, tok: TokenType) -> Continuation:
         dprint(4, 'tok')
         return lambda p, f: (self.ptok(tok), (self.pbump, p, f), f)
 
-    def ptyp(self, typ: str):
+    def ptyp(self, typ: str) -> Continuation:
         dprint(4, 'ptyp')
         def intl(p, f):
             dprint(3, 'ptyp.intl', typ, self.peek())
@@ -222,7 +224,7 @@ class Parser(TokenManager):
             return f
         return lambda p, f: (self.check_for_any, (intl, p,f), f)
 
-    def typ(self, typ: str):
+    def typ(self, typ: str) -> Continuation:
         dprint(4, 'typ')
         return lambda p, f: (self.ptyp(typ), (self.pbump, p,f), f)
 
@@ -1558,7 +1560,7 @@ class Parser(TokenManager):
         dprint(3, 'parse_function_body')
         return self.parse_compound_statement, p, f
 
-    def parse(self, tokens: list[TokenType]):
+    def parse(self, tokens: list[TokenType]) -> None:
         super().reset()
         self.tokens = tokens
         self.len = len(tokens)

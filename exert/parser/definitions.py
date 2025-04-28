@@ -4,6 +4,7 @@ from exert.parser import expressions
 from exert.parser.tokenmanager import TokenManager, tok_seq, mk_id, mk_op, mk_int
 from exert.utilities.debug import dprint
 from exert.utilities.types.global_types import TokenType, ExpressionTypes
+from typing import Self, Any, cast
 
 class DefOption:
     def __init__(self, tokens: list[TokenType], params: (list[str] | None) = None):
@@ -39,7 +40,7 @@ class Def:
     [  defined,  undefined, options ]: This was defined in one sub-scope and undefined in another
     """
 
-    def __init__(self, *options: DefOption, defined = False, undefined = False) -> None:
+    def __init__(self, *options: DefOption, defined: bool = False, undefined: bool = False) -> None:
         self.options: set[DefOption] = set()
         self.undefined = undefined
         self.defined = defined
@@ -73,13 +74,13 @@ class Def:
     def is_uncertain(self) -> bool:
         return self.undefined and self.defined
 
-    def undefine(self, keep: bool = True):
+    def undefine(self, keep: bool = True) -> None:
         self.undefined = True
         if not keep:
             self.defined = False
             self.options.clear()
 
-    def define(self, option: DefOption, keep: bool = True):
+    def define(self, option: DefOption, keep: bool = True) -> None:
         if not isinstance(option, DefOption):
             raise TypeError(option)
         if self.is_undefined() or not keep:
@@ -87,7 +88,7 @@ class Def:
         self.options.add(option)
         self.defined = True
 
-    def get_replacements(self, sym: TokenType, params: (list[str] | None) = None):
+    def get_replacements(self, sym: TokenType, params: (list[str] | None) = None) -> set[DefOption]:
         """
         [ initial,   {}      ]: [[{}]]
         [ undefined, {}      ]: [[sym]]
@@ -108,7 +109,7 @@ class Def:
             replacements.add(DefOption([('any', sym[1], set())]))
         return replacements
 
-    def combine(self, other: 'Def', replace: bool):
+    def combine(self, other: 'Def', replace: bool) -> Self:
         if not isinstance(other, Def):
             raise TypeError(other)
         if replace:
@@ -122,7 +123,7 @@ class Def:
             self.options |= other.options
         return self
 
-    def matches(self, other: 'Def'):
+    def matches(self, other: 'Def') -> bool:
         if not isinstance(other, Def):
             raise TypeError(other)
         if other.is_initial() or self.is_initial():
@@ -162,7 +163,7 @@ class DefMap:
     mappings between symbols to their definitions.
     """
 
-    def __init__(self, parent, skipping: bool = False, initial: (dict[ExpressionTypes, Def] | None) = None):
+    def __init__(self, parent: ('DefMap' | None), skipping: bool = False, initial: (dict[ExpressionTypes, Def] | None) = None):
         assert parent is None or isinstance(parent, DefMap)
         assert initial is None or isinstance(initial, dict)
         self.skipping = skipping
@@ -170,7 +171,7 @@ class DefMap:
         self.defs = initial or {}
         self.validate()
 
-    def getlocal(self, key: ExpressionTypes):
+    def getlocal(self, key: ExpressionTypes) -> Def:
         if key not in self.defs:
             self.defs[key] = Def()
         return self.defs[key]
@@ -188,27 +189,27 @@ class DefMap:
             return self.parent[key]
         return Def()
 
-    def __setitem__(self, key, item: Def):
+    def __setitem__(self, key: ExpressionTypes, item: Def) -> None:
         if not isinstance(item, Def):
             raise TypeError(item)
         self.defs[key] = item
 
-    def get_replacements(self, sym_tok: TokenType, params: (list[str] | None) = None):
+    def get_replacements(self, sym_tok: TokenType, params: (list[list[TokenType]] | None) = None) -> set[DefOption]:
         return self[sym_tok[1]].get_replacements(sym_tok, params)
 
     def validate(self) -> None:
         for key in self.defs:
             self[key].validate()
 
-    def undefine(self, key: str | int):
+    def undefine(self, key: str | int) -> None:
         if not self.skipping:
             self.getlocal(key).undefine(keep = False)
 
-    def define(self, key: str | int, option: DefOption):
+    def define(self, key: str | int, option: DefOption) -> None:
         if not self.skipping:
             self.getlocal(key).define(option, keep = True)
 
-    def combine(self, other: dict[ExpressionTypes, Def], replace):
+    def combine(self, other: dict[ExpressionTypes, Def], replace: bool) -> Self:
         if not isinstance(other, dict):
             raise TypeError(other)
         if not self.skipping:
@@ -216,7 +217,7 @@ class DefMap:
                 self[key] = self[key].copy().combine(other[key], replace = replace)
         return self
 
-    def matches(self, conditions: object):
+    def matches(self, conditions: object) -> bool:
         if not isinstance(conditions, DefMap):
             raise TypeError(conditions)
         for key in conditions.defs:
@@ -224,7 +225,7 @@ class DefMap:
                 return False
         return True
 
-    def __eq__(self, other: object):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, DefMap) \
             and self.parent == other.parent \
             and self.skipping == other.skipping \
@@ -235,8 +236,8 @@ class DefMap:
         return f'DefMap(parent = {self.parent}, skipping = {self.skipping}, ' \
             f'defs = {{{", ".join(defs_strs)}}})'
 
-def substitute(tokmgr: TokenManager, defmap, replmap = None, keys = None):
-    def parse_macro(tokmgr: TokenManager):
+def substitute(tokmgr: TokenManager, defmap: DefMap, replmap: (dict[str | int, dict[(None | list[list[TokenType]]), list[set[DefOption]]]] | None) = None, keys: (set[TokenType] | None) = None) -> list[TokenType]:
+    def parse_macro(tokmgr: TokenManager) -> tuple[TokenType | None, list[list[TokenType]]]:
         bindex = tokmgr.index
         if tokmgr.peek_type() not in ['identifier', 'keyword']:
             return None, []
@@ -245,7 +246,7 @@ def substitute(tokmgr: TokenManager, defmap, replmap = None, keys = None):
         if not defmap[name[1]].defined:
             tokmgr.index = bindex
             return None, []
-        params = []
+        params: list[list[TokenType]] = []
 
         # If any options have params, we assert that they all must.
         # Technically this is inaccurate, but we'd have to track multiple
@@ -280,7 +281,7 @@ def substitute(tokmgr: TokenManager, defmap, replmap = None, keys = None):
     # Recursively substitute macros with their ANY forms, and track the
     # substitutions in replmap. Each macro will only be expanded once, e.g.
     # '#define ABC ABC' won't infinitely loop.
-    def subst(tokmgr: TokenManager):
+    def subst(tokmgr: TokenManager) -> (list[TokenType] | None):
         index = tokmgr.index
         name, params = parse_macro(tokmgr)
         if name is None or name[1] in expansion_stack or defmap[name[1]].is_initial():
@@ -305,12 +306,13 @@ def substitute(tokmgr: TokenManager, defmap, replmap = None, keys = None):
             tokens: list[TokenType] = []
             optmgr = TokenManager(opt.tokens)
             while optmgr.has_next():
-                tokens += subst(optmgr) or [optmgr.next()]
+                tokens += subst(optmgr) or [cast(TokenType, optmgr.next())]
             if tokens:
                 substitutions.add(DefOption(tokens))
         expansion_stack.pop()
         macroname = name[1]
         if len(params) > 0:
+            assert isinstance(macroname, str)
             macroname += '(' + ', '.join(tok_seq(p) for p in params) + ')'
         if replmap is not None:
             # Map macro name and arguments to a list of possible substitutions
@@ -324,14 +326,14 @@ def substitute(tokmgr: TokenManager, defmap, replmap = None, keys = None):
         return list(substitutions)[0].tokens
 
     result = subst(tokmgr)
-    return [tokmgr.next()] if result is None else result
+    return [cast(TokenType, tokmgr.next())] if result is None else result
 
 class DefEvaluator(expressions.Evaluator):
-    def __init__(self, bitsize: int, defmap):
+    def __init__(self, bitsize: int, defmap: DefMap):
         super().__init__(bitsize)
         self.defs = defmap
 
-    def evaluate(self, tokens: list[TokenType]):
+    def evaluate(self, tokens: list[TokenType]) -> tuple[bool, bool, DefMap]:
         self.matches = DefMap(self.defs)
 
         # First we run through and replace all defined(MACRO) with a special
@@ -339,7 +341,7 @@ class DefEvaluator(expressions.Evaluator):
         # serialized, but expressions.py knows how to handle it
         keys: set[TokenType] = set()
         identlike = ['identifier', 'keyword']
-        replmap: dict[str | int, dict[None, list[set[DefOption]]]] = {}
+        replmap: dict[str | int, dict[(None | list[list[TokenType]]), list[set[DefOption]]]] = {}
         nex = []
         index = 0
         while index < len(tokens):
@@ -402,7 +404,7 @@ class DefEvaluator(expressions.Evaluator):
         self.any_match = False
         self.all_match = True
 
-        def insert_permutation(lookup: dict[str | int, Def], tokens: list[TokenType]):
+        def insert_permutation(lookup: dict[str | int, Def], tokens: list[TokenType]) -> list[TokenType]:
             nex = []
             for tok in tokens:
                 if tok[0] == 'any' and len(tok) > 2 and len(tok[2]) > 0:
@@ -422,7 +424,7 @@ class DefEvaluator(expressions.Evaluator):
             if isinstance(result, expressions.Wildcard):
                 self.any_match = True
                 self.all_match = False
-            elif result.value == 0:
+            elif isinstance(result, expressions.Integer) and result.value == 0:
                 self.all_match = False
             else:
                 for expression, is_defined in self.defines.items():
@@ -472,7 +474,7 @@ class DefLayer:
             self.accumulator.combine(self.current.defs, replace = False)
             self.current = None
 
-    def add_map(self, cond_tokens: list[TokenType], closing: bool = False):
+    def add_map(self, cond_tokens: list[TokenType], closing: bool = False) -> None:
         self.depth += 1
         if self.skip_rest:
             self.apply()
@@ -503,10 +505,10 @@ class DefState:
     of symbols.
     """
 
-    def __init__(self, bitsize: int, initial = None):
+    def __init__(self, bitsize: int, initial: (dict[str, Def] | None) = None):
         self.bitsize = bitsize
         self.keys: set[str] = set()
-        self.layers = [DefLayer(DefMap(None, initial = initial), bitsize, False)]
+        self.layers = [DefLayer(DefMap(None, initial = cast(dict[ExpressionTypes, Def], initial)), bitsize, False)]
         self.layers[0].add_map([mk_int(1)], closing = True)
         if initial is not None:
             self.keys |= set(initial.keys())
@@ -521,8 +523,8 @@ class DefState:
     def is_guaranteed(self) -> bool:
         return not self.is_skipping() and self.layers[-1].skip_rest
 
-    def flat_defines(self) -> dict[str | int, Def]:
-        result: dict[str | int, Def] = {}
+    def flat_defines(self) -> dict[ExpressionTypes, Def]:
+        result: dict[ExpressionTypes, Def] = {}
         for key in self.keys:
             assert self.layers[-1].current is not None
             defn = self.layers[-1].current[key]
@@ -538,41 +540,41 @@ class DefState:
                 result.add(key)
         return result
 
-    def on_define(self, sym: str, tokens: list[TokenType], params = None):
+    def on_define(self, sym: str, tokens: list[TokenType], params: (list[str] | None) = None) -> None:
         if not self.is_skipping():
             dprint(3, '  ' * self.depth() + f'#define {sym} {tok_seq(tokens)}')
             self.keys.add(sym)
             assert self.layers[-1].current is not None
             self.layers[-1].current.define(sym, DefOption(tokens, params))
 
-    def on_undef(self, sym: str):
+    def on_undef(self, sym: str) -> None:
         if not self.is_skipping():
             dprint(3, '  ' * self.depth() + f'#undef {sym}')
             self.keys.add(sym)
             assert self.layers[-1].current is not None
             self.layers[-1].current.undefine(sym)
 
-    def on_if(self, cond_tokens: list[TokenType]):
+    def on_if(self, cond_tokens: list[TokenType]) -> None:
         dprint(2, '  ' * self.depth() + f'#if {tok_seq(cond_tokens)}')
         parent = self.layers[-1].current
         assert parent is not None
         self.layers.append(DefLayer(parent, self.bitsize, self.is_skipping()))
         self.layers[-1].add_map(cond_tokens)
 
-    def on_ifdef(self, sym: str | int):
+    def on_ifdef(self, sym: str | int) -> None:
         self.on_if([ mk_id('defined'), mk_id(sym) ])
 
-    def on_ifndef(self, sym: str | int):
+    def on_ifndef(self, sym: str | int) -> None:
         self.on_if([ mk_op('!'), mk_id('defined'), mk_id(sym) ])
 
-    def on_elif(self, cond_tokens: list[TokenType]):
+    def on_elif(self, cond_tokens: list[TokenType]) -> None:
         dprint(2, '  ' * self.depth() + f'#elif {tok_seq(cond_tokens)}')
         self.layers[-1].add_map(cond_tokens)
 
-    def on_elifdef(self, sym: str | int):
+    def on_elifdef(self, sym: str | int) -> None:
         self.on_elif([ mk_id('defined'), mk_id(sym) ])
 
-    def on_elifndef(self, sym: str | int):
+    def on_elifndef(self, sym: str | int) -> None:
         self.on_elif([ mk_op('!'), mk_id('defined'), mk_id(sym) ])
 
     def on_else(self) -> None:
@@ -586,7 +588,7 @@ class DefState:
         assert self.layers[-1].current is not None
         self.layers[-1].current.combine(layer.accumulator.defs, replace = layer.closed)
 
-    def get_replacements(self, tok: TokenType, params = None):
+    def get_replacements(self, tok: TokenType, params: (list[list[TokenType]] | None) = None) -> set[DefOption]:
         assert self.layers[-1].current is not None
         return self.layers[-1].current.get_replacements(tok, params)
 
@@ -594,6 +596,7 @@ class DefState:
         if isinstance(tokmgr, tuple):
             tok = tokmgr
             tokmgr = TokenManager([tok])
+        assert self.layers[-1].current is not None
         return substitute(tokmgr, self.layers[-1].current)
 
     def get_cond_tokens(self) -> list[TokenType]:
