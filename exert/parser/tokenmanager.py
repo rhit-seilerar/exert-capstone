@@ -1,7 +1,8 @@
-from typing import NoReturn
-from exert.utilities.types.global_types import TokenType
+from typing import NoReturn, Union
 
-def tok_str(token: TokenType,
+type OptionalToken = Union['TokenType', None]
+
+def tok_str(token: 'TokenType',
             newlines: bool = False) -> str:
     n = token
 
@@ -26,28 +27,28 @@ def tok_str(token: TokenType,
     assert isinstance(string, str)
     return string.replace('\n', ' ')
 
-def tok_seq(tokens: list[TokenType],
+def tok_seq(tokens: list['TokenType'],
             newlines: bool = False) -> str:
     return ''.join(tok_str(n, newlines) for n in tokens).strip() \
         if isinstance(tokens, list) else tokens
 
-def mk_int(num: int, suffix: str = '') -> TokenType:
+def mk_int(num: int, suffix: str = '') -> 'TokenType':
     return ('integer', num, suffix)
 
-def mk_id(sym: str | int) -> TokenType:
+def mk_id(sym: str | int) -> 'TokenType':
     return ('identifier', sym)
 
-def mk_kw(sym: str) -> TokenType:
+def mk_kw(sym: str) -> 'TokenType':
     return ('keyword', sym)
 
-def mk_op(op: str) -> TokenType:
+def mk_op(op: str) -> 'TokenType':
     return ('operator', op)
 
-def mk_str(string:str, suffix: str = '"') -> TokenType:
+def mk_str(string:str, suffix: str = '"') -> 'TokenType':
     return ('string', string, suffix)
 
 class TokenManager:
-    def __init__(self, tokens: (list[TokenType] | None) = None):
+    def __init__(self, tokens: (list['TokenType'] | None) = None):
         self.reset()
         if tokens is not None:
             self.tokens = tokens
@@ -69,7 +70,7 @@ class TokenManager:
         self.tokens_consumed += 1
         self.index += 1
 
-    def peek(self, offset: int = 0) -> (TokenType | None):
+    def peek(self, offset: int = 0) -> OptionalToken:
         if 0 <= self.index + offset and self.index + offset < self.len:
             return self.tokens[self.index+offset]
         return None
@@ -77,30 +78,30 @@ class TokenManager:
     def peek_type(self, offset: int = 0) -> (str | None):
         return tok[0] if (tok := self.peek(offset)) else None
 
-    def next(self, offset: int = 0) -> (TokenType | None):
+    def next(self, offset: int = 0) -> OptionalToken:
         if (token := self.peek(offset)):
             self.bump()
             return token
         return None
 
-    def consume_type(self, typ: str) -> (TokenType | None):
+    def consume_type(self, typ: str) -> OptionalToken:
         return self.next() if (token := self.peek()) and token[0] == typ else None
 
-    def consume(self, token: TokenType) -> (TokenType | None):
+    def consume(self, token: 'TokenType') -> OptionalToken:
         if self.peek() == token:
             return self.next()
         return None
 
-    def consume_directive(self, name: str) -> (TokenType | None):
+    def consume_directive(self, name: str) -> OptionalToken:
         return self.consume(('directive', name))
 
-    def consume_operator(self, name: str) -> (TokenType | None):
+    def consume_operator(self, name: str) -> OptionalToken:
         return self.consume(('operator', name))
 
-    def consume_keyword(self, name: str) -> (TokenType | None):
+    def consume_keyword(self, name: str) -> OptionalToken:
         return self.consume(('keyword', name))
 
-    def consume_identifier(self, name: str) -> (TokenType | None):
+    def consume_identifier(self, name: str) -> OptionalToken:
         return self.consume(('identifier', name))
 
     def parse_identifier(self) -> (str | int):
@@ -153,3 +154,5 @@ class TokenManager:
         print(*message)
         self.print_current()
         assert False
+
+from exert.utilities.types.global_types import TokenType
