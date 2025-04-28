@@ -1,5 +1,6 @@
 from exert.parser.defoption import DefOption
 from exert.utilities.types.global_types import TokenType
+from typing import Self
 
 class Def:
     """
@@ -11,7 +12,7 @@ class Def:
     [  defined,  undefined, options ]: This was defined in one sub-scope and undefined in another
     """
 
-    def __init__(self, *options: DefOption, defined = False, undefined = False) -> None:
+    def __init__(self, *options: DefOption, defined: bool = False, undefined: bool = False) -> None:
         self.options: set[DefOption] = set()
         self.undefined = undefined
         self.defined = defined
@@ -45,13 +46,13 @@ class Def:
     def is_uncertain(self) -> bool:
         return self.undefined and self.defined
 
-    def undefine(self, keep: bool = True):
+    def undefine(self, keep: bool = True) -> None:
         self.undefined = True
         if not keep:
             self.defined = False
             self.options.clear()
 
-    def define(self, option: DefOption, keep: bool = True):
+    def define(self, option: DefOption, keep: bool = True) -> None:
         if not isinstance(option, DefOption):
             raise TypeError(option)
         if self.is_undefined() or not keep:
@@ -59,7 +60,7 @@ class Def:
         self.options.add(option)
         self.defined = True
 
-    def get_replacements(self, sym: TokenType, params: (list[str] | None) = None):
+    def get_replacements(self, sym: TokenType, params: (list[str] | None) = None) -> set[DefOption]:
         """
         [ initial,   {}      ]: [[{}]]
         [ undefined, {}      ]: [[sym]]
@@ -80,7 +81,7 @@ class Def:
             replacements.add(DefOption([('any', sym[1], set())]))
         return replacements
 
-    def combine(self, other: 'Def', replace: bool):
+    def combine(self, other: 'Def', replace: bool) -> Self:
         if not isinstance(other, Def):
             raise TypeError(other)
         if replace:
@@ -94,7 +95,7 @@ class Def:
             self.options |= other.options
         return self
 
-    def matches(self, other: 'Def'):
+    def matches(self, other: 'Def') -> bool:
         if not isinstance(other, Def):
             raise TypeError(other)
         if other.is_initial() or self.is_initial():

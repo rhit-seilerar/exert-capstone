@@ -1,6 +1,7 @@
 from exert.parser.defoption import DefOption
 from exert.parser.definition import Def
 from exert.utilities.types.global_types import TokenType, ExpressionTypes
+from typing import Self
 
 class DefMap:
     """
@@ -9,7 +10,7 @@ class DefMap:
     mappings between symbols to their definitions.
     """
 
-    def __init__(self, parent, skipping: bool = False,
+    def __init__(self, parent: 'DefMap | None', skipping: bool = False,
         initial: (dict[ExpressionTypes, Def] | None) = None):
         assert parent is None or isinstance(parent, DefMap)
         assert initial is None or isinstance(initial, dict)
@@ -18,7 +19,7 @@ class DefMap:
         self.defs = initial or {}
         self.validate()
 
-    def getlocal(self, key: ExpressionTypes):
+    def getlocal(self, key: ExpressionTypes) -> Def:
         if key not in self.defs:
             self.defs[key] = Def()
         return self.defs[key]
@@ -36,27 +37,27 @@ class DefMap:
             return self.parent[key]
         return Def()
 
-    def __setitem__(self, key, item: Def):
+    def __setitem__(self, key: ExpressionTypes, item: Def) -> None:
         if not isinstance(item, Def):
             raise TypeError(item)
         self.defs[key] = item
 
-    def get_replacements(self, sym_tok: TokenType, params: (list[str] | None) = None):
+    def get_replacements(self, sym_tok: TokenType, params: (list[list[TokenType]] | list[str] | None) = None) -> set[DefOption]:
         return self[sym_tok[1]].get_replacements(sym_tok, params)
 
     def validate(self) -> None:
         for key in self.defs:
             self[key].validate()
 
-    def undefine(self, key: str | int):
+    def undefine(self, key: str | int) -> None:
         if not self.skipping:
             self.getlocal(key).undefine(keep = False)
 
-    def define(self, key: str | int, option: DefOption):
+    def define(self, key: str | int, option: DefOption) -> None:
         if not self.skipping:
             self.getlocal(key).define(option, keep = True)
 
-    def combine(self, other: dict[ExpressionTypes, Def], replace):
+    def combine(self, other: dict[ExpressionTypes, Def], replace: bool) -> Self:
         if not isinstance(other, dict):
             raise TypeError(other)
         if not self.skipping:
@@ -64,7 +65,7 @@ class DefMap:
                 self[key] = self[key].copy().combine(other[key], replace = replace)
         return self
 
-    def matches(self, conditions: object):
+    def matches(self, conditions: object) -> bool:
         if not isinstance(conditions, DefMap):
             raise TypeError(conditions)
         for key in conditions.defs:
@@ -72,7 +73,7 @@ class DefMap:
                 return False
         return True
 
-    def __eq__(self, other: object):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, DefMap) \
             and self.parent == other.parent \
             and self.skipping == other.skipping \

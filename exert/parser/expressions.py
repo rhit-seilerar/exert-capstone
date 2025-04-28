@@ -4,6 +4,7 @@ from exert.parser.defoption import DefOption
 from exert.parser.definition import Def
 from exert.parser.defmap import DefMap
 from exert.utilities.types.global_types import TokenType, ExpressionTypes
+from typing import cast
 
 class Expression:
     def evaluate(self, evaluator: 'Evaluator') -> 'Expression':
@@ -68,6 +69,7 @@ class UnaryOperator(Operator):
         if isinstance(aint, Wildcard):
             aint.options = set()
             return aint
+        aint = cast(Integer, aint) # This makes the type checker happy, doesn't impact logic
         unsigned = self.signop(aint.unsigned)
         return Integer(self.op(aint.value), unsigned)
 

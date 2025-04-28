@@ -1,16 +1,5 @@
-from _typeshed import Incomplete
-
 class _PPP_CB:
-    callbacks: Incomplete
     def __init__(self) -> None: ...
 
 class PyPlugin:
-    ppp_cbs: Incomplete
-    args: Incomplete
-    pypluginmgr: Incomplete
-    @property
-    def ppp(self): ...
-    @staticmethod
-    def ppp_export(method): ...
-    def get_arg(self, arg_name): ...
-    def get_arg_bool(self, arg_name): ...
+    pass

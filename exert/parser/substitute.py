@@ -1,9 +1,11 @@
 from exert.parser.tokenmanager import TokenManager, tok_seq
 from exert.parser.defoption import DefOption
+from exert.parser.defmap import DefMap
 from exert.utilities.types.global_types import TokenType
+from typing import cast
 
-def substitute(tokmgr: TokenManager, defmap, replmap = None, keys = None):
-    def parse_macro(tokmgr: TokenManager):
+def substitute(tokmgr: TokenManager, defmap: DefMap, replmap: None = None, keys: set[TokenType] | None = None) -> list[TokenType]:
+    def parse_macro(tokmgr: TokenManager) -> tuple[None | TokenType, list[list[TokenType]]]:
         bindex = tokmgr.index
         if tokmgr.peek_type() not in ['identifier', 'keyword']:
             return None, []
@@ -47,7 +49,7 @@ def substitute(tokmgr: TokenManager, defmap, replmap = None, keys = None):
     # Recursively substitute macros with their ANY forms, and track the
     # substitutions in replmap. Each macro will only be expanded once, e.g.
     # '#define ABC ABC' won't infinitely loop.
-    def subst(tokmgr: TokenManager):
+    def subst(tokmgr: TokenManager) -> list[TokenType] | None:
         index = tokmgr.index
         name, params = parse_macro(tokmgr)
         if name is None or name[1] in expansion_stack or defmap[name[1]].is_initial():
@@ -72,11 +74,11 @@ def substitute(tokmgr: TokenManager, defmap, replmap = None, keys = None):
             tokens: list[TokenType] = []
             optmgr = TokenManager(opt.tokens)
             while optmgr.has_next():
-                tokens += subst(optmgr) or [optmgr.next()]
+                tokens += subst(optmgr) or [cast(TokenType, optmgr.next())]
             if tokens:
                 substitutions.add(DefOption(tokens))
         expansion_stack.pop()
-        macroname = name[1]
+        macroname = cast(str, name[1])
         if len(params) > 0:
             macroname += '(' + ', '.join(tok_seq(p) for p in params) + ')'
         # if replmap is not None:
@@ -93,4 +95,4 @@ def substitute(tokmgr: TokenManager, defmap, replmap = None, keys = None):
         return []
 
     result = subst(tokmgr)
-    return [tokmgr.next()] if result is None else result
+    return [cast(TokenType, tokmgr.next())] if result is None else result

@@ -7,7 +7,8 @@ from exert.parser.substitute import substitute
 from exert.parser import expressions
 from exert.parser.tokenmanager import TokenManager, tok_seq, mk_id, mk_op, mk_int
 from exert.utilities.debug import dprint
-from exert.utilities.types.global_types import TokenType
+from exert.utilities.types.global_types import TokenType, ExpressionTypes
+from typing import cast
 
 class DefEvaluator(expressions.Evaluator):
     def __init__(self, bitsize: int, defmap: DefMap):
@@ -68,6 +69,7 @@ class DefEvaluator(expressions.Evaluator):
             keylist = list(keys)
             for index, key in enumerate(keylist):
                 lists.append([])
+                assert self.defs is not None
                 defn = self.defs[key[1]]
                 if not defn.is_defined():
                     lists[-1].append(Def(undefined = True))
