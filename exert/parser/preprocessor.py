@@ -18,8 +18,9 @@ from exert.parser.serializer import write_tokens, read_tokens
 from exert.parser.tokenizer import Tokenizer
 from exert.utilities.debug import dprint
 from exert.utilities.types.global_types import TokenType, TokenType3
+from typing import cast, Self
 
-def read_file(path: str):
+def read_file(path: str) -> (str | None):
     try:
         with open(path, 'r', encoding = 'utf-8') as file:
             return file.read()
@@ -50,7 +51,7 @@ class Preprocessor(TokenManager):
         initdefs['__STDC_VERSION__'] = Def(DefOption([mk_int(202311, 'L')]))
         self.defs = DefState(bitsize, initial = initdefs)
 
-    def load_file(self, path: str, is_relative: bool):
+    def load_file(self, path: str, is_relative: bool) -> bool:
         if self.defs.is_skipping():
             dprint(1.5, '  ' * self.defs.depth() + f'::Skipping {path}')
             return True
@@ -98,7 +99,7 @@ class Preprocessor(TokenManager):
         self.invalid_paths.add(path)
         return True
 
-    def package_emissions(self, is_start: bool = False, is_end: bool = False):
+    def package_emissions(self, is_start: bool = False, is_end: bool = False) -> None:
         if is_start:
             self.defs.layers[-1].blocks = []
             self.defs.layers[-1].emitted = []
@@ -126,7 +127,7 @@ class Preprocessor(TokenManager):
                 self.defs.layers[-2].emitted.append(('any', '',
                     {DefOption(b) for b in blocks}))
 
-    def skip_to_newline(self, offset: int = 0):
+    def skip_to_newline(self, offset: int = 0) -> list[TokenType]:
         tokens: list[TokenType] = []
         while not self.peek_type() == 'newline':
             tokens.append(cast(TokenType, self.next()))
@@ -165,7 +166,7 @@ class Preprocessor(TokenManager):
             params = []
             while True:
                 if (ident := self.parse_identifier()):
-                    params.append(ident)
+                    params.append(cast(str, ident))
                     if self.consume_operator(')'):
                         break
                     if not self.consume_operator(','):
@@ -314,7 +315,7 @@ class Preprocessor(TokenManager):
 
         return result
 
-    def insert(self, tokens: (str | TokenType | list[TokenType])):
+    def insert(self, tokens: (str | TokenType | list[TokenType])) -> None:
         if isinstance(tokens, str):
             tokens = self.tokenizer.tokenize(tokens)
         if isinstance(tokens, tuple):
@@ -336,11 +337,11 @@ class Preprocessor(TokenManager):
             dprint(3, f"::Substituting {tok[0]} '{tok[1]}': {tok_seq(result)}")
         self.emit_tokens(result)
 
-    def emit_tokens(self, tokens: list[TokenType]):
+    def emit_tokens(self, tokens: list[TokenType]) -> None:
         if not self.defs.is_skipping():
             self.defs.layers[-1].emitted += tokens
 
-    def preprocess(self, data: str, cache: str, reset_cache: bool = False):
+    def preprocess(self, data: str, cache: str, reset_cache: bool = False) -> Self:
         super().reset()
         self.conditions: list[TokenType] = []
         self.file = ''
@@ -392,7 +393,7 @@ class Preprocessor(TokenManager):
 
         return self
 
-    def load(self, cache: str):
+    def load(self, cache: str) -> Self:
         self.tokens = read_tokens(cache)
         return self
 

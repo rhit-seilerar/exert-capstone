@@ -1,2153 +1,2249 @@
 from enum import IntEnum
+from collections.abc import Callable
 import ctypes
-from typing import TYPE_CHECKING
+class ARMGenericTimer:
+    cval: int
+    ctl: int
 
-if TYPE_CHECKING:
-    Function = ctypes._CFunctionType
-else:
-    Function = ctypes._CFuncPtr
-
-class CStructure(ctypes.Structure):
-    def __init__(self):
-        self.fields = []
-        for key in self.__annotations__:
-            self.fields.append((key, self.__annotations__[key]))
-
-class CUnion(ctypes.Union):
-    def __init__(self):
-        self.fields = []
-        for key in self.__annotations__:
-            self.fields.append((key, self.__annotations__[key]))
-
-class ARMGenericTimer(CStructure):
-    cval: 'ctypes.c_ulong'
-    ctl: 'ctypes.c_ulong'
-
-class AccelState(CStructure):
+class AccelState:
     parent_obj: 'Object'
 
-class Addr(CStructure):
-    typ: 'ctypes.c_int'
-    val: 'ctypes.c_ulong'
-    off: 'ctypes.c_ushort'
-    flag: 'ctypes.c_int'
+class Addr:
+    typ: 'AddrType'
+    val: int
+    off: int
+    flag: 'AddrFlag'
 
-AddrFlag:ctypes.c_int
-class AddrRange(CStructure):
-    start: 'ctypes.Array[ctypes.c_ubyte]'
-    size: 'ctypes.Array[ctypes.c_ubyte]'
+class AddrFlag(IntEnum):
+    FUNCARG = 3
+    READLOG = 2
+    EXCEPTION = 1
+    IRRELEVANT = 5
 
-AddrType:ctypes.c_int
-class AddressSpace(CStructure):
+class AddrRange:
+    start: list[int]
+    size: list[int]
+
+class AddrType(IntEnum):
+    ADDR_LAST = 10
+    RET = 9
+    CONST = 8
+    UNK = 7
+    GSPEC = 6
+    GREG = 5
+    LADDR = 4
+    PADDR = 3
+    IADDR = 2
+    MADDR = 1
+    HADDR = 0
+
+class AddressSpace:
     rcu: 'rcu_head'
-    name: 'ctypes._Pointer[ctypes.c_char]'
-    root: 'ctypes._Pointer[MemoryRegion]'
-    ref_count: 'ctypes.c_int'
-    malloced: 'ctypes.c_bool'
-    current_map: 'ctypes._Pointer[FlatView]'
-    ioeventfd_nb: 'ctypes.c_int'
-    ioeventfds: 'ctypes._Pointer[MemoryRegionIoeventfd]'
-    dispatch: 'ctypes._Pointer[AddressSpaceDispatch]'
-    next_dispatch: 'ctypes._Pointer[AddressSpaceDispatch]'
+    name: bytes
+    root: 'MemoryRegion'
+    ref_count: int
+    malloced: bool
+    current_map: 'FlatView'
+    ioeventfd_nb: int
+    ioeventfds: 'MemoryRegionIoeventfd'
+    dispatch: 'AddressSpaceDispatch'
+    next_dispatch: 'AddressSpaceDispatch'
     dispatch_listener: 'MemoryListener'
     listeners: 'memory_listeners_as'
-    class internal_7(CStructure):
-        tqe_next: 'ctypes._Pointer[AddressSpace]'
-        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[AddressSpace]]'
+    class internal_7:
+        tqe_next: 'AddressSpace'
+        tqe_prev: 'AddressSpace'
 
-    address_spaces_link: 'internal_7'
+    address_spaces_link: internal_7
 
 BlockCompletionFunc: None
-class BusState(CStructure):
+class BusState:
     obj: 'Object'
-    parent: 'ctypes._Pointer[DeviceState]'
-    name: 'ctypes._Pointer[ctypes.c_char]'
-    hotplug_handler: 'ctypes._Pointer[HotplugHandler]'
-    max_index: 'ctypes.c_int'
-    realized: 'ctypes.c_bool'
+    parent: 'DeviceState'
+    name: bytes
+    hotplug_handler: 'HotplugHandler'
+    max_index: int
+    realized: bool
     children: 'ChildrenHead'
-    class internal_21(CStructure):
-        le_next: 'ctypes._Pointer[BusState]'
-        le_prev: 'ctypes._Pointer[ctypes._Pointer[BusState]]'
+    class internal_21:
+        le_next: 'BusState'
+        le_prev: 'BusState'
 
-    sibling: 'internal_21'
+    sibling: internal_21
 
-class CPUARMState(CStructure):
-    regs: 'ctypes.Array[ctypes.c_uint]'
-    xregs: 'ctypes.Array[ctypes.c_ulong]'
-    pc: 'ctypes.c_ulong'
-    pstate: 'ctypes.c_uint'
-    aarch64: 'ctypes.c_uint'
-    uncached_cpsr: 'ctypes.c_uint'
-    spsr: 'ctypes.c_uint'
-    banked_spsr: 'ctypes.Array[ctypes.c_ulong]'
-    banked_r13: 'ctypes.Array[ctypes.c_uint]'
-    banked_r14: 'ctypes.Array[ctypes.c_uint]'
-    usr_regs: 'ctypes.Array[ctypes.c_uint]'
-    fiq_regs: 'ctypes.Array[ctypes.c_uint]'
-    CF: 'ctypes.c_uint'
-    VF: 'ctypes.c_uint'
-    NF: 'ctypes.c_uint'
-    ZF: 'ctypes.c_uint'
-    QF: 'ctypes.c_uint'
-    GE: 'ctypes.c_uint'
-    thumb: 'ctypes.c_uint'
-    condexec_bits: 'ctypes.c_uint'
-    daif: 'ctypes.c_ulong'
-    elr_el: 'ctypes.Array[ctypes.c_ulong]'
-    sp_el: 'ctypes.Array[ctypes.c_ulong]'
-    class internal_22(CStructure):
-        c0_cpuid: 'ctypes.c_uint'
-        _unused_csselr0: 'ctypes.c_ulong'
-        csselr_ns: 'ctypes.c_ulong'
-        _unused_csselr1: 'ctypes.c_ulong'
-        csselr_s: 'ctypes.c_ulong'
-        csselr_el: 'ctypes.Array[ctypes.c_ulong]'
-        _unused_sctlr: 'ctypes.c_ulong'
-        sctlr_ns: 'ctypes.c_ulong'
-        hsctlr: 'ctypes.c_ulong'
-        sctlr_s: 'ctypes.c_ulong'
-        sctlr_el: 'ctypes.Array[ctypes.c_ulong]'
-        cpacr_el1: 'ctypes.c_ulong'
-        cptr_el: 'ctypes.Array[ctypes.c_ulong]'
-        c1_xscaleauxcr: 'ctypes.c_uint'
-        sder: 'ctypes.c_ulong'
-        nsacr: 'ctypes.c_uint'
-        _unused_ttbr0_0: 'ctypes.c_ulong'
-        ttbr0_ns: 'ctypes.c_ulong'
-        _unused_ttbr0_1: 'ctypes.c_ulong'
-        ttbr0_s: 'ctypes.c_ulong'
-        ttbr0_el: 'ctypes.Array[ctypes.c_ulong]'
-        _unused_ttbr1_0: 'ctypes.c_ulong'
-        ttbr1_ns: 'ctypes.c_ulong'
-        _unused_ttbr1_1: 'ctypes.c_ulong'
-        ttbr1_s: 'ctypes.c_ulong'
-        ttbr1_el: 'ctypes.Array[ctypes.c_ulong]'
-        vttbr_el2: 'ctypes.c_ulong'
-        tcr_el: 'ctypes.Array[TCR]'
+class CPUARMState:
+    regs: list[int]
+    xregs: list[int]
+    pc: int
+    pstate: int
+    aarch64: int
+    uncached_cpsr: int
+    spsr: int
+    banked_spsr: list[int]
+    banked_r13: list[int]
+    banked_r14: list[int]
+    usr_regs: list[int]
+    fiq_regs: list[int]
+    CF: int
+    VF: int
+    NF: int
+    ZF: int
+    QF: int
+    GE: int
+    thumb: int
+    condexec_bits: int
+    daif: int
+    elr_el: list[int]
+    sp_el: list[int]
+    class internal_22:
+        c0_cpuid: int
+        _unused_csselr0: int
+        csselr_ns: int
+        _unused_csselr1: int
+        csselr_s: int
+        csselr_el: list[int]
+        _unused_sctlr: int
+        sctlr_ns: int
+        hsctlr: int
+        sctlr_s: int
+        sctlr_el: list[int]
+        cpacr_el1: int
+        cptr_el: list[int]
+        c1_xscaleauxcr: int
+        sder: int
+        nsacr: int
+        _unused_ttbr0_0: int
+        ttbr0_ns: int
+        _unused_ttbr0_1: int
+        ttbr0_s: int
+        ttbr0_el: list[int]
+        _unused_ttbr1_0: int
+        ttbr1_ns: int
+        _unused_ttbr1_1: int
+        ttbr1_s: int
+        ttbr1_el: list[int]
+        vttbr_el2: int
+        tcr_el: list['TCR']
         vtcr_el2: 'TCR'
-        c2_data: 'ctypes.c_uint'
-        c2_insn: 'ctypes.c_uint'
-        dacr_ns: 'ctypes.c_ulong'
-        dacr_s: 'ctypes.c_ulong'
-        dacr32_el2: 'ctypes.c_ulong'
-        pmsav5_data_ap: 'ctypes.c_uint'
-        pmsav5_insn_ap: 'ctypes.c_uint'
-        hcr_el2: 'ctypes.c_ulong'
-        scr_el3: 'ctypes.c_ulong'
-        ifsr_ns: 'ctypes.c_ulong'
-        ifsr_s: 'ctypes.c_ulong'
-        ifsr32_el2: 'ctypes.c_ulong'
-        _unused_dfsr: 'ctypes.c_ulong'
-        dfsr_ns: 'ctypes.c_ulong'
-        hsr: 'ctypes.c_ulong'
-        dfsr_s: 'ctypes.c_ulong'
-        esr_el: 'ctypes.Array[ctypes.c_ulong]'
-        c6_region: 'ctypes.Array[ctypes.c_uint]'
-        _unused_far0: 'ctypes.c_ulong'
-        dfar_ns: 'ctypes.c_uint'
-        ifar_ns: 'ctypes.c_uint'
-        dfar_s: 'ctypes.c_uint'
-        ifar_s: 'ctypes.c_uint'
-        _unused_far3: 'ctypes.c_ulong'
-        far_el: 'ctypes.Array[ctypes.c_ulong]'
-        hpfar_el2: 'ctypes.c_ulong'
-        hstr_el2: 'ctypes.c_ulong'
-        _unused_par_0: 'ctypes.c_ulong'
-        par_ns: 'ctypes.c_ulong'
-        _unused_par_1: 'ctypes.c_ulong'
-        par_s: 'ctypes.c_ulong'
-        par_el: 'ctypes.Array[ctypes.c_ulong]'
-        c6_rgnr: 'ctypes.c_uint'
-        c9_insn: 'ctypes.c_uint'
-        c9_data: 'ctypes.c_uint'
-        c9_pmcr: 'ctypes.c_ulong'
-        c9_pmcnten: 'ctypes.c_ulong'
-        c9_pmovsr: 'ctypes.c_uint'
-        c9_pmuserenr: 'ctypes.c_uint'
-        c9_pmselr: 'ctypes.c_ulong'
-        c9_pminten: 'ctypes.c_ulong'
-        _unused_mair_0: 'ctypes.c_ulong'
-        mair0_ns: 'ctypes.c_uint'
-        mair1_ns: 'ctypes.c_uint'
-        _unused_mair_1: 'ctypes.c_ulong'
-        mair0_s: 'ctypes.c_uint'
-        mair1_s: 'ctypes.c_uint'
-        mair_el: 'ctypes.Array[ctypes.c_ulong]'
-        _unused_vbar: 'ctypes.c_ulong'
-        vbar_ns: 'ctypes.c_ulong'
-        hvbar: 'ctypes.c_ulong'
-        vbar_s: 'ctypes.c_ulong'
-        vbar_el: 'ctypes.Array[ctypes.c_ulong]'
-        mvbar: 'ctypes.c_uint'
-        fcseidr_ns: 'ctypes.c_uint'
-        fcseidr_s: 'ctypes.c_uint'
-        _unused_contextidr_0: 'ctypes.c_ulong'
-        contextidr_ns: 'ctypes.c_ulong'
-        _unused_contextidr_1: 'ctypes.c_ulong'
-        contextidr_s: 'ctypes.c_ulong'
-        contextidr_el: 'ctypes.Array[ctypes.c_ulong]'
-        tpidrurw_ns: 'ctypes.c_ulong'
-        tpidrprw_ns: 'ctypes.c_ulong'
-        htpidr: 'ctypes.c_ulong'
-        _tpidr_el3: 'ctypes.c_ulong'
-        tpidr_el: 'ctypes.Array[ctypes.c_ulong]'
-        tpidrurw_s: 'ctypes.c_ulong'
-        tpidrprw_s: 'ctypes.c_ulong'
-        tpidruro_s: 'ctypes.c_ulong'
-        tpidruro_ns: 'ctypes.c_ulong'
-        tpidrro_el: 'ctypes.Array[ctypes.c_ulong]'
-        c14_cntfrq: 'ctypes.c_ulong'
-        c14_cntkctl: 'ctypes.c_ulong'
-        cnthctl_el2: 'ctypes.c_uint'
-        cntvoff_el2: 'ctypes.c_ulong'
-        c14_timer: 'ctypes.Array[ARMGenericTimer]'
-        c15_cpar: 'ctypes.c_uint'
-        c15_ticonfig: 'ctypes.c_uint'
-        c15_i_max: 'ctypes.c_uint'
-        c15_i_min: 'ctypes.c_uint'
-        c15_threadid: 'ctypes.c_uint'
-        c15_config_base_address: 'ctypes.c_uint'
-        c15_diagnostic: 'ctypes.c_uint'
-        c15_power_diagnostic: 'ctypes.c_uint'
-        c15_power_control: 'ctypes.c_uint'
-        dbgbvr: 'ctypes.Array[ctypes.c_ulong]'
-        dbgbcr: 'ctypes.Array[ctypes.c_ulong]'
-        dbgwvr: 'ctypes.Array[ctypes.c_ulong]'
-        dbgwcr: 'ctypes.Array[ctypes.c_ulong]'
-        mdscr_el1: 'ctypes.c_ulong'
-        oslsr_el1: 'ctypes.c_ulong'
-        mdcr_el2: 'ctypes.c_ulong'
-        mdcr_el3: 'ctypes.c_ulong'
-        c15_ccnt: 'ctypes.c_ulong'
-        pmccfiltr_el0: 'ctypes.c_ulong'
-        vpidr_el2: 'ctypes.c_ulong'
-        vmpidr_el2: 'ctypes.c_ulong'
+        c2_data: int
+        c2_insn: int
+        dacr_ns: int
+        dacr_s: int
+        dacr32_el2: int
+        pmsav5_data_ap: int
+        pmsav5_insn_ap: int
+        hcr_el2: int
+        scr_el3: int
+        ifsr_ns: int
+        ifsr_s: int
+        ifsr32_el2: int
+        _unused_dfsr: int
+        dfsr_ns: int
+        hsr: int
+        dfsr_s: int
+        esr_el: list[int]
+        c6_region: list[int]
+        _unused_far0: int
+        dfar_ns: int
+        ifar_ns: int
+        dfar_s: int
+        ifar_s: int
+        _unused_far3: int
+        far_el: list[int]
+        hpfar_el2: int
+        hstr_el2: int
+        _unused_par_0: int
+        par_ns: int
+        _unused_par_1: int
+        par_s: int
+        par_el: list[int]
+        c6_rgnr: int
+        c9_insn: int
+        c9_data: int
+        c9_pmcr: int
+        c9_pmcnten: int
+        c9_pmovsr: int
+        c9_pmuserenr: int
+        c9_pmselr: int
+        c9_pminten: int
+        _unused_mair_0: int
+        mair0_ns: int
+        mair1_ns: int
+        _unused_mair_1: int
+        mair0_s: int
+        mair1_s: int
+        mair_el: list[int]
+        _unused_vbar: int
+        vbar_ns: int
+        hvbar: int
+        vbar_s: int
+        vbar_el: list[int]
+        mvbar: int
+        fcseidr_ns: int
+        fcseidr_s: int
+        _unused_contextidr_0: int
+        contextidr_ns: int
+        _unused_contextidr_1: int
+        contextidr_s: int
+        contextidr_el: list[int]
+        tpidrurw_ns: int
+        tpidrprw_ns: int
+        htpidr: int
+        _tpidr_el3: int
+        tpidr_el: list[int]
+        tpidrurw_s: int
+        tpidrprw_s: int
+        tpidruro_s: int
+        tpidruro_ns: int
+        tpidrro_el: list[int]
+        c14_cntfrq: int
+        c14_cntkctl: int
+        cnthctl_el2: int
+        cntvoff_el2: int
+        c14_timer: list['ARMGenericTimer']
+        c15_cpar: int
+        c15_ticonfig: int
+        c15_i_max: int
+        c15_i_min: int
+        c15_threadid: int
+        c15_config_base_address: int
+        c15_diagnostic: int
+        c15_power_diagnostic: int
+        c15_power_control: int
+        dbgbvr: list[int]
+        dbgbcr: list[int]
+        dbgwvr: list[int]
+        dbgwcr: list[int]
+        mdscr_el1: int
+        oslsr_el1: int
+        mdcr_el2: int
+        mdcr_el3: int
+        c15_ccnt: int
+        pmccfiltr_el0: int
+        vpidr_el2: int
+        vmpidr_el2: int
 
-    cp15: 'internal_22'
-    class internal_53(CStructure):
-        other_sp: 'ctypes.c_uint'
-        vecbase: 'ctypes.c_uint'
-        basepri: 'ctypes.c_uint'
-        control: 'ctypes.c_uint'
-        ccr: 'ctypes.c_uint'
-        cfsr: 'ctypes.c_uint'
-        hfsr: 'ctypes.c_uint'
-        dfsr: 'ctypes.c_uint'
-        mmfar: 'ctypes.c_uint'
-        bfar: 'ctypes.c_uint'
-        exception: 'ctypes.c_int'
+    cp15: internal_22
+    class internal_53:
+        other_sp: int
+        vecbase: int
+        basepri: int
+        control: int
+        ccr: int
+        cfsr: int
+        hfsr: int
+        dfsr: int
+        mmfar: int
+        bfar: int
+        exception: int
 
-    v7m: 'internal_53'
-    class internal_54(CStructure):
-        syndrome: 'ctypes.c_uint'
-        fsr: 'ctypes.c_uint'
-        vaddress: 'ctypes.c_ulong'
-        target_el: 'ctypes.c_uint'
+    v7m: internal_53
+    class internal_54:
+        syndrome: int
+        fsr: int
+        vaddress: int
+        target_el: int
 
-    exception: 'internal_54'
-    teecr: 'ctypes.c_uint'
-    teehbr: 'ctypes.c_uint'
-    class internal_55(CStructure):
-        regs: 'ctypes.Array[ctypes.c_ulong]'
-        xregs: 'ctypes.Array[ctypes.c_uint]'
-        vec_len: 'ctypes.c_int'
-        vec_stride: 'ctypes.c_int'
-        scratch: 'ctypes.Array[ctypes.c_uint]'
+    exception: internal_54
+    teecr: int
+    teehbr: int
+    class internal_55:
+        regs: list[int]
+        xregs: list[int]
+        vec_len: int
+        vec_stride: int
+        scratch: list[int]
         fp_status: 'float_status'
         standard_fp_status: 'float_status'
 
-    vfp: 'internal_55'
-    exclusive_addr: 'ctypes.c_ulong'
-    exclusive_val: 'ctypes.c_ulong'
-    exclusive_high: 'ctypes.c_ulong'
-    class internal_56(CStructure):
-        regs: 'ctypes.Array[ctypes.c_ulong]'
-        val: 'ctypes.c_ulong'
-        cregs: 'ctypes.Array[ctypes.c_uint]'
+    vfp: internal_55
+    exclusive_addr: int
+    exclusive_val: int
+    exclusive_high: int
+    class internal_56:
+        regs: list[int]
+        val: int
+        cregs: list[int]
 
-    iwmmxt: 'internal_56'
-    cpu_breakpoint: 'ctypes.Array[ctypes._Pointer[CPUBreakpoint]]'
-    cpu_watchpoint: 'ctypes.Array[ctypes._Pointer[CPUWatchpoint]]'
-    tlb_table: 'ctypes.Array[ctypes.Array[CPUTLBEntry]]'
-    tlb_v_table: 'ctypes.Array[ctypes.Array[CPUTLBEntry]]'
-    iotlb: 'ctypes.Array[ctypes.Array[CPUIOTLBEntry]]'
-    iotlb_v: 'ctypes.Array[ctypes.Array[CPUIOTLBEntry]]'
-    tlb_flush_addr: 'ctypes.c_uint'
-    tlb_flush_mask: 'ctypes.c_uint'
-    vtlb_index: 'ctypes.c_uint'
-    features: 'ctypes.c_ulong'
-    class internal_57(CStructure):
-        drbar: 'ctypes._Pointer[ctypes.c_uint]'
-        drsr: 'ctypes._Pointer[ctypes.c_uint]'
-        dracr: 'ctypes._Pointer[ctypes.c_uint]'
+    iwmmxt: internal_56
+    cpu_breakpoint: list['CPUBreakpoint']
+    cpu_watchpoint: list['CPUWatchpoint']
+    tlb_table: list[list['CPUTLBEntry']]
+    tlb_v_table: list[list['CPUTLBEntry']]
+    iotlb: list[list['CPUIOTLBEntry']]
+    iotlb_v: list[list['CPUIOTLBEntry']]
+    tlb_flush_addr: int
+    tlb_flush_mask: int
+    vtlb_index: int
+    features: int
+    class internal_57:
+        drbar: int
+        drsr: int
+        dracr: int
 
-    pmsav7: 'internal_57'
-    nvic: 'ctypes.c_void_p'
-    boot_info: 'ctypes._Pointer[arm_boot_info]'
-    gicv3state: 'ctypes.c_void_p'
+    pmsav7: internal_57
+    nvic: ctypes.c_void_p
+    boot_info: 'arm_boot_info'
+    gicv3state: ctypes.c_void_p
 
-class CPUAddressSpace(CStructure):
-    cpu: 'ctypes._Pointer[CPUState]'
-    memory_dispatch: 'ctypes._Pointer[AddressSpaceDispatch]'
+class CPUAddressSpace:
+    cpu: 'CPUState'
+    memory_dispatch: 'AddressSpaceDispatch'
     tcg_as_listener: 'MemoryListener'
 
-CPUArchIdList: ctypes.c_ulong
-class CPUBreakpoint(CStructure):
-    pc: 'ctypes.c_ulong'
-    rr_instr_count: 'ctypes.c_ulong'
-    flags: 'ctypes.c_int'
+CPUArchIdList: int
+class CPUBreakpoint:
+    pc: int
+    rr_instr_count: int
+    flags: int
     entry: 'CPUBreakpoint_qtailq'
 
-class CPUBreakpoint_qtailq(CStructure):
-    tqe_next: 'ctypes._Pointer[CPUBreakpoint]'
-    tqe_prev: 'ctypes._Pointer[ctypes._Pointer[CPUBreakpoint]]'
+class CPUBreakpoint_qtailq:
+    tqe_next: 'CPUBreakpoint'
+    tqe_prev: 'CPUBreakpoint'
 
-class CPUIOTLBEntry(CStructure):
-    addr: 'ctypes.c_ulong'
+class CPUIOTLBEntry:
+    addr: int
     attrs: 'MemTxAttrs'
 
-CPUReadMemoryFunc: ctypes.c_uint
-class CPUState(CStructure):
+CPUReadMemoryFunc: int
+class CPUState:
     parent_obj: 'DeviceState'
-    nr_cores: 'ctypes.c_int'
-    nr_threads: 'ctypes.c_int'
-    numa_node: 'ctypes.c_int'
-    thread: 'ctypes._Pointer[QemuThread]'
-    thread_id: 'ctypes.c_int'
-    host_tid: 'ctypes.c_uint'
-    running: 'ctypes.c_bool'
-    has_waiter: 'ctypes.c_bool'
-    halt_cond: 'ctypes._Pointer[QemuCond]'
-    thread_kicked: 'ctypes.c_bool'
-    created: 'ctypes.c_bool'
-    stop: 'ctypes.c_bool'
-    stopped: 'ctypes.c_bool'
-    unplug: 'ctypes.c_bool'
-    crash_occurred: 'ctypes.c_bool'
-    exit_request: 'ctypes.c_bool'
-    interrupt_request: 'ctypes.c_uint'
-    singlestep_enabled: 'ctypes.c_int'
-    icount_budget: 'ctypes.c_long'
-    icount_extra: 'ctypes.c_long'
-    jmp_env: 'ctypes.Array[ctypes.c_ubyte]'
+    nr_cores: int
+    nr_threads: int
+    numa_node: int
+    thread: 'QemuThread'
+    thread_id: int
+    host_tid: int
+    running: bool
+    has_waiter: bool
+    halt_cond: 'QemuCond'
+    thread_kicked: bool
+    created: bool
+    stop: bool
+    stopped: bool
+    unplug: bool
+    crash_occurred: bool
+    exit_request: bool
+    interrupt_request: int
+    singlestep_enabled: int
+    icount_budget: int
+    icount_extra: int
+    jmp_env: list[int]
     work_mutex: 'QemuMutex'
-    queued_work_first: 'ctypes._Pointer[qemu_work_item]'
-    queued_work_last: 'ctypes._Pointer[qemu_work_item]'
-    cpu_ases: 'ctypes._Pointer[CPUAddressSpace]'
-    num_ases: 'ctypes.c_int'
-    memory: 'ctypes._Pointer[MemoryRegion]'
-    env_ptr: 'ctypes._Pointer[CPUARMState]'
-    tb_jmp_cache: 'ctypes.Array[ctypes._Pointer[TranslationBlock]]'
-    gdb_regs: 'ctypes._Pointer[GDBRegisterState]'
-    gdb_num_regs: 'ctypes.c_int'
-    gdb_num_g_regs: 'ctypes.c_int'
-    class internal_58(CStructure):
-        tqe_next: 'ctypes._Pointer[CPUState]'
-        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[CPUState]]'
+    queued_work_first: 'qemu_work_item'
+    queued_work_last: 'qemu_work_item'
+    cpu_ases: 'CPUAddressSpace'
+    num_ases: int
+    memory: 'MemoryRegion'
+    env_ptr: 'CPUARMState'
+    tb_jmp_cache: list['TranslationBlock']
+    gdb_regs: 'GDBRegisterState'
+    gdb_num_regs: int
+    gdb_num_g_regs: int
+    class internal_58:
+        tqe_next: 'CPUState'
+        tqe_prev: 'CPUState'
 
-    node: 'internal_58'
+    node: internal_58
     breakpoints: 'breakpoints_head'
     watchpoints: 'watchpoints_head'
-    watchpoint_hit: 'ctypes._Pointer[CPUWatchpoint]'
-    watchpoints_disabled: 'ctypes.c_bool'
-    opaque: 'ctypes.c_void_p'
-    mem_io_pc: 'ctypes.c_ulong'
-    mem_io_vaddr: 'ctypes.c_ulong'
-    kvm_fd: 'ctypes.c_int'
-    kvm_vcpu_dirty: 'ctypes.c_bool'
-    kvm_state: 'ctypes._Pointer[KVMState]'
-    kvm_run: 'ctypes._Pointer[kvm_run]'
-    trace_dstate: 'ctypes._Pointer[ctypes.c_ulong]'
-    cpu_index: 'ctypes.c_int'
-    halted: 'ctypes.c_uint'
-    class internal_59(CUnion):
-        u32: 'ctypes.c_uint'
+    watchpoint_hit: 'CPUWatchpoint'
+    watchpoints_disabled: bool
+    opaque: ctypes.c_void_p
+    mem_io_pc: int
+    mem_io_vaddr: int
+    kvm_fd: int
+    kvm_vcpu_dirty: bool
+    kvm_state: 'KVMState'
+    kvm_run: 'kvm_run'
+    trace_dstate: int
+    cpu_index: int
+    halted: int
+    class internal_59:
+        u32: int
         u16: 'icount_decr_u16'
 
-    icount_decr: 'internal_59'
-    can_do_io: 'ctypes.c_uint'
-    exception_index: 'ctypes.c_int'
-    rr_guest_instr_count: 'ctypes.c_ulong'
-    panda_guest_pc: 'ctypes.c_ulong'
-    reverse_flags: 'ctypes.c_ubyte'
-    last_gdb_instr: 'ctypes.c_ulong'
-    last_bp_hit_instr: 'ctypes.c_ulong'
-    temp_rr_bp_instr: 'ctypes.c_ulong'
-    throttle_thread_scheduled: 'ctypes.c_bool'
-    tcg_exit_req: 'ctypes.c_uint'
-    hax_vcpu_dirty: 'ctypes.c_bool'
-    hax_vcpu: 'ctypes._Pointer[hax_vcpu_state]'
-    pending_tlb_flush: 'ctypes.c_ushort'
+    icount_decr: internal_59
+    can_do_io: int
+    exception_index: int
+    rr_guest_instr_count: int
+    panda_guest_pc: int
+    reverse_flags: int
+    last_gdb_instr: int
+    last_bp_hit_instr: int
+    temp_rr_bp_instr: int
+    throttle_thread_scheduled: bool
+    tcg_exit_req: int
+    hax_vcpu_dirty: bool
+    hax_vcpu: 'hax_vcpu_state'
+    pending_tlb_flush: int
 
-class CPUTLBEntry(CStructure):
-    addr_read: 'ctypes.c_uint'
-    addr_write: 'ctypes.c_uint'
-    addr_code: 'ctypes.c_uint'
-    addend: 'ctypes.c_ulong'
-    dummy: 'ctypes.Array[ctypes.c_ubyte]'
+class CPUTLBEntry:
+    addr_read: int
+    addr_write: int
+    addr_code: int
+    addend: int
+    dummy: list[int]
 
-class CPUWatchpoint(CStructure):
-    virtaddr: 'ctypes.c_ulong'
-    len: 'ctypes.c_ulong'
-    hitaddr: 'ctypes.c_ulong'
+class CPUWatchpoint:
+    virtaddr: int
+    len: int
+    hitaddr: int
     hitattrs: 'MemTxAttrs'
-    flags: 'ctypes.c_int'
-    class internal_6(CStructure):
-        tqe_next: 'ctypes._Pointer[CPUWatchpoint]'
-        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[CPUWatchpoint]]'
+    flags: int
+    class internal_6:
+        tqe_next: 'CPUWatchpoint'
+        tqe_prev: 'CPUWatchpoint'
 
-    entry: 'internal_6'
+    entry: internal_6
 
 CPUWriteMemoryFunc: None
-class CharBackend(CStructure):
-    chr: 'ctypes._Pointer[Chardev]'
-    chr_event: 'Function'
-    chr_can_read: 'Function'
-    chr_read: 'Function'
-    opaque: 'ctypes.c_void_p'
-    tag: 'ctypes.c_int'
-    fe_open: 'ctypes.c_int'
+class CharBackend:
+    chr: 'Chardev'
+    chr_event: Callable[[ctypes.c_void_p, int], None]
+    chr_can_read: Callable[[ctypes.c_void_p], int]
+    chr_read: Callable[[ctypes.c_void_p, int, int], None]
+    opaque: ctypes.c_void_p
+    tag: int
+    fe_open: int
 
-class Chardev(CStructure):
+class Chardev:
     parent_obj: 'Object'
     chr_write_lock: 'QemuMutex'
-    be: 'ctypes._Pointer[CharBackend]'
-    label: 'ctypes._Pointer[ctypes.c_char]'
-    filename: 'ctypes._Pointer[ctypes.c_char]'
-    logfd: 'ctypes.c_int'
-    be_open: 'ctypes.c_int'
-    fd_in_tag: 'ctypes.c_uint'
-    features: 'ctypes.Array[ctypes.c_ulong]'
-    class internal_18(CStructure):
-        tqe_next: 'ctypes._Pointer[Chardev]'
-        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[Chardev]]'
+    be: 'CharBackend'
+    label: bytes
+    filename: bytes
+    logfd: int
+    be_open: int
+    fd_in_tag: int
+    features: list[int]
+    class internal_18:
+        tqe_next: 'Chardev'
+        tqe_prev: 'Chardev'
 
-    next: 'internal_18'
+    next: internal_18
 
-class ChildrenHead(CStructure):
-    tqh_first: 'ctypes._Pointer[BusChild]'
-    tqh_last: 'ctypes._Pointer[ctypes._Pointer[BusChild]]'
+class ChildrenHead:
+    tqh_first: 'BusChild'
+    tqh_last: 'BusChild'
 
-Const: ctypes.c_ulong
-class CosiFile(CStructure):
-    addr: 'ctypes.c_uint'
+Const: int
+class CosiFile:
+    addr: int
     file_struct: 'File'
-    name: 'ctypes._Pointer[String]'
-    fd: 'ctypes.c_uint'
+    name: 'String'
+    fd: int
 
-class CosiFiles(CStructure):
+class CosiFiles:
     pass
 
-class CosiMappings(CStructure):
-    modules: 'ctypes._Pointer[Vec_CosiModule]'
+class CosiMappings:
+    modules: 'Vec_CosiModule'
 
-class CosiModule(CStructure):
-    modd: 'ctypes.c_uint'
-    base: 'ctypes.c_uint'
-    size: 'ctypes.c_uint'
+class CosiModule:
+    modd: int
+    base: int
+    size: int
     vma: 'VmAreaStruct'
-    file: 'ctypes._Pointer[String]'
-    name: 'ctypes._Pointer[String]'
+    file: 'String'
+    name: 'String'
 
-class CosiProc(CStructure):
-    addr: 'ctypes.c_uint'
+class CosiProc:
+    addr: int
     task: 'TaskStruct'
-    name: 'ctypes._Pointer[String]'
-    ppid: 'ctypes.c_uint'
-    mm: 'ctypes._Pointer[MmStruct]'
-    asid: 'ctypes.c_uint'
-    taskd: 'ctypes.c_uint'
+    name: 'String'
+    ppid: int
+    mm: 'MmStruct'
+    asid: int
+    taskd: int
 
-class CosiThread(CStructure):
-    tid: 'ctypes.c_uint'
-    pid: 'ctypes.c_uint'
+class CosiThread:
+    tid: int
+    pid: int
 
-class DeviceState(CStructure):
+class DeviceState:
     parent_obj: 'Object'
-    id: 'ctypes._Pointer[ctypes.c_char]'
-    realized: 'ctypes.c_bool'
-    pending_deleted_event: 'ctypes.c_bool'
-    opts: 'ctypes._Pointer[QemuOpts]'
-    hotplugged: 'ctypes.c_int'
-    parent_bus: 'ctypes._Pointer[BusState]'
-    class internal_16(CStructure):
-        lh_first: 'ctypes._Pointer[NamedGPIOList]'
+    id: bytes
+    realized: bool
+    pending_deleted_event: bool
+    opts: 'QemuOpts'
+    hotplugged: int
+    parent_bus: 'BusState'
+    class internal_16:
+        lh_first: 'NamedGPIOList'
 
-    gpios: 'internal_16'
-    class internal_17(CStructure):
-        lh_first: 'ctypes._Pointer[BusState]'
+    gpios: internal_16
+    class internal_17:
+        lh_first: 'BusState'
 
-    child_bus: 'internal_17'
-    num_child_bus: 'ctypes.c_int'
-    instance_id_alias: 'ctypes.c_int'
-    alias_required_for_version: 'ctypes.c_int'
+    child_bus: internal_17
+    num_child_bus: int
+    instance_id_alias: int
+    alias_required_for_version: int
 
-class EventNotifier(CStructure):
-    rfd: 'ctypes.c_int'
-    wfd: 'ctypes.c_int'
+class EventNotifier:
+    rfd: int
+    wfd: int
 
-class FILE(CStructure):
+class FILE:
     pass
 
-FPReg: ctypes.Array[ctypes.c_ubyte]
-FeatureWordArray: ctypes.Array[ctypes.c_uint]
-class File(CStructure):
+FPReg: list[int]
+FeatureWordArray: list[int]
+class File:
     f_path: 'Path'
-    f_pos: 'ctypes.c_uint'
+    f_pos: int
 
 GArray: None
-class GDBRegisterState(CStructure):
-    base_reg: 'ctypes.c_int'
-    num_regs: 'ctypes.c_int'
-    get_reg: 'ctypes.c_int'
-    set_reg: 'ctypes.c_int'
-    xml: 'ctypes._Pointer[ctypes.c_char]'
-    next: 'ctypes._Pointer[GDBRegisterState]'
+class GDBRegisterState:
+    base_reg: int
+    num_regs: int
+    get_reg: int
+    set_reg: int
+    xml: bytes
+    next: 'GDBRegisterState'
 
-class GHashTable(CStructure):
+class GHashTable:
     pass
 
-GReg: ctypes.c_ulong
-GSpec: ctypes.c_ulong
-HAddr: ctypes.c_ulong
-class HotplugHandler(CStructure):
+GReg: int
+GSpec: int
+HAddr: int
+class HotplugHandler:
     Parent: 'Object'
 
-IAddr: ctypes.c_ulong
-IOCanReadHandler: ctypes.c_int
+IAddr: int
+IOCanReadHandler: int
 IOEventHandler: None
-IOMMUAccessFlags:ctypes.c_int
-IOMMUNotifierFlag:ctypes.c_int
-class IOMMUTLBEntry(CStructure):
-    target_as: 'ctypes._Pointer[AddressSpace]'
-    iova: 'ctypes.c_ulong'
-    translated_addr: 'ctypes.c_ulong'
-    addr_mask: 'ctypes.c_ulong'
-    perm: 'ctypes.c_int'
+class IOMMUAccessFlags(IntEnum):
+    IOMMU_RW = 3
+    IOMMU_WO = 2
+    IOMMU_RO = 1
+    IOMMU_NONE = 0
+
+class IOMMUNotifierFlag(IntEnum):
+    IOMMU_NOTIFIER_MAP = 2
+    IOMMU_NOTIFIER_UNMAP = 1
+    IOMMU_NOTIFIER_NONE = 0
+
+class IOMMUTLBEntry:
+    target_as: 'AddressSpace'
+    iova: int
+    translated_addr: int
+    addr_mask: int
+    perm: 'IOMMUAccessFlags'
 
 IOReadHandler: None
-InsnFlag:ctypes.c_int
-Int128: ctypes.Array[ctypes.c_ubyte]
-LAddr: ctypes.c_ulong
-class ListHead(CStructure):
-    next: 'ctypes.c_uint'
-    prev: 'ctypes.c_uint'
+class InsnFlag(IntEnum):
+    INSNREADLOG = 1
 
-class Location(CStructure):
-    num: 'ctypes.c_int'
-    ptr: 'ctypes.c_void_p'
-    prev: 'ctypes._Pointer[Location]'
+Int128: list[int]
+LAddr: int
+class ListHead:
+    next: int
+    prev: int
 
-MAddr: ctypes.c_ulong
-MMXReg: ctypes.Array[ctypes.c_ubyte]
-class MTRRVar(CStructure):
-    base: 'ctypes.c_ulong'
-    mask: 'ctypes.c_ulong'
+class Location:
+    num: int
+    ptr: ctypes.c_void_p
+    prev: 'Location'
 
-class MachineState(CStructure):
+MAddr: int
+MMXReg: list[int]
+class MTRRVar:
+    base: int
+    mask: int
+
+class MachineState:
     parent_obj: 'Object'
     sysbus_notifier: 'Notifier'
-    accel: 'ctypes._Pointer[ctypes.c_char]'
-    kernel_irqchip_allowed: 'ctypes.c_bool'
-    kernel_irqchip_required: 'ctypes.c_bool'
-    kernel_irqchip_split: 'ctypes.c_bool'
-    kvm_shadow_mem: 'ctypes.c_int'
-    dtb: 'ctypes._Pointer[ctypes.c_char]'
-    dumpdtb: 'ctypes._Pointer[ctypes.c_char]'
-    phandle_start: 'ctypes.c_int'
-    dt_compatible: 'ctypes._Pointer[ctypes.c_char]'
-    dump_guest_core: 'ctypes.c_bool'
-    mem_merge: 'ctypes.c_bool'
-    usb: 'ctypes.c_bool'
-    usb_disabled: 'ctypes.c_bool'
-    igd_gfx_passthru: 'ctypes.c_bool'
-    firmware: 'ctypes._Pointer[ctypes.c_char]'
-    iommu: 'ctypes.c_bool'
-    suppress_vmdesc: 'ctypes.c_bool'
-    enforce_config_section: 'ctypes.c_bool'
-    enable_graphics: 'ctypes.c_bool'
-    board_id: 'ctypes.c_int'
-    mem_map_str: 'ctypes._Pointer[ctypes.c_char]'
-    ram_size: 'ctypes.c_ulong'
-    maxram_size: 'ctypes.c_ulong'
-    ram_slots: 'ctypes.c_ulong'
-    boot_order: 'ctypes._Pointer[ctypes.c_char]'
-    kernel_filename: 'ctypes._Pointer[ctypes.c_char]'
-    kernel_cmdline: 'ctypes._Pointer[ctypes.c_char]'
-    initrd_filename: 'ctypes._Pointer[ctypes.c_char]'
-    cpu_model: 'ctypes._Pointer[ctypes.c_char]'
-    accelerator: 'ctypes._Pointer[AccelState]'
-    possible_cpus: 'ctypes._Pointer[ctypes.c_ulong]'
+    accel: bytes
+    kernel_irqchip_allowed: bool
+    kernel_irqchip_required: bool
+    kernel_irqchip_split: bool
+    kvm_shadow_mem: int
+    dtb: bytes
+    dumpdtb: bytes
+    phandle_start: int
+    dt_compatible: bytes
+    dump_guest_core: bool
+    mem_merge: bool
+    usb: bool
+    usb_disabled: bool
+    igd_gfx_passthru: bool
+    firmware: bytes
+    iommu: bool
+    suppress_vmdesc: bool
+    enforce_config_section: bool
+    enable_graphics: bool
+    board_id: int
+    mem_map_str: bytes
+    ram_size: int
+    maxram_size: int
+    ram_slots: int
+    boot_order: bytes
+    kernel_filename: bytes
+    kernel_cmdline: bytes
+    initrd_filename: bytes
+    cpu_model: bytes
+    accelerator: 'AccelState'
+    possible_cpus: int
 
-class MemTxAttrs(CStructure):
-    unspecified: 'ctypes.c_uint'
-    secure: 'ctypes.c_uint'
-    user: 'ctypes.c_uint'
-    requester_id: 'ctypes.c_uint'
+class MemTxAttrs:
+    unspecified: int
+    secure: int
+    user: int
+    requester_id: int
 
-MemTxResult: ctypes.c_ulong
-class MemoryListener(CStructure):
-    begin: 'Function'
-    commit: 'Function'
-    region_add: 'Function'
-    region_del: 'Function'
-    region_nop: 'Function'
-    log_start: 'Function'
-    log_stop: 'Function'
-    log_sync: 'Function'
-    log_global_start: 'Function'
-    log_global_stop: 'Function'
-    eventfd_add: 'Function'
-    eventfd_del: 'Function'
-    coalesced_mmio_add: 'Function'
-    coalesced_mmio_del: 'Function'
-    priority: 'ctypes.c_uint'
-    address_space: 'ctypes._Pointer[AddressSpace]'
-    class internal_13(CStructure):
-        tqe_next: 'ctypes._Pointer[MemoryListener]'
-        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[MemoryListener]]'
+MemTxResult: int
+class MemoryListener:
+    begin: Callable[['MemoryListener'], None]
+    commit: Callable[['MemoryListener'], None]
+    region_add: Callable[['MemoryListener', 'MemoryRegionSection'], None]
+    region_del: Callable[['MemoryListener', 'MemoryRegionSection'], None]
+    region_nop: Callable[['MemoryListener', 'MemoryRegionSection'], None]
+    log_start: Callable[['MemoryListener', 'MemoryRegionSection', int, int], None]
+    log_stop: Callable[['MemoryListener', 'MemoryRegionSection', int, int], None]
+    log_sync: Callable[['MemoryListener', 'MemoryRegionSection'], None]
+    log_global_start: Callable[['MemoryListener'], None]
+    log_global_stop: Callable[['MemoryListener'], None]
+    eventfd_add: Callable[['MemoryListener', 'MemoryRegionSection', bool, int, 'EventNotifier'], None]
+    eventfd_del: Callable[['MemoryListener', 'MemoryRegionSection', bool, int, 'EventNotifier'], None]
+    coalesced_mmio_add: Callable[['MemoryListener', 'MemoryRegionSection', int, int], None]
+    coalesced_mmio_del: Callable[['MemoryListener', 'MemoryRegionSection', int, int], None]
+    priority: int
+    address_space: 'AddressSpace'
+    class internal_13:
+        tqe_next: 'MemoryListener'
+        tqe_prev: 'MemoryListener'
 
-    link: 'internal_13'
-    class internal_14(CStructure):
-        tqe_next: 'ctypes._Pointer[MemoryListener]'
-        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[MemoryListener]]'
+    link: internal_13
+    class internal_14:
+        tqe_next: 'MemoryListener'
+        tqe_prev: 'MemoryListener'
 
-    link_as: 'internal_14'
+    link_as: internal_14
 
-class MemoryRegion(CStructure):
+class MemoryRegion:
     parent_obj: 'Object'
-    romd_mode: 'ctypes.c_bool'
-    ram: 'ctypes.c_bool'
-    subpage: 'ctypes.c_bool'
-    readonly: 'ctypes.c_bool'
-    rom_device: 'ctypes.c_bool'
-    flush_coalesced_mmio: 'ctypes.c_bool'
-    global_locking: 'ctypes.c_bool'
-    dirty_log_mask: 'ctypes.c_ubyte'
-    ram_block: 'ctypes._Pointer[RAMBlock]'
-    owner: 'ctypes._Pointer[Object]'
-    iommu_ops: 'ctypes._Pointer[MemoryRegionIOMMUOps]'
-    ops: 'ctypes._Pointer[MemoryRegionOps]'
-    opaque: 'ctypes.c_void_p'
-    container: 'ctypes._Pointer[MemoryRegion]'
-    size: 'ctypes.Array[ctypes.c_ubyte]'
-    addr: 'ctypes.c_ulong'
-    destructor: 'Function'
-    align: 'ctypes.c_ulong'
-    terminates: 'ctypes.c_bool'
-    ram_device: 'ctypes.c_bool'
-    enabled: 'ctypes.c_bool'
-    warning_printed: 'ctypes.c_bool'
-    vga_logging_count: 'ctypes.c_ubyte'
-    alias: 'ctypes._Pointer[MemoryRegion]'
-    alias_offset: 'ctypes.c_ulong'
-    priority: 'ctypes.c_int'
+    romd_mode: bool
+    ram: bool
+    subpage: bool
+    readonly: bool
+    rom_device: bool
+    flush_coalesced_mmio: bool
+    global_locking: bool
+    dirty_log_mask: int
+    ram_block: 'RAMBlock'
+    owner: 'Object'
+    iommu_ops: 'MemoryRegionIOMMUOps'
+    ops: 'MemoryRegionOps'
+    opaque: ctypes.c_void_p
+    container: 'MemoryRegion'
+    size: list[int]
+    addr: int
+    destructor: Callable[['MemoryRegion'], None]
+    align: int
+    terminates: bool
+    ram_device: bool
+    enabled: bool
+    warning_printed: bool
+    vga_logging_count: int
+    alias: 'MemoryRegion'
+    alias_offset: int
+    priority: int
     subregions: 'subregions'
-    class internal_11(CStructure):
-        tqe_next: 'ctypes._Pointer[MemoryRegion]'
-        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[MemoryRegion]]'
+    class internal_11:
+        tqe_next: 'MemoryRegion'
+        tqe_prev: 'MemoryRegion'
 
-    subregions_link: 'internal_11'
+    subregions_link: internal_11
     coalesced: 'coalesced_ranges'
-    name: 'ctypes._Pointer[ctypes.c_char]'
-    ioeventfd_nb: 'ctypes.c_uint'
-    ioeventfds: 'ctypes._Pointer[MemoryRegionIoeventfd]'
-    class internal_12(CStructure):
-        lh_first: 'ctypes._Pointer[IOMMUNotifier]'
+    name: bytes
+    ioeventfd_nb: int
+    ioeventfds: 'MemoryRegionIoeventfd'
+    class internal_12:
+        lh_first: 'IOMMUNotifier'
 
-    iommu_notify: 'internal_12'
-    iommu_notify_flags: 'ctypes.c_int'
+    iommu_notify: internal_12
+    iommu_notify_flags: 'IOMMUNotifierFlag'
 
-class MemoryRegionIOMMUOps(CStructure):
-    translate: 'Function'
-    get_min_page_size: 'Function'
-    notify_flag_changed: 'Function'
+class MemoryRegionIOMMUOps:
+    translate: Callable[['MemoryRegion', int, bool], 'IOMMUTLBEntry']
+    get_min_page_size: Callable[['MemoryRegion'], int]
+    notify_flag_changed: Callable[['MemoryRegion', 'IOMMUNotifierFlag', 'IOMMUNotifierFlag'], None]
 
-class MemoryRegionIoeventfd(CStructure):
+class MemoryRegionIoeventfd:
     addr: 'AddrRange'
-    match_data: 'ctypes.c_bool'
-    data: 'ctypes.c_ulong'
-    e: 'ctypes._Pointer[EventNotifier]'
+    match_data: bool
+    data: int
+    e: 'EventNotifier'
 
-class MemoryRegionMmio(CStructure):
-    read: 'ctypes.Array[Function]'
-    write: 'ctypes.Array[Function]'
+class MemoryRegionMmio:
+    read: list[Callable[[ctypes.c_void_p, int], int]]
+    write: list[Callable[[ctypes.c_void_p, int, int], None]]
 
-class MemoryRegionOps(CStructure):
-    read: 'Function'
-    write: 'Function'
-    read_with_attrs: 'Function'
-    write_with_attrs: 'Function'
-    endianness: 'ctypes.c_int'
-    class internal_9(CStructure):
-        min_access_size: 'ctypes.c_uint'
-        max_access_size: 'ctypes.c_uint'
-        unaligned: 'ctypes.c_bool'
-        accepts: 'Function'
+class MemoryRegionOps:
+    read: Callable[[ctypes.c_void_p, int, int], int]
+    write: Callable[[ctypes.c_void_p, int, int, int], None]
+    read_with_attrs: Callable[[ctypes.c_void_p, int, int, int, 'MemTxAttrs'], int]
+    write_with_attrs: Callable[[ctypes.c_void_p, int, int, int, 'MemTxAttrs'], int]
+    endianness: 'device_endian'
+    class internal_9:
+        min_access_size: int
+        max_access_size: int
+        unaligned: bool
+        accepts: Callable[[ctypes.c_void_p, int, int, bool], bool]
 
-    valid: 'internal_9'
-    class internal_10(CStructure):
-        min_access_size: 'ctypes.c_uint'
-        max_access_size: 'ctypes.c_uint'
-        unaligned: 'ctypes.c_bool'
+    valid: internal_9
+    class internal_10:
+        min_access_size: int
+        max_access_size: int
+        unaligned: bool
 
-    impl: 'internal_10'
+    impl: internal_10
     old_mmio: 'MemoryRegionMmio'
 
-class MemoryRegionSection(CStructure):
-    mr: 'ctypes._Pointer[MemoryRegion]'
-    address_space: 'ctypes._Pointer[AddressSpace]'
-    offset_within_region: 'ctypes.c_ulong'
-    size: 'ctypes.Array[ctypes.c_ubyte]'
-    offset_within_address_space: 'ctypes.c_ulong'
-    readonly: 'ctypes.c_bool'
+class MemoryRegionSection:
+    mr: 'MemoryRegion'
+    address_space: 'AddressSpace'
+    offset_within_region: int
+    size: list[int]
+    offset_within_address_space: int
+    readonly: bool
 
-class MmStruct(CStructure):
-    pgd: 'ctypes.c_uint'
-    arg_start: 'ctypes.c_uint'
-    start_brk: 'ctypes.c_uint'
-    brk: 'ctypes.c_uint'
-    start_stack: 'ctypes.c_uint'
-    mmap: 'ctypes.c_uint'
+class MmStruct:
+    pgd: int
+    arg_start: int
+    start_brk: int
+    brk: int
+    start_stack: int
+    mmap: int
 
-class Monitor(CStructure):
+class Monitor:
     chr: 'CharBackend'
-    reset_seen: 'ctypes.c_int'
-    flags: 'ctypes.c_int'
-    suspend_cnt: 'ctypes.c_int'
-    skip_flush: 'ctypes.c_bool'
+    reset_seen: int
+    flags: int
+    suspend_cnt: int
+    skip_flush: bool
     out_lock: 'QemuMutex'
-    outbuf: 'ctypes._Pointer[QString]'
-    out_watch: 'ctypes.c_uint'
-    mux_out: 'ctypes.c_int'
-    rs: 'ctypes._Pointer[ReadLineState]'
-    qmp: 'ctypes.Array[ctypes.c_ubyte]'
-    mon_cpu: 'ctypes._Pointer[CPUState]'
-    password_completion_cb: 'Function'
-    password_opaque: 'ctypes.c_void_p'
-    cmd_table: 'ctypes._Pointer[ctypes.Array[ctypes.c_ubyte]]'
-    class internal_19(CStructure):
-        lh_first: 'ctypes._Pointer[mon_fd_t]'
+    outbuf: 'QString'
+    out_watch: int
+    mux_out: int
+    rs: 'ReadLineState'
+    qmp: list[int]
+    mon_cpu: 'CPUState'
+    password_completion_cb: Callable[[ctypes.c_void_p, int], None]
+    password_opaque: ctypes.c_void_p
+    cmd_table: list[int]
+    class internal_19:
+        lh_first: 'mon_fd_t'
 
-    fds: 'internal_19'
-    class internal_20(CStructure):
-        le_next: 'ctypes._Pointer[Monitor]'
-        le_prev: 'ctypes._Pointer[ctypes._Pointer[Monitor]]'
+    fds: internal_19
+    class internal_20:
+        le_next: 'Monitor'
+        le_prev: 'Monitor'
 
-    entry: 'internal_20'
+    entry: internal_20
 
-MonitorQMP: ctypes.Array[ctypes.c_ubyte]
-class Notifier(CStructure):
-    notify: 'Function'
-    class internal_3(CStructure):
-        le_next: 'ctypes._Pointer[Notifier]'
-        le_prev: 'ctypes._Pointer[ctypes._Pointer[Notifier]]'
+MonitorQMP: list[int]
+class Notifier:
+    notify: Callable[['Notifier', ctypes.c_void_p], None]
+    class internal_3:
+        le_next: 'Notifier'
+        le_prev: 'Notifier'
 
-    node: 'internal_3'
+    node: internal_3
 
-class Object(CStructure):
-    klass: 'ctypes.c_void_p'
-    free: 'ctypes.c_void_p'
-    properties: 'ctypes.c_void_p'
-    ref: 'ctypes.c_uint'
-    parent: 'ctypes.c_void_p'
+class Object:
+    klass: ctypes.c_void_p
+    free: ctypes.c_void_p
+    properties: ctypes.c_void_p
+    ref: int
+    parent: ctypes.c_void_p
 
-class OsiModule(CStructure):
-    modd: 'ctypes.c_uint'
-    base: 'ctypes.c_uint'
-    size: 'ctypes.c_uint'
-    file: 'ctypes._Pointer[ctypes.c_char]'
-    name: 'ctypes._Pointer[ctypes.c_char]'
-    offset: 'ctypes.c_uint'
-    flags: 'ctypes.c_uint'
+class OsiModule:
+    modd: int
+    base: int
+    size: int
+    file: bytes
+    name: bytes
+    offset: int
+    flags: int
 
-class OsiPage(CStructure):
-    start: 'ctypes.c_uint'
-    len: 'ctypes.c_uint'
+class OsiPage:
+    start: int
+    len: int
 
-class OsiProc(CStructure):
-    taskd: 'ctypes.c_uint'
-    pgd: 'ctypes.c_uint'
-    asid: 'ctypes.c_uint'
-    pid: 'ctypes.c_int'
-    ppid: 'ctypes.c_int'
-    name: 'ctypes._Pointer[ctypes.c_char]'
-    pages: 'ctypes._Pointer[osi_page_struct]'
-    create_time: 'ctypes.c_ulong'
+class OsiProc:
+    taskd: int
+    pgd: int
+    asid: int
+    pid: int
+    ppid: int
+    name: bytes
+    pages: 'osi_page_struct'
+    create_time: int
 
-class OsiProcHandle(CStructure):
-    taskd: 'ctypes.c_uint'
-    asid: 'ctypes.c_uint'
+class OsiProcHandle:
+    taskd: int
+    asid: int
 
-class OsiProcMem(CStructure):
-    start_brk: 'ctypes.c_uint'
-    brk: 'ctypes.c_uint'
+class OsiProcMem:
+    start_brk: int
+    brk: int
 
-class OsiThread(CStructure):
-    pid: 'ctypes.c_int'
-    tid: 'ctypes.c_int'
+class OsiThread:
+    pid: int
+    tid: int
 
-PAddr: ctypes.c_ulong
-PandaOsFamily:ctypes.c_int
-class Path(CStructure):
-    dentry: 'ctypes.c_uint'
-    mnt: 'ctypes.c_uint'
+PAddr: int
+class PandaOsFamily(IntEnum):
+    OS_FREEBSD = 3
+    OS_LINUX = 2
+    OS_WINDOWS = 1
+    OS_UNKNOWN = 0
 
-QDict: ctypes.Array[ctypes.c_ubyte]
-QEMUClockType: ctypes.c_uint
+class Path:
+    dentry: int
+    mnt: int
+
+QDict: list[int]
+QEMUClockType: int
 QEMUTimerCB: None
 QEMUTimerListNotifyCB: None
-class QObject(CStructure):
-    type: 'ctypes.c_uint'
-    refcnt: 'ctypes.c_ulong'
+class QObject:
+    type: int
+    refcnt: int
 
-class QString(CStructure):
+class QString:
     base: 'QObject'
-    string: 'ctypes._Pointer[ctypes.c_char]'
-    length: 'ctypes.c_ulong'
-    capacity: 'ctypes.c_ulong'
+    string: bytes
+    length: int
+    capacity: int
 
-QType: ctypes.c_uint
-class QemuCond(CStructure):
-    cond: 'ctypes.Array[ctypes.c_ubyte]'
+QType: int
+class QemuCond:
+    cond: list[int]
 
-class QemuMutex(CStructure):
-    lock: 'ctypes.Array[ctypes.c_ubyte]'
+class QemuMutex:
+    lock: list[int]
 
-class QemuOptDesc(CStructure):
-    name: 'ctypes._Pointer[ctypes.c_char]'
-    type: 'ctypes.c_int'
-    help: 'ctypes._Pointer[ctypes.c_char]'
-    def_value_str: 'ctypes._Pointer[ctypes.c_char]'
+class QemuOptDesc:
+    name: bytes
+    type: 'QemuOptType'
+    help: bytes
+    def_value_str: bytes
 
-class QemuOptHead(CStructure):
-    tqh_first: 'ctypes._Pointer[QemuOpt]'
-    tqh_last: 'ctypes._Pointer[ctypes._Pointer[QemuOpt]]'
+class QemuOptHead:
+    tqh_first: 'QemuOpt'
+    tqh_last: 'QemuOpt'
 
-class QemuOpts(CStructure):
-    id: 'ctypes._Pointer[ctypes.c_char]'
-    list: 'ctypes._Pointer[QemuOptsList]'
+class QemuOpts:
+    id: bytes
+    list: 'QemuOptsList'
     loc: 'Location'
     head: 'QemuOptHead'
-    class internal_15(CStructure):
-        tqe_next: 'ctypes._Pointer[QemuOpts]'
-        tqe_prev: 'ctypes._Pointer[ctypes._Pointer[QemuOpts]]'
+    class internal_15:
+        tqe_next: 'QemuOpts'
+        tqe_prev: 'QemuOpts'
 
-    next: 'internal_15'
+    next: internal_15
 
-class QemuOptsList(CStructure):
-    name: 'ctypes._Pointer[ctypes.c_char]'
-    implied_opt_name: 'ctypes._Pointer[ctypes.c_char]'
-    merge_lists: 'ctypes.c_bool'
-    class internal_8(CStructure):
-        tqh_first: 'ctypes._Pointer[QemuOpts]'
-        tqh_last: 'ctypes._Pointer[ctypes._Pointer[QemuOpts]]'
+class QemuOptsList:
+    name: bytes
+    implied_opt_name: bytes
+    merge_lists: bool
+    class internal_8:
+        tqh_first: 'QemuOpts'
+        tqh_last: 'QemuOpts'
 
-    head: 'internal_8'
-    desc: 'ctypes.Array[QemuOptDesc]'
+    head: internal_8
+    desc: list['QemuOptDesc']
 
-class QemuThread(CStructure):
-    thread: 'ctypes.c_ulong'
+class QemuThread:
+    thread: int
 
-class QueryResult(CStructure):
-    num_labels: 'ctypes.c_uint'
-    ls: 'ctypes.c_void_p'
-    it_end: 'ctypes.c_void_p'
-    it_curr: 'ctypes.c_void_p'
-    tcn: 'ctypes.c_uint'
-    cb_mask: 'ctypes.c_ubyte'
+class QueryResult:
+    num_labels: int
+    ls: ctypes.c_void_p
+    it_end: ctypes.c_void_p
+    it_curr: ctypes.c_void_p
+    tcn: int
+    cb_mask: int
 
-class RAMBlock(CStructure):
+class RAMBlock:
     rcu: 'rcu_head'
-    mr: 'ctypes._Pointer[MemoryRegion]'
-    host: 'ctypes._Pointer[ctypes.c_ubyte]'
-    offset: 'ctypes.c_ulong'
-    used_length: 'ctypes.c_ulong'
-    max_length: 'ctypes.c_ulong'
-    resized: 'Function'
-    flags: 'ctypes.c_uint'
-    idstr: 'ctypes.Array[ctypes.c_char]'
-    class internal_1(CStructure):
-        le_next: 'ctypes._Pointer[RAMBlock]'
-        le_prev: 'ctypes._Pointer[ctypes._Pointer[RAMBlock]]'
+    mr: 'MemoryRegion'
+    host: int
+    offset: int
+    used_length: int
+    max_length: int
+    resized: Callable[[bytes, int, ctypes.c_void_p], None]
+    flags: int
+    idstr: list[bytes]
+    class internal_1:
+        le_next: 'RAMBlock'
+        le_prev: 'RAMBlock'
 
-    next: 'internal_1'
-    class internal_2(CStructure):
-        lh_first: 'ctypes._Pointer[RAMBlockNotifier]'
+    next: internal_1
+    class internal_2:
+        lh_first: 'RAMBlockNotifier'
 
-    ramblock_notifiers: 'internal_2'
-    fd: 'ctypes.c_int'
-    page_size: 'ctypes.c_ulong'
+    ramblock_notifiers: internal_2
+    fd: int
+    page_size: int
 
 RCUCBFunc: None
-RRCTRL_ret:ctypes.c_int
-RR_mem_type:ctypes.c_int
-RR_mode:ctypes.c_int
+class RRCTRL_ret(IntEnum):
+    RRCTRL_OK = 0
+    RRCTRL_EPENDING = -1
+    RRCTRL_EINVALID = -2
+
+class RR_mem_type(IntEnum):
+    RR_MEM_UNKNOWN = 2
+    RR_MEM_RAM = 1
+    RR_MEM_IO = 0
+
+class RR_mode(IntEnum):
+    RR_REPLAY = 2
+    RR_RECORD = 1
+    RR_OFF = 0
+    RR_NOCHANGE = -1
+
 ReadLineCompletionFunc: None
 ReadLineFlushFunc: None
 ReadLineFunc: None
 ReadLinePrintfFunc: None
-class ReadLineState(CStructure):
-    cmd_buf: 'ctypes.Array[ctypes.c_char]'
-    cmd_buf_index: 'ctypes.c_int'
-    cmd_buf_size: 'ctypes.c_int'
-    last_cmd_buf: 'ctypes.Array[ctypes.c_char]'
-    last_cmd_buf_index: 'ctypes.c_int'
-    last_cmd_buf_size: 'ctypes.c_int'
-    esc_state: 'ctypes.c_int'
-    esc_param: 'ctypes.c_int'
-    history: 'ctypes.Array[ctypes._Pointer[ctypes.c_char]]'
-    hist_entry: 'ctypes.c_int'
-    completion_finder: 'Function'
-    completions: 'ctypes.Array[ctypes._Pointer[ctypes.c_char]]'
-    nb_completions: 'ctypes.c_int'
-    completion_index: 'ctypes.c_int'
-    readline_func: 'Function'
-    readline_opaque: 'ctypes.c_void_p'
-    read_password: 'ctypes.c_int'
-    prompt: 'ctypes.Array[ctypes.c_char]'
-    printf_func: 'Function'
-    flush_func: 'Function'
-    opaque: 'ctypes.c_void_p'
+class ReadLineState:
+    cmd_buf: list[bytes]
+    cmd_buf_index: int
+    cmd_buf_size: int
+    last_cmd_buf: list[bytes]
+    last_cmd_buf_index: int
+    last_cmd_buf_size: int
+    esc_state: int
+    esc_param: int
+    history: list[bytes]
+    hist_entry: int
+    completion_finder: Callable[[ctypes.c_void_p, bytes], None]
+    completions: list[bytes]
+    nb_completions: int
+    completion_index: int
+    readline_func: Callable[[ctypes.c_void_p, bytes, ctypes.c_void_p], None]
+    readline_opaque: ctypes.c_void_p
+    read_password: int
+    prompt: list[bytes]
+    printf_func: Callable[[ctypes.c_void_p, bytes], None]
+    flush_func: Callable[[ctypes.c_void_p], None]
+    opaque: ctypes.c_void_p
 
-Ret: ctypes.c_ulong
-class String(CStructure):
+Ret: int
+class String:
     pass
 
-class SymbolicBranchMeta(CStructure):
-    pc: 'ctypes.c_ulong'
+class SymbolicBranchMeta:
+    pc: int
 
-TCGMemOp: ctypes.c_uint
-class TCR(CStructure):
-    raw_tcr: 'ctypes.c_ulong'
-    mask: 'ctypes.c_uint'
-    base_mask: 'ctypes.c_uint'
+TCGMemOp: int
+class TCR:
+    raw_tcr: int
+    mask: int
+    base_mask: int
 
-TPRAccess:ctypes.c_int
-TaintLabel: ctypes.c_uint
-class TaskStruct(CStructure):
+class TPRAccess(IntEnum):
+    TPR_ACCESS_WRITE = 1
+    TPR_ACCESS_READ = 0
+
+TaintLabel: int
+class TaskStruct:
     tasks: 'ListHead'
-    pid: 'ctypes.c_uint'
-    tgid: 'ctypes.c_uint'
-    group_leader: 'ctypes.c_uint'
-    thread_group: 'ctypes.c_uint'
-    real_parent: 'ctypes.c_uint'
-    parent: 'ctypes.c_uint'
-    mm: 'ctypes.c_uint'
-    stack: 'ctypes.c_uint'
-    real_cred: 'ctypes.c_uint'
-    cred: 'ctypes.c_uint'
-    comm: 'ctypes.Array[ctypes.c_ubyte]'
-    files: 'ctypes.c_uint'
-    start_time: 'ctypes.c_uint'
+    pid: int
+    tgid: int
+    group_leader: int
+    thread_group: int
+    real_parent: int
+    parent: int
+    mm: int
+    stack: int
+    real_cred: int
+    cred: int
+    comm: list[int]
+    files: int
+    start_time: int
     children: 'ListHead'
     sibling: 'ListHead'
 
-class TranslationBlock(CStructure):
-    pc: 'ctypes.c_uint'
-    cs_base: 'ctypes.c_uint'
-    flags: 'ctypes.c_uint'
-    size: 'ctypes.c_ushort'
-    icount: 'ctypes.c_ushort'
-    cflags: 'ctypes.c_uint'
-    invalid: 'ctypes.c_ushort'
-    was_split: 'ctypes.c_ubyte'
-    tc_ptr: 'ctypes.c_void_p'
-    tc_search: 'ctypes._Pointer[ctypes.c_ubyte]'
-    orig_tb: 'ctypes._Pointer[TranslationBlock]'
-    page_next: 'ctypes.Array[ctypes._Pointer[TranslationBlock]]'
-    page_addr: 'ctypes.Array[ctypes.c_ulong]'
-    jmp_reset_offset: 'ctypes.Array[ctypes.c_ushort]'
-    jmp_insn_offset: 'ctypes.Array[ctypes.c_ushort]'
-    jmp_list_next: 'ctypes.Array[ctypes.c_ulong]'
-    jmp_list_first: 'ctypes.c_ulong'
-    llvm_tc_ptr: 'ctypes._Pointer[ctypes.c_ubyte]'
-    llvm_tc_end: 'ctypes._Pointer[ctypes.c_ubyte]'
-    llvm_tb_next: 'ctypes.Array[ctypes._Pointer[TranslationBlock]]'
-    llvm_asm_ptr: 'ctypes._Pointer[ctypes.c_ubyte]'
-    llvm_fn_name: 'ctypes.Array[ctypes.c_char]'
+class TranslationBlock:
+    pc: int
+    cs_base: int
+    flags: int
+    size: int
+    icount: int
+    cflags: int
+    invalid: int
+    was_split: int
+    tc_ptr: ctypes.c_void_p
+    tc_search: int
+    orig_tb: 'TranslationBlock'
+    page_next: list['TranslationBlock']
+    page_addr: list[int]
+    jmp_reset_offset: list[int]
+    jmp_insn_offset: list[int]
+    jmp_list_next: list[int]
+    jmp_list_first: int
+    llvm_tc_ptr: int
+    llvm_tc_end: int
+    llvm_tb_next: list['TranslationBlock']
+    llvm_asm_ptr: int
+    llvm_fn_name: list[bytes]
 
-Unk: ctypes.c_ulong
-ValueUnion: ctypes.c_ulong
-class Vec_CosiModule(CStructure):
+Unk: int
+ValueUnion: int
+class Vec_CosiModule:
     pass
 
-class Vec_CosiProc(CStructure):
+class Vec_CosiProc:
     pass
 
-class VmAreaStruct(CStructure):
-    vm_mm: 'ctypes.c_uint'
-    vm_start: 'ctypes.c_uint'
-    vm_end: 'ctypes.c_uint'
-    vm_next: 'ctypes.c_uint'
-    vm_file: 'ctypes.c_uint'
-    vm_flags: 'ctypes.c_uint'
+class VmAreaStruct:
+    vm_mm: int
+    vm_start: int
+    vm_end: int
+    vm_next: int
+    vm_file: int
+    vm_flags: int
 
-class VolatilityBaseType(CStructure):
+class VolatilityBaseType:
     pass
 
-class VolatilityEnum(CStructure):
+class VolatilityEnum:
     pass
 
-class VolatilityStruct(CStructure):
+class VolatilityStruct:
     pass
 
-class VolatilitySymbol(CStructure):
+class VolatilitySymbol:
     pass
 
-ZMMReg: ctypes.Array[ctypes.c_ubyte]
-__u16: ctypes.c_ushort
-__u32: ctypes.c_uint
-__u64: ctypes.c_ulong
-__u8: ctypes.c_ubyte
-_add_hooks2_t: Function
-_disable_hooks2_t: Function
-_enable_hooks2_t: Function
-class breakpoints_head(CStructure):
-    tqh_first: 'ctypes._Pointer[CPUBreakpoint]'
-    tqh_last: 'ctypes._Pointer[ctypes._Pointer[CPUBreakpoint]]'
+ZMMReg: list[int]
+__u16: int
+__u32: int
+__u64: int
+__u8: int
+_add_hooks2_t: Callable[[Callable[['CPUState', 'TranslationBlock', ctypes.c_void_p], bool], ctypes.c_void_p, bool, bytes, bytes, int, int, int, int], int]
+_disable_hooks2_t: Callable[[int], None]
+_enable_hooks2_t: Callable[[int], None]
+class breakpoints_head:
+    tqh_first: 'CPUBreakpoint'
+    tqh_last: 'CPUBreakpoint'
 
-class coalesced_ranges(CStructure):
-    tqh_first: 'ctypes._Pointer[CoalescedMemoryRange]'
-    tqh_last: 'ctypes._Pointer[ctypes._Pointer[CoalescedMemoryRange]]'
+class coalesced_ranges:
+    tqh_first: 'CoalescedMemoryRange'
+    tqh_last: 'CoalescedMemoryRange'
 
-dcr_read_cb: Function
-dcr_write_cb: Function
-dynamic_hook_func_t: Function
-dynamic_symbol_hook_func_t: Function
-flag: ctypes.c_char
-float32: ctypes.c_uint
-float64: ctypes.c_ulong
-class float_status(CStructure):
-    float_detect_tininess: 'ctypes.c_byte'
-    float_rounding_mode: 'ctypes.c_byte'
-    float_exception_flags: 'ctypes.c_ubyte'
-    floatx80_rounding_precision: 'ctypes.c_byte'
-    flush_to_zero: 'ctypes.c_char'
-    flush_inputs_to_zero: 'ctypes.c_char'
-    default_nan_mode: 'ctypes.c_char'
-    snan_bit_is_one: 'ctypes.c_char'
+dcr_read_cb: Callable[[ctypes.c_void_p, int], int]
+dcr_write_cb: Callable[[ctypes.c_void_p, int, int], None]
+dynamic_hook_func_t: Callable[['hook_symbol_resolve', 'symbol', int], None]
+dynamic_symbol_hook_func_t: Callable[['CPUState', 'TranslationBlock', 'hook'], bool]
+flag: bytes
+float32: int
+float64: int
+class float_status:
+    float_detect_tininess: int
+    float_rounding_mode: int
+    float_exception_flags: int
+    floatx80_rounding_precision: int
+    flush_to_zero: bytes
+    flush_inputs_to_zero: bytes
+    default_nan_mode: bytes
+    snan_bit_is_one: bytes
 
-class floatx80(CStructure):
-    low: 'ctypes.c_ulong'
-    high: 'ctypes.c_ushort'
+class floatx80:
+    low: int
+    high: int
 
-fpr_t: ctypes.Array[ctypes.c_ubyte]
-gchar: ctypes.c_char
-gdb_reg_cb: ctypes.c_int
-guint: ctypes.c_uint
-hax_fd: ctypes.c_ulong
-class hax_global(CStructure):
+fpr_t: list[int]
+gchar: bytes
+gdb_reg_cb: int
+guint: int
+hax_fd: int
+class hax_global:
     pass
 
-class hax_vcpu_state(CStructure):
-    fd: 'ctypes.c_ulong'
-    vcpu_id: 'ctypes.c_int'
-    tunnel: 'ctypes._Pointer[hax_tunnel]'
-    iobuf: 'ctypes._Pointer[ctypes.c_ubyte]'
+class hax_vcpu_state:
+    fd: int
+    vcpu_id: int
+    tunnel: 'hax_tunnel'
+    iobuf: int
 
-class hook(CStructure):
-    addr: 'ctypes.c_uint'
-    asid: 'ctypes.c_uint'
-    type: 'ctypes.c_int'
+class hook:
+    addr: int
+    asid: int
+    type: 'panda_cb_type'
     cb: 'hooks_panda_cb'
-    km: 'ctypes.c_int'
-    enabled: 'ctypes.c_bool'
+    km: 'kernel_mode'
+    enabled: bool
     sym: 'symbol'
-    context: 'ctypes.c_void_p'
+    context: ctypes.c_void_p
 
-hook_func_t: Function
-hooks2_func_t: Function
-class hooks_panda_cb(CUnion):
-    before_tcg_codegen: 'Function'
-    before_block_translate: 'Function'
-    after_block_translate: 'Function'
-    before_block_exec_invalidate_opt: 'Function'
-    before_block_exec: 'Function'
-    after_block_exec: 'Function'
-    start_block_exec: 'Function'
-    end_block_exec: 'Function'
+hook_func_t: Callable[['CPUState', 'TranslationBlock', 'hook'], bool]
+hooks2_func_t: Callable[['CPUState', 'TranslationBlock', ctypes.c_void_p], bool]
+class hooks_panda_cb:
+    before_tcg_codegen: Callable[['CPUState', 'TranslationBlock', 'hook'], None]
+    before_block_translate: Callable[['CPUState', int, 'hook'], None]
+    after_block_translate: Callable[['CPUState', 'TranslationBlock', 'hook'], None]
+    before_block_exec_invalidate_opt: Callable[['CPUState', 'TranslationBlock', 'hook'], bool]
+    before_block_exec: Callable[['CPUState', 'TranslationBlock', 'hook'], None]
+    after_block_exec: Callable[['CPUState', 'TranslationBlock', int, 'hook'], None]
+    start_block_exec: Callable[['CPUState', 'TranslationBlock', 'hook'], None]
+    end_block_exec: Callable[['CPUState', 'TranslationBlock', 'hook'], None]
 
-hwaddr: ctypes.c_ulong
-hypercall_t: Function
-class icount_decr_u16(CStructure):
-    low: 'ctypes.c_ushort'
-    high: 'ctypes.c_ushort'
+hwaddr: int
+hypercall_t: Callable[['CPUState'], None]
+class icount_decr_u16:
+    low: int
+    high: int
 
-mem_hook_func_t: Function
-class memory_listeners_as(CStructure):
-    tqh_first: 'ctypes._Pointer[MemoryListener]'
-    tqh_last: 'ctypes._Pointer[ctypes._Pointer[MemoryListener]]'
+mem_hook_func_t: Callable[['CPUState', 'memory_access_desc'], None]
+class memory_listeners_as:
+    tqh_first: 'MemoryListener'
+    tqh_last: 'MemoryListener'
 
-mon_cmd_t: ctypes.Array[ctypes.c_ubyte]
-on_ARM_breakpoint_enter_t: Function
-on_ARM_breakpoint_return_t: Function
-on_ARM_cacheflush_enter_t: Function
-on_ARM_cacheflush_return_t: Function
-on_ARM_set_tls_enter_t: Function
-on_ARM_set_tls_return_t: Function
-on_ARM_user26_mode_enter_t: Function
-on_ARM_user26_mode_return_t: Function
-on_ARM_usr32_mode_enter_t: Function
-on_ARM_usr32_mode_return_t: Function
-on_after_load_t: Function
-on_after_store_t: Function
-on_all_sys_enter2_t: Function
-on_all_sys_enter_t: Function
-on_all_sys_return2_t: Function
-on_all_sys_return_t: Function
-on_branch2_t: Function
-on_branch_t: Function
-on_call_match_num_t: Function
-on_call_match_str_t: Function
-on_call_t: Function
-on_do_mmap2_enter_t: Function
-on_do_mmap2_return_t: Function
-on_get_current_process_handle_t: Function
-on_get_current_process_t: Function
-on_get_current_thread_t: Function
-on_get_file_mappings_t: Function
-on_get_heap_mappings_t: Function
-on_get_mapping_base_address_by_name_t: Function
-on_get_mapping_by_addr_t: Function
-on_get_mappings_t: Function
-on_get_modules_t: Function
-on_get_proc_mem_t: Function
-on_get_process_handles_t: Function
-on_get_process_pid_t: Function
-on_get_process_ppid_t: Function
-on_get_process_t: Function
-on_get_processes_t: Function
-on_get_stack_mappings_t: Function
-on_get_unknown_mappings_t: Function
-on_has_mapping_prefix_t: Function
-on_indirect_jump_t: Function
-on_mmap_updated_t: Function
-on_process_end_t: Function
-on_process_start_t: Function
-on_ptr_load_t: Function
-on_ptr_store_t: Function
-on_rec_auxv_t: Function
-on_ret_t: Function
-on_ssm_t: Function
-on_sys_accept4_enter_t: Function
-on_sys_accept4_return_t: Function
-on_sys_accept_enter_t: Function
-on_sys_accept_return_t: Function
-on_sys_access_enter_t: Function
-on_sys_access_return_t: Function
-on_sys_acct_enter_t: Function
-on_sys_acct_return_t: Function
-on_sys_add_key_enter_t: Function
-on_sys_add_key_return_t: Function
-on_sys_adjtimex_enter_t: Function
-on_sys_adjtimex_return_t: Function
-on_sys_alarm_enter_t: Function
-on_sys_alarm_return_t: Function
-on_sys_arm_fadvise64_64_enter_t: Function
-on_sys_arm_fadvise64_64_return_t: Function
-on_sys_bdflush_enter_t: Function
-on_sys_bdflush_return_t: Function
-on_sys_bind_enter_t: Function
-on_sys_bind_return_t: Function
-on_sys_bpf_enter_t: Function
-on_sys_bpf_return_t: Function
-on_sys_brk_enter_t: Function
-on_sys_brk_return_t: Function
-on_sys_capget_enter_t: Function
-on_sys_capget_return_t: Function
-on_sys_capset_enter_t: Function
-on_sys_capset_return_t: Function
-on_sys_chdir_enter_t: Function
-on_sys_chdir_return_t: Function
-on_sys_chmod_enter_t: Function
-on_sys_chmod_return_t: Function
-on_sys_chown16_enter_t: Function
-on_sys_chown16_return_t: Function
-on_sys_chown_enter_t: Function
-on_sys_chown_return_t: Function
-on_sys_chroot_enter_t: Function
-on_sys_chroot_return_t: Function
-on_sys_clock_adjtime_enter_t: Function
-on_sys_clock_adjtime_return_t: Function
-on_sys_clock_getres_enter_t: Function
-on_sys_clock_getres_return_t: Function
-on_sys_clock_gettime_enter_t: Function
-on_sys_clock_gettime_return_t: Function
-on_sys_clock_nanosleep_enter_t: Function
-on_sys_clock_nanosleep_return_t: Function
-on_sys_clock_settime_enter_t: Function
-on_sys_clock_settime_return_t: Function
-on_sys_clone_enter_t: Function
-on_sys_clone_return_t: Function
-on_sys_close_enter_t: Function
-on_sys_close_return_t: Function
-on_sys_connect_enter_t: Function
-on_sys_connect_return_t: Function
-on_sys_creat_enter_t: Function
-on_sys_creat_return_t: Function
-on_sys_delete_module_enter_t: Function
-on_sys_delete_module_return_t: Function
-on_sys_dup2_enter_t: Function
-on_sys_dup2_return_t: Function
-on_sys_dup3_enter_t: Function
-on_sys_dup3_return_t: Function
-on_sys_dup_enter_t: Function
-on_sys_dup_return_t: Function
-on_sys_epoll_create1_enter_t: Function
-on_sys_epoll_create1_return_t: Function
-on_sys_epoll_create_enter_t: Function
-on_sys_epoll_create_return_t: Function
-on_sys_epoll_ctl_enter_t: Function
-on_sys_epoll_ctl_return_t: Function
-on_sys_epoll_pwait_enter_t: Function
-on_sys_epoll_pwait_return_t: Function
-on_sys_epoll_wait_enter_t: Function
-on_sys_epoll_wait_return_t: Function
-on_sys_eventfd2_enter_t: Function
-on_sys_eventfd2_return_t: Function
-on_sys_eventfd_enter_t: Function
-on_sys_eventfd_return_t: Function
-on_sys_execve_enter_t: Function
-on_sys_execve_return_t: Function
-on_sys_execveat_enter_t: Function
-on_sys_execveat_return_t: Function
-on_sys_exit_enter_t: Function
-on_sys_exit_group_enter_t: Function
-on_sys_exit_group_return_t: Function
-on_sys_exit_return_t: Function
-on_sys_faccessat_enter_t: Function
-on_sys_faccessat_return_t: Function
-on_sys_fallocate_enter_t: Function
-on_sys_fallocate_return_t: Function
-on_sys_fanotify_init_enter_t: Function
-on_sys_fanotify_init_return_t: Function
-on_sys_fanotify_mark_enter_t: Function
-on_sys_fanotify_mark_return_t: Function
-on_sys_fchdir_enter_t: Function
-on_sys_fchdir_return_t: Function
-on_sys_fchmod_enter_t: Function
-on_sys_fchmod_return_t: Function
-on_sys_fchmodat_enter_t: Function
-on_sys_fchmodat_return_t: Function
-on_sys_fchown16_enter_t: Function
-on_sys_fchown16_return_t: Function
-on_sys_fchown_enter_t: Function
-on_sys_fchown_return_t: Function
-on_sys_fchownat_enter_t: Function
-on_sys_fchownat_return_t: Function
-on_sys_fcntl64_enter_t: Function
-on_sys_fcntl64_return_t: Function
-on_sys_fcntl_enter_t: Function
-on_sys_fcntl_return_t: Function
-on_sys_fdatasync_enter_t: Function
-on_sys_fdatasync_return_t: Function
-on_sys_fgetxattr_enter_t: Function
-on_sys_fgetxattr_return_t: Function
-on_sys_finit_module_enter_t: Function
-on_sys_finit_module_return_t: Function
-on_sys_flistxattr_enter_t: Function
-on_sys_flistxattr_return_t: Function
-on_sys_flock_enter_t: Function
-on_sys_flock_return_t: Function
-on_sys_fork_enter_t: Function
-on_sys_fork_return_t: Function
-on_sys_fremovexattr_enter_t: Function
-on_sys_fremovexattr_return_t: Function
-on_sys_fsetxattr_enter_t: Function
-on_sys_fsetxattr_return_t: Function
-on_sys_fstat64_enter_t: Function
-on_sys_fstat64_return_t: Function
-on_sys_fstatat64_enter_t: Function
-on_sys_fstatat64_return_t: Function
-on_sys_fstatfs64_enter_t: Function
-on_sys_fstatfs64_return_t: Function
-on_sys_fstatfs_enter_t: Function
-on_sys_fstatfs_return_t: Function
-on_sys_fsync_enter_t: Function
-on_sys_fsync_return_t: Function
-on_sys_ftruncate64_enter_t: Function
-on_sys_ftruncate64_return_t: Function
-on_sys_ftruncate_enter_t: Function
-on_sys_ftruncate_return_t: Function
-on_sys_futex_enter_t: Function
-on_sys_futex_return_t: Function
-on_sys_futimesat_enter_t: Function
-on_sys_futimesat_return_t: Function
-on_sys_get_mempolicy_enter_t: Function
-on_sys_get_mempolicy_return_t: Function
-on_sys_get_robust_list_enter_t: Function
-on_sys_get_robust_list_return_t: Function
-on_sys_getcpu_enter_t: Function
-on_sys_getcpu_return_t: Function
-on_sys_getcwd_enter_t: Function
-on_sys_getcwd_return_t: Function
-on_sys_getdents64_enter_t: Function
-on_sys_getdents64_return_t: Function
-on_sys_getdents_enter_t: Function
-on_sys_getdents_return_t: Function
-on_sys_getegid16_enter_t: Function
-on_sys_getegid16_return_t: Function
-on_sys_getegid_enter_t: Function
-on_sys_getegid_return_t: Function
-on_sys_geteuid16_enter_t: Function
-on_sys_geteuid16_return_t: Function
-on_sys_geteuid_enter_t: Function
-on_sys_geteuid_return_t: Function
-on_sys_getgid16_enter_t: Function
-on_sys_getgid16_return_t: Function
-on_sys_getgid_enter_t: Function
-on_sys_getgid_return_t: Function
-on_sys_getgroups16_enter_t: Function
-on_sys_getgroups16_return_t: Function
-on_sys_getgroups_enter_t: Function
-on_sys_getgroups_return_t: Function
-on_sys_getitimer_enter_t: Function
-on_sys_getitimer_return_t: Function
-on_sys_getpeername_enter_t: Function
-on_sys_getpeername_return_t: Function
-on_sys_getpgid_enter_t: Function
-on_sys_getpgid_return_t: Function
-on_sys_getpgrp_enter_t: Function
-on_sys_getpgrp_return_t: Function
-on_sys_getpid_enter_t: Function
-on_sys_getpid_return_t: Function
-on_sys_getppid_enter_t: Function
-on_sys_getppid_return_t: Function
-on_sys_getpriority_enter_t: Function
-on_sys_getpriority_return_t: Function
-on_sys_getrandom_enter_t: Function
-on_sys_getrandom_return_t: Function
-on_sys_getresgid16_enter_t: Function
-on_sys_getresgid16_return_t: Function
-on_sys_getresgid_enter_t: Function
-on_sys_getresgid_return_t: Function
-on_sys_getresuid16_enter_t: Function
-on_sys_getresuid16_return_t: Function
-on_sys_getresuid_enter_t: Function
-on_sys_getresuid_return_t: Function
-on_sys_getrlimit_enter_t: Function
-on_sys_getrlimit_return_t: Function
-on_sys_getrusage_enter_t: Function
-on_sys_getrusage_return_t: Function
-on_sys_getsid_enter_t: Function
-on_sys_getsid_return_t: Function
-on_sys_getsockname_enter_t: Function
-on_sys_getsockname_return_t: Function
-on_sys_getsockopt_enter_t: Function
-on_sys_getsockopt_return_t: Function
-on_sys_gettid_enter_t: Function
-on_sys_gettid_return_t: Function
-on_sys_gettimeofday_enter_t: Function
-on_sys_gettimeofday_return_t: Function
-on_sys_getuid16_enter_t: Function
-on_sys_getuid16_return_t: Function
-on_sys_getuid_enter_t: Function
-on_sys_getuid_return_t: Function
-on_sys_getxattr_enter_t: Function
-on_sys_getxattr_return_t: Function
-on_sys_init_module_enter_t: Function
-on_sys_init_module_return_t: Function
-on_sys_inotify_add_watch_enter_t: Function
-on_sys_inotify_add_watch_return_t: Function
-on_sys_inotify_init1_enter_t: Function
-on_sys_inotify_init1_return_t: Function
-on_sys_inotify_init_enter_t: Function
-on_sys_inotify_init_return_t: Function
-on_sys_inotify_rm_watch_enter_t: Function
-on_sys_inotify_rm_watch_return_t: Function
-on_sys_io_cancel_enter_t: Function
-on_sys_io_cancel_return_t: Function
-on_sys_io_destroy_enter_t: Function
-on_sys_io_destroy_return_t: Function
-on_sys_io_getevents_enter_t: Function
-on_sys_io_getevents_return_t: Function
-on_sys_io_setup_enter_t: Function
-on_sys_io_setup_return_t: Function
-on_sys_io_submit_enter_t: Function
-on_sys_io_submit_return_t: Function
-on_sys_ioctl_enter_t: Function
-on_sys_ioctl_return_t: Function
-on_sys_ioprio_get_enter_t: Function
-on_sys_ioprio_get_return_t: Function
-on_sys_ioprio_set_enter_t: Function
-on_sys_ioprio_set_return_t: Function
-on_sys_ipc_enter_t: Function
-on_sys_ipc_return_t: Function
-on_sys_kcmp_enter_t: Function
-on_sys_kcmp_return_t: Function
-on_sys_kexec_load_enter_t: Function
-on_sys_kexec_load_return_t: Function
-on_sys_keyctl_enter_t: Function
-on_sys_keyctl_return_t: Function
-on_sys_kill_enter_t: Function
-on_sys_kill_return_t: Function
-on_sys_lchown16_enter_t: Function
-on_sys_lchown16_return_t: Function
-on_sys_lchown_enter_t: Function
-on_sys_lchown_return_t: Function
-on_sys_lgetxattr_enter_t: Function
-on_sys_lgetxattr_return_t: Function
-on_sys_link_enter_t: Function
-on_sys_link_return_t: Function
-on_sys_linkat_enter_t: Function
-on_sys_linkat_return_t: Function
-on_sys_listen_enter_t: Function
-on_sys_listen_return_t: Function
-on_sys_listxattr_enter_t: Function
-on_sys_listxattr_return_t: Function
-on_sys_llistxattr_enter_t: Function
-on_sys_llistxattr_return_t: Function
-on_sys_llseek_enter_t: Function
-on_sys_llseek_return_t: Function
-on_sys_lookup_dcookie_enter_t: Function
-on_sys_lookup_dcookie_return_t: Function
-on_sys_lremovexattr_enter_t: Function
-on_sys_lremovexattr_return_t: Function
-on_sys_lseek_enter_t: Function
-on_sys_lseek_return_t: Function
-on_sys_lsetxattr_enter_t: Function
-on_sys_lsetxattr_return_t: Function
-on_sys_lstat64_enter_t: Function
-on_sys_lstat64_return_t: Function
-on_sys_madvise_enter_t: Function
-on_sys_madvise_return_t: Function
-on_sys_mbind_enter_t: Function
-on_sys_mbind_return_t: Function
-on_sys_membarrier_enter_t: Function
-on_sys_membarrier_return_t: Function
-on_sys_memfd_create_enter_t: Function
-on_sys_memfd_create_return_t: Function
-on_sys_mincore_enter_t: Function
-on_sys_mincore_return_t: Function
-on_sys_mkdir_enter_t: Function
-on_sys_mkdir_return_t: Function
-on_sys_mkdirat_enter_t: Function
-on_sys_mkdirat_return_t: Function
-on_sys_mknod_enter_t: Function
-on_sys_mknod_return_t: Function
-on_sys_mknodat_enter_t: Function
-on_sys_mknodat_return_t: Function
-on_sys_mlock2_enter_t: Function
-on_sys_mlock2_return_t: Function
-on_sys_mlock_enter_t: Function
-on_sys_mlock_return_t: Function
-on_sys_mlockall_enter_t: Function
-on_sys_mlockall_return_t: Function
-on_sys_mount_enter_t: Function
-on_sys_mount_return_t: Function
-on_sys_move_pages_enter_t: Function
-on_sys_move_pages_return_t: Function
-on_sys_mprotect_enter_t: Function
-on_sys_mprotect_return_t: Function
-on_sys_mq_getsetattr_enter_t: Function
-on_sys_mq_getsetattr_return_t: Function
-on_sys_mq_notify_enter_t: Function
-on_sys_mq_notify_return_t: Function
-on_sys_mq_open_enter_t: Function
-on_sys_mq_open_return_t: Function
-on_sys_mq_timedreceive_enter_t: Function
-on_sys_mq_timedreceive_return_t: Function
-on_sys_mq_timedsend_enter_t: Function
-on_sys_mq_timedsend_return_t: Function
-on_sys_mq_unlink_enter_t: Function
-on_sys_mq_unlink_return_t: Function
-on_sys_mremap_enter_t: Function
-on_sys_mremap_return_t: Function
-on_sys_msgctl_enter_t: Function
-on_sys_msgctl_return_t: Function
-on_sys_msgget_enter_t: Function
-on_sys_msgget_return_t: Function
-on_sys_msgrcv_enter_t: Function
-on_sys_msgrcv_return_t: Function
-on_sys_msgsnd_enter_t: Function
-on_sys_msgsnd_return_t: Function
-on_sys_msync_enter_t: Function
-on_sys_msync_return_t: Function
-on_sys_munlock_enter_t: Function
-on_sys_munlock_return_t: Function
-on_sys_munlockall_enter_t: Function
-on_sys_munlockall_return_t: Function
-on_sys_munmap_enter_t: Function
-on_sys_munmap_return_t: Function
-on_sys_name_to_handle_at_enter_t: Function
-on_sys_name_to_handle_at_return_t: Function
-on_sys_nanosleep_enter_t: Function
-on_sys_nanosleep_return_t: Function
-on_sys_newfstat_enter_t: Function
-on_sys_newfstat_return_t: Function
-on_sys_newlstat_enter_t: Function
-on_sys_newlstat_return_t: Function
-on_sys_newstat_enter_t: Function
-on_sys_newstat_return_t: Function
-on_sys_newuname_enter_t: Function
-on_sys_newuname_return_t: Function
-on_sys_nice_enter_t: Function
-on_sys_nice_return_t: Function
-on_sys_open_by_handle_at_enter_t: Function
-on_sys_open_by_handle_at_return_t: Function
-on_sys_open_enter_t: Function
-on_sys_open_return_t: Function
-on_sys_openat_enter_t: Function
-on_sys_openat_return_t: Function
-on_sys_pause_enter_t: Function
-on_sys_pause_return_t: Function
-on_sys_pciconfig_iobase_enter_t: Function
-on_sys_pciconfig_iobase_return_t: Function
-on_sys_pciconfig_read_enter_t: Function
-on_sys_pciconfig_read_return_t: Function
-on_sys_pciconfig_write_enter_t: Function
-on_sys_pciconfig_write_return_t: Function
-on_sys_perf_event_open_enter_t: Function
-on_sys_perf_event_open_return_t: Function
-on_sys_personality_enter_t: Function
-on_sys_personality_return_t: Function
-on_sys_pipe2_enter_t: Function
-on_sys_pipe2_return_t: Function
-on_sys_pipe_enter_t: Function
-on_sys_pipe_return_t: Function
-on_sys_pivot_root_enter_t: Function
-on_sys_pivot_root_return_t: Function
-on_sys_poll_enter_t: Function
-on_sys_poll_return_t: Function
-on_sys_ppoll_enter_t: Function
-on_sys_ppoll_return_t: Function
-on_sys_prctl_enter_t: Function
-on_sys_prctl_return_t: Function
-on_sys_pread64_enter_t: Function
-on_sys_pread64_return_t: Function
-on_sys_preadv_enter_t: Function
-on_sys_preadv_return_t: Function
-on_sys_prlimit64_enter_t: Function
-on_sys_prlimit64_return_t: Function
-on_sys_process_vm_readv_enter_t: Function
-on_sys_process_vm_readv_return_t: Function
-on_sys_process_vm_writev_enter_t: Function
-on_sys_process_vm_writev_return_t: Function
-on_sys_pselect6_enter_t: Function
-on_sys_pselect6_return_t: Function
-on_sys_ptrace_enter_t: Function
-on_sys_ptrace_return_t: Function
-on_sys_pwrite64_enter_t: Function
-on_sys_pwrite64_return_t: Function
-on_sys_pwritev_enter_t: Function
-on_sys_pwritev_return_t: Function
-on_sys_quotactl_enter_t: Function
-on_sys_quotactl_return_t: Function
-on_sys_read_enter_t: Function
-on_sys_read_return_t: Function
-on_sys_readahead_enter_t: Function
-on_sys_readahead_return_t: Function
-on_sys_readlink_enter_t: Function
-on_sys_readlink_return_t: Function
-on_sys_readlinkat_enter_t: Function
-on_sys_readlinkat_return_t: Function
-on_sys_readv_enter_t: Function
-on_sys_readv_return_t: Function
-on_sys_reboot_enter_t: Function
-on_sys_reboot_return_t: Function
-on_sys_recv_enter_t: Function
-on_sys_recv_return_t: Function
-on_sys_recvfrom_enter_t: Function
-on_sys_recvfrom_return_t: Function
-on_sys_recvmmsg_enter_t: Function
-on_sys_recvmmsg_return_t: Function
-on_sys_recvmsg_enter_t: Function
-on_sys_recvmsg_return_t: Function
-on_sys_remap_file_pages_enter_t: Function
-on_sys_remap_file_pages_return_t: Function
-on_sys_removexattr_enter_t: Function
-on_sys_removexattr_return_t: Function
-on_sys_rename_enter_t: Function
-on_sys_rename_return_t: Function
-on_sys_renameat2_enter_t: Function
-on_sys_renameat2_return_t: Function
-on_sys_renameat_enter_t: Function
-on_sys_renameat_return_t: Function
-on_sys_request_key_enter_t: Function
-on_sys_request_key_return_t: Function
-on_sys_restart_syscall_enter_t: Function
-on_sys_restart_syscall_return_t: Function
-on_sys_rmdir_enter_t: Function
-on_sys_rmdir_return_t: Function
-on_sys_rt_sigaction_enter_t: Function
-on_sys_rt_sigaction_return_t: Function
-on_sys_rt_sigpending_enter_t: Function
-on_sys_rt_sigpending_return_t: Function
-on_sys_rt_sigprocmask_enter_t: Function
-on_sys_rt_sigprocmask_return_t: Function
-on_sys_rt_sigqueueinfo_enter_t: Function
-on_sys_rt_sigqueueinfo_return_t: Function
-on_sys_rt_sigreturn_enter_t: Function
-on_sys_rt_sigreturn_return_t: Function
-on_sys_rt_sigsuspend_enter_t: Function
-on_sys_rt_sigsuspend_return_t: Function
-on_sys_rt_sigtimedwait_enter_t: Function
-on_sys_rt_sigtimedwait_return_t: Function
-on_sys_rt_tgsigqueueinfo_enter_t: Function
-on_sys_rt_tgsigqueueinfo_return_t: Function
-on_sys_sched_get_priority_max_enter_t: Function
-on_sys_sched_get_priority_max_return_t: Function
-on_sys_sched_get_priority_min_enter_t: Function
-on_sys_sched_get_priority_min_return_t: Function
-on_sys_sched_getaffinity_enter_t: Function
-on_sys_sched_getaffinity_return_t: Function
-on_sys_sched_getattr_enter_t: Function
-on_sys_sched_getattr_return_t: Function
-on_sys_sched_getparam_enter_t: Function
-on_sys_sched_getparam_return_t: Function
-on_sys_sched_getscheduler_enter_t: Function
-on_sys_sched_getscheduler_return_t: Function
-on_sys_sched_rr_get_interval_enter_t: Function
-on_sys_sched_rr_get_interval_return_t: Function
-on_sys_sched_setaffinity_enter_t: Function
-on_sys_sched_setaffinity_return_t: Function
-on_sys_sched_setattr_enter_t: Function
-on_sys_sched_setattr_return_t: Function
-on_sys_sched_setparam_enter_t: Function
-on_sys_sched_setparam_return_t: Function
-on_sys_sched_setscheduler_enter_t: Function
-on_sys_sched_setscheduler_return_t: Function
-on_sys_sched_yield_enter_t: Function
-on_sys_sched_yield_return_t: Function
-on_sys_seccomp_enter_t: Function
-on_sys_seccomp_return_t: Function
-on_sys_select_enter_t: Function
-on_sys_select_return_t: Function
-on_sys_semctl_enter_t: Function
-on_sys_semctl_return_t: Function
-on_sys_semget_enter_t: Function
-on_sys_semget_return_t: Function
-on_sys_semop_enter_t: Function
-on_sys_semop_return_t: Function
-on_sys_semtimedop_enter_t: Function
-on_sys_semtimedop_return_t: Function
-on_sys_send_enter_t: Function
-on_sys_send_return_t: Function
-on_sys_sendfile64_enter_t: Function
-on_sys_sendfile64_return_t: Function
-on_sys_sendfile_enter_t: Function
-on_sys_sendfile_return_t: Function
-on_sys_sendmmsg_enter_t: Function
-on_sys_sendmmsg_return_t: Function
-on_sys_sendmsg_enter_t: Function
-on_sys_sendmsg_return_t: Function
-on_sys_sendto_enter_t: Function
-on_sys_sendto_return_t: Function
-on_sys_set_mempolicy_enter_t: Function
-on_sys_set_mempolicy_return_t: Function
-on_sys_set_robust_list_enter_t: Function
-on_sys_set_robust_list_return_t: Function
-on_sys_set_tid_address_enter_t: Function
-on_sys_set_tid_address_return_t: Function
-on_sys_setdomainname_enter_t: Function
-on_sys_setdomainname_return_t: Function
-on_sys_setfsgid16_enter_t: Function
-on_sys_setfsgid16_return_t: Function
-on_sys_setfsgid_enter_t: Function
-on_sys_setfsgid_return_t: Function
-on_sys_setfsuid16_enter_t: Function
-on_sys_setfsuid16_return_t: Function
-on_sys_setfsuid_enter_t: Function
-on_sys_setfsuid_return_t: Function
-on_sys_setgid16_enter_t: Function
-on_sys_setgid16_return_t: Function
-on_sys_setgid_enter_t: Function
-on_sys_setgid_return_t: Function
-on_sys_setgroups16_enter_t: Function
-on_sys_setgroups16_return_t: Function
-on_sys_setgroups_enter_t: Function
-on_sys_setgroups_return_t: Function
-on_sys_sethostname_enter_t: Function
-on_sys_sethostname_return_t: Function
-on_sys_setitimer_enter_t: Function
-on_sys_setitimer_return_t: Function
-on_sys_setns_enter_t: Function
-on_sys_setns_return_t: Function
-on_sys_setpgid_enter_t: Function
-on_sys_setpgid_return_t: Function
-on_sys_setpriority_enter_t: Function
-on_sys_setpriority_return_t: Function
-on_sys_setregid16_enter_t: Function
-on_sys_setregid16_return_t: Function
-on_sys_setregid_enter_t: Function
-on_sys_setregid_return_t: Function
-on_sys_setresgid16_enter_t: Function
-on_sys_setresgid16_return_t: Function
-on_sys_setresgid_enter_t: Function
-on_sys_setresgid_return_t: Function
-on_sys_setresuid16_enter_t: Function
-on_sys_setresuid16_return_t: Function
-on_sys_setresuid_enter_t: Function
-on_sys_setresuid_return_t: Function
-on_sys_setreuid16_enter_t: Function
-on_sys_setreuid16_return_t: Function
-on_sys_setreuid_enter_t: Function
-on_sys_setreuid_return_t: Function
-on_sys_setrlimit_enter_t: Function
-on_sys_setrlimit_return_t: Function
-on_sys_setsid_enter_t: Function
-on_sys_setsid_return_t: Function
-on_sys_setsockopt_enter_t: Function
-on_sys_setsockopt_return_t: Function
-on_sys_settimeofday_enter_t: Function
-on_sys_settimeofday_return_t: Function
-on_sys_setuid16_enter_t: Function
-on_sys_setuid16_return_t: Function
-on_sys_setuid_enter_t: Function
-on_sys_setuid_return_t: Function
-on_sys_setxattr_enter_t: Function
-on_sys_setxattr_return_t: Function
-on_sys_shmat_enter_t: Function
-on_sys_shmat_return_t: Function
-on_sys_shmctl_enter_t: Function
-on_sys_shmctl_return_t: Function
-on_sys_shmdt_enter_t: Function
-on_sys_shmdt_return_t: Function
-on_sys_shmget_enter_t: Function
-on_sys_shmget_return_t: Function
-on_sys_shutdown_enter_t: Function
-on_sys_shutdown_return_t: Function
-on_sys_sigaction_enter_t: Function
-on_sys_sigaction_return_t: Function
-on_sys_sigaltstack_enter_t: Function
-on_sys_sigaltstack_return_t: Function
-on_sys_signalfd4_enter_t: Function
-on_sys_signalfd4_return_t: Function
-on_sys_signalfd_enter_t: Function
-on_sys_signalfd_return_t: Function
-on_sys_sigpending_enter_t: Function
-on_sys_sigpending_return_t: Function
-on_sys_sigprocmask_enter_t: Function
-on_sys_sigprocmask_return_t: Function
-on_sys_sigreturn_enter_t: Function
-on_sys_sigreturn_return_t: Function
-on_sys_sigsuspend_enter_t: Function
-on_sys_sigsuspend_return_t: Function
-on_sys_socket_enter_t: Function
-on_sys_socket_return_t: Function
-on_sys_socketcall_enter_t: Function
-on_sys_socketcall_return_t: Function
-on_sys_socketpair_enter_t: Function
-on_sys_socketpair_return_t: Function
-on_sys_splice_enter_t: Function
-on_sys_splice_return_t: Function
-on_sys_stat64_enter_t: Function
-on_sys_stat64_return_t: Function
-on_sys_statfs64_enter_t: Function
-on_sys_statfs64_return_t: Function
-on_sys_statfs_enter_t: Function
-on_sys_statfs_return_t: Function
-on_sys_statx_enter_t: Function
-on_sys_statx_return_t: Function
-on_sys_stime_enter_t: Function
-on_sys_stime_return_t: Function
-on_sys_swapoff_enter_t: Function
-on_sys_swapoff_return_t: Function
-on_sys_swapon_enter_t: Function
-on_sys_swapon_return_t: Function
-on_sys_symlink_enter_t: Function
-on_sys_symlink_return_t: Function
-on_sys_symlinkat_enter_t: Function
-on_sys_symlinkat_return_t: Function
-on_sys_sync_enter_t: Function
-on_sys_sync_file_range2_enter_t: Function
-on_sys_sync_file_range2_return_t: Function
-on_sys_sync_return_t: Function
-on_sys_syncfs_enter_t: Function
-on_sys_syncfs_return_t: Function
-on_sys_sysctl_enter_t: Function
-on_sys_sysctl_return_t: Function
-on_sys_sysfs_enter_t: Function
-on_sys_sysfs_return_t: Function
-on_sys_sysinfo_enter_t: Function
-on_sys_sysinfo_return_t: Function
-on_sys_syslog_enter_t: Function
-on_sys_syslog_return_t: Function
-on_sys_tee_enter_t: Function
-on_sys_tee_return_t: Function
-on_sys_tgkill_enter_t: Function
-on_sys_tgkill_return_t: Function
-on_sys_time_enter_t: Function
-on_sys_time_return_t: Function
-on_sys_timer_create_enter_t: Function
-on_sys_timer_create_return_t: Function
-on_sys_timer_delete_enter_t: Function
-on_sys_timer_delete_return_t: Function
-on_sys_timer_getoverrun_enter_t: Function
-on_sys_timer_getoverrun_return_t: Function
-on_sys_timer_gettime_enter_t: Function
-on_sys_timer_gettime_return_t: Function
-on_sys_timer_settime_enter_t: Function
-on_sys_timer_settime_return_t: Function
-on_sys_timerfd_create_enter_t: Function
-on_sys_timerfd_create_return_t: Function
-on_sys_timerfd_gettime_enter_t: Function
-on_sys_timerfd_gettime_return_t: Function
-on_sys_timerfd_settime_enter_t: Function
-on_sys_timerfd_settime_return_t: Function
-on_sys_times_enter_t: Function
-on_sys_times_return_t: Function
-on_sys_tkill_enter_t: Function
-on_sys_tkill_return_t: Function
-on_sys_truncate64_enter_t: Function
-on_sys_truncate64_return_t: Function
-on_sys_truncate_enter_t: Function
-on_sys_truncate_return_t: Function
-on_sys_umask_enter_t: Function
-on_sys_umask_return_t: Function
-on_sys_umount_enter_t: Function
-on_sys_umount_return_t: Function
-on_sys_unlink_enter_t: Function
-on_sys_unlink_return_t: Function
-on_sys_unlinkat_enter_t: Function
-on_sys_unlinkat_return_t: Function
-on_sys_unshare_enter_t: Function
-on_sys_unshare_return_t: Function
-on_sys_uselib_enter_t: Function
-on_sys_uselib_return_t: Function
-on_sys_userfaultfd_enter_t: Function
-on_sys_userfaultfd_return_t: Function
-on_sys_ustat_enter_t: Function
-on_sys_ustat_return_t: Function
-on_sys_utime_enter_t: Function
-on_sys_utime_return_t: Function
-on_sys_utimensat_enter_t: Function
-on_sys_utimensat_return_t: Function
-on_sys_utimes_enter_t: Function
-on_sys_utimes_return_t: Function
-on_sys_vfork_enter_t: Function
-on_sys_vfork_return_t: Function
-on_sys_vhangup_enter_t: Function
-on_sys_vhangup_return_t: Function
-on_sys_vmsplice_enter_t: Function
-on_sys_vmsplice_return_t: Function
-on_sys_wait4_enter_t: Function
-on_sys_wait4_return_t: Function
-on_sys_waitid_enter_t: Function
-on_sys_waitid_return_t: Function
-on_sys_write_enter_t: Function
-on_sys_write_return_t: Function
-on_sys_writev_enter_t: Function
-on_sys_writev_return_t: Function
-on_taint_change_t: Function
-on_taint_prop_t: Function
-on_task_change_t: Function
-on_thread_end_t: Function
-on_thread_start_t: Function
-on_unknown_sys_enter_t: Function
-on_unknown_sys_return_t: Function
-class panda_arg(CStructure):
-    argptr: 'ctypes._Pointer[ctypes.c_char]'
-    key: 'ctypes._Pointer[ctypes.c_char]'
-    value: 'ctypes._Pointer[ctypes.c_char]'
+mon_cmd_t: list[int]
+on_ARM_breakpoint_enter_t: Callable[['CPUState', int], None]
+on_ARM_breakpoint_return_t: Callable[['CPUState', int], None]
+on_ARM_cacheflush_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_ARM_cacheflush_return_t: Callable[['CPUState', int, int, int, int], None]
+on_ARM_set_tls_enter_t: Callable[['CPUState', int, int], None]
+on_ARM_set_tls_return_t: Callable[['CPUState', int, int], None]
+on_ARM_user26_mode_enter_t: Callable[['CPUState', int], None]
+on_ARM_user26_mode_return_t: Callable[['CPUState', int], None]
+on_ARM_usr32_mode_enter_t: Callable[['CPUState', int], None]
+on_ARM_usr32_mode_return_t: Callable[['CPUState', int], None]
+on_after_load_t: Callable[['addr_struct', int, int], None]
+on_after_store_t: Callable[['addr_struct', int, int], None]
+on_all_sys_enter2_t: Callable[['CPUState', int, 'syscall_info_t', 'syscall_ctx'], None]
+on_all_sys_enter_t: Callable[['CPUState', int, int], None]
+on_all_sys_return2_t: Callable[['CPUState', int, 'syscall_info_t', 'syscall_ctx'], None]
+on_all_sys_return_t: Callable[['CPUState', int, int], None]
+on_branch2_t: Callable[['addr_struct', int, bool, bool], None]
+on_branch_t: Callable[['CPUState', 'TranslationBlock', int], bool]
+on_call_match_num_t: Callable[['CPUState', int, int, int, int], None]
+on_call_match_str_t: Callable[['CPUState', int, int, bytes, int, int], None]
+on_call_t: Callable[['CPUState', int], None]
+on_do_mmap2_enter_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_do_mmap2_return_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_get_current_process_handle_t: Callable[['CPUState', 'osi_proc_handle_struct'], None]
+on_get_current_process_t: Callable[['CPUState', 'osi_proc_struct'], None]
+on_get_current_thread_t: Callable[['CPUState', 'osi_thread_struct'], None]
+on_get_file_mappings_t: Callable[['CPUState', 'osi_proc_struct', ctypes.c_void_p], None]
+on_get_heap_mappings_t: Callable[['CPUState', 'osi_proc_struct', ctypes.c_void_p], None]
+on_get_mapping_base_address_by_name_t: Callable[['CPUState', 'osi_proc_struct', bytes, int], None]
+on_get_mapping_by_addr_t: Callable[['CPUState', 'osi_proc_struct', int, 'osi_module_struct'], None]
+on_get_mappings_t: Callable[['CPUState', 'osi_proc_struct', ctypes.c_void_p], None]
+on_get_modules_t: Callable[['CPUState', ctypes.c_void_p], None]
+on_get_proc_mem_t: Callable[['CPUState', 'osi_proc_struct', 'osi_proc_mem'], None]
+on_get_process_handles_t: Callable[['CPUState', ctypes.c_void_p], None]
+on_get_process_pid_t: Callable[['CPUState', 'osi_proc_handle_struct', int], None]
+on_get_process_ppid_t: Callable[['CPUState', 'osi_proc_handle_struct', int], None]
+on_get_process_t: Callable[['CPUState', 'osi_proc_handle_struct', 'osi_proc_struct'], None]
+on_get_processes_t: Callable[['CPUState', ctypes.c_void_p], None]
+on_get_stack_mappings_t: Callable[['CPUState', 'osi_proc_struct', ctypes.c_void_p], None]
+on_get_unknown_mappings_t: Callable[['CPUState', 'osi_proc_struct', ctypes.c_void_p], None]
+on_has_mapping_prefix_t: Callable[['CPUState', 'osi_proc_struct', bytes, bool], None]
+on_indirect_jump_t: Callable[['addr_struct', int, bool, bool], None]
+on_mmap_updated_t: Callable[['CPUState', bytes, int, int], None]
+on_process_end_t: Callable[['CPUState', bytes, int, int], None]
+on_process_start_t: Callable[['CPUState', bytes, int, int], None]
+on_ptr_load_t: Callable[['addr_struct', int, int], None]
+on_ptr_store_t: Callable[['addr_struct', int, int], None]
+on_rec_auxv_t: Callable[['CPUState', 'TranslationBlock', 'auxv_values'], None]
+on_ret_t: Callable[['CPUState', int], None]
+on_ssm_t: Callable[['CPUState', int, int, int, int, bool, bool], None]
+on_sys_accept4_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_accept4_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_accept_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_accept_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_access_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_access_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_acct_enter_t: Callable[['CPUState', int, int], None]
+on_sys_acct_return_t: Callable[['CPUState', int, int], None]
+on_sys_add_key_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_add_key_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_adjtimex_enter_t: Callable[['CPUState', int, int], None]
+on_sys_adjtimex_return_t: Callable[['CPUState', int, int], None]
+on_sys_alarm_enter_t: Callable[['CPUState', int, int], None]
+on_sys_alarm_return_t: Callable[['CPUState', int, int], None]
+on_sys_arm_fadvise64_64_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_arm_fadvise64_64_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_bdflush_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_bdflush_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_bind_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_bind_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_bpf_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_bpf_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_brk_enter_t: Callable[['CPUState', int, int], None]
+on_sys_brk_return_t: Callable[['CPUState', int, int], None]
+on_sys_capget_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_capget_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_capset_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_capset_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_chdir_enter_t: Callable[['CPUState', int, int], None]
+on_sys_chdir_return_t: Callable[['CPUState', int, int], None]
+on_sys_chmod_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_chmod_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_chown16_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_chown16_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_chown_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_chown_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_chroot_enter_t: Callable[['CPUState', int, int], None]
+on_sys_chroot_return_t: Callable[['CPUState', int, int], None]
+on_sys_clock_adjtime_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_clock_adjtime_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_clock_getres_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_clock_getres_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_clock_gettime_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_clock_gettime_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_clock_nanosleep_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_clock_nanosleep_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_clock_settime_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_clock_settime_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_clone_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_clone_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_close_enter_t: Callable[['CPUState', int, int], None]
+on_sys_close_return_t: Callable[['CPUState', int, int], None]
+on_sys_connect_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_connect_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_creat_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_creat_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_delete_module_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_delete_module_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_dup2_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_dup2_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_dup3_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_dup3_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_dup_enter_t: Callable[['CPUState', int, int], None]
+on_sys_dup_return_t: Callable[['CPUState', int, int], None]
+on_sys_epoll_create1_enter_t: Callable[['CPUState', int, int], None]
+on_sys_epoll_create1_return_t: Callable[['CPUState', int, int], None]
+on_sys_epoll_create_enter_t: Callable[['CPUState', int, int], None]
+on_sys_epoll_create_return_t: Callable[['CPUState', int, int], None]
+on_sys_epoll_ctl_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_epoll_ctl_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_epoll_pwait_enter_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_epoll_pwait_return_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_epoll_wait_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_epoll_wait_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_eventfd2_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_eventfd2_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_eventfd_enter_t: Callable[['CPUState', int, int], None]
+on_sys_eventfd_return_t: Callable[['CPUState', int, int], None]
+on_sys_execve_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_execve_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_execveat_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_execveat_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_exit_enter_t: Callable[['CPUState', int, int], None]
+on_sys_exit_group_enter_t: Callable[['CPUState', int, int], None]
+on_sys_exit_group_return_t: Callable[['CPUState', int, int], None]
+on_sys_exit_return_t: Callable[['CPUState', int, int], None]
+on_sys_faccessat_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_faccessat_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_fallocate_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_fallocate_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_fanotify_init_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_fanotify_init_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_fanotify_mark_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_fanotify_mark_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_fchdir_enter_t: Callable[['CPUState', int, int], None]
+on_sys_fchdir_return_t: Callable[['CPUState', int, int], None]
+on_sys_fchmod_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_fchmod_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_fchmodat_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_fchmodat_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_fchown16_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_fchown16_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_fchown_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_fchown_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_fchownat_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_fchownat_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_fcntl64_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_fcntl64_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_fcntl_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_fcntl_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_fdatasync_enter_t: Callable[['CPUState', int, int], None]
+on_sys_fdatasync_return_t: Callable[['CPUState', int, int], None]
+on_sys_fgetxattr_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_fgetxattr_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_finit_module_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_finit_module_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_flistxattr_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_flistxattr_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_flock_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_flock_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_fork_enter_t: Callable[['CPUState', int], None]
+on_sys_fork_return_t: Callable[['CPUState', int], None]
+on_sys_fremovexattr_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_fremovexattr_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_fsetxattr_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_fsetxattr_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_fstat64_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_fstat64_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_fstatat64_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_fstatat64_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_fstatfs64_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_fstatfs64_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_fstatfs_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_fstatfs_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_fsync_enter_t: Callable[['CPUState', int, int], None]
+on_sys_fsync_return_t: Callable[['CPUState', int, int], None]
+on_sys_ftruncate64_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_ftruncate64_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_ftruncate_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_ftruncate_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_futex_enter_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_futex_return_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_futimesat_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_futimesat_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_get_mempolicy_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_get_mempolicy_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_get_robust_list_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_get_robust_list_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getcpu_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getcpu_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getcwd_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_getcwd_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_getdents64_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getdents64_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getdents_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getdents_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getegid16_enter_t: Callable[['CPUState', int], None]
+on_sys_getegid16_return_t: Callable[['CPUState', int], None]
+on_sys_getegid_enter_t: Callable[['CPUState', int], None]
+on_sys_getegid_return_t: Callable[['CPUState', int], None]
+on_sys_geteuid16_enter_t: Callable[['CPUState', int], None]
+on_sys_geteuid16_return_t: Callable[['CPUState', int], None]
+on_sys_geteuid_enter_t: Callable[['CPUState', int], None]
+on_sys_geteuid_return_t: Callable[['CPUState', int], None]
+on_sys_getgid16_enter_t: Callable[['CPUState', int], None]
+on_sys_getgid16_return_t: Callable[['CPUState', int], None]
+on_sys_getgid_enter_t: Callable[['CPUState', int], None]
+on_sys_getgid_return_t: Callable[['CPUState', int], None]
+on_sys_getgroups16_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_getgroups16_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_getgroups_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_getgroups_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_getitimer_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_getitimer_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_getpeername_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getpeername_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getpgid_enter_t: Callable[['CPUState', int, int], None]
+on_sys_getpgid_return_t: Callable[['CPUState', int, int], None]
+on_sys_getpgrp_enter_t: Callable[['CPUState', int], None]
+on_sys_getpgrp_return_t: Callable[['CPUState', int], None]
+on_sys_getpid_enter_t: Callable[['CPUState', int], None]
+on_sys_getpid_return_t: Callable[['CPUState', int], None]
+on_sys_getppid_enter_t: Callable[['CPUState', int], None]
+on_sys_getppid_return_t: Callable[['CPUState', int], None]
+on_sys_getpriority_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_getpriority_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_getrandom_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getrandom_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getresgid16_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getresgid16_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getresgid_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getresgid_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getresuid16_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getresuid16_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getresuid_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getresuid_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getrlimit_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_getrlimit_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_getrusage_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_getrusage_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_getsid_enter_t: Callable[['CPUState', int, int], None]
+on_sys_getsid_return_t: Callable[['CPUState', int, int], None]
+on_sys_getsockname_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getsockname_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_getsockopt_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_getsockopt_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_gettid_enter_t: Callable[['CPUState', int], None]
+on_sys_gettid_return_t: Callable[['CPUState', int], None]
+on_sys_gettimeofday_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_gettimeofday_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_getuid16_enter_t: Callable[['CPUState', int], None]
+on_sys_getuid16_return_t: Callable[['CPUState', int], None]
+on_sys_getuid_enter_t: Callable[['CPUState', int], None]
+on_sys_getuid_return_t: Callable[['CPUState', int], None]
+on_sys_getxattr_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_getxattr_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_init_module_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_init_module_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_inotify_add_watch_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_inotify_add_watch_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_inotify_init1_enter_t: Callable[['CPUState', int, int], None]
+on_sys_inotify_init1_return_t: Callable[['CPUState', int, int], None]
+on_sys_inotify_init_enter_t: Callable[['CPUState', int], None]
+on_sys_inotify_init_return_t: Callable[['CPUState', int], None]
+on_sys_inotify_rm_watch_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_inotify_rm_watch_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_io_cancel_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_io_cancel_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_io_destroy_enter_t: Callable[['CPUState', int, int], None]
+on_sys_io_destroy_return_t: Callable[['CPUState', int, int], None]
+on_sys_io_getevents_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_io_getevents_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_io_setup_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_io_setup_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_io_submit_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_io_submit_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_ioctl_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_ioctl_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_ioprio_get_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_ioprio_get_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_ioprio_set_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_ioprio_set_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_ipc_enter_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_ipc_return_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_kcmp_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_kcmp_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_kexec_load_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_kexec_load_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_keyctl_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_keyctl_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_kill_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_kill_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_lchown16_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_lchown16_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_lchown_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_lchown_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_lgetxattr_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_lgetxattr_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_link_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_link_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_linkat_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_linkat_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_listen_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_listen_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_listxattr_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_listxattr_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_llistxattr_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_llistxattr_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_llseek_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_llseek_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_lookup_dcookie_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_lookup_dcookie_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_lremovexattr_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_lremovexattr_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_lseek_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_lseek_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_lsetxattr_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_lsetxattr_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_lstat64_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_lstat64_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_madvise_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_madvise_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_mbind_enter_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_mbind_return_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_membarrier_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_membarrier_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_memfd_create_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_memfd_create_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_mincore_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_mincore_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_mkdir_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_mkdir_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_mkdirat_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_mkdirat_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_mknod_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_mknod_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_mknodat_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_mknodat_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_mlock2_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_mlock2_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_mlock_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_mlock_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_mlockall_enter_t: Callable[['CPUState', int, int], None]
+on_sys_mlockall_return_t: Callable[['CPUState', int, int], None]
+on_sys_mount_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_mount_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_move_pages_enter_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_move_pages_return_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_mprotect_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_mprotect_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_mq_getsetattr_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_mq_getsetattr_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_mq_notify_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_mq_notify_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_mq_open_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_mq_open_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_mq_timedreceive_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_mq_timedreceive_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_mq_timedsend_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_mq_timedsend_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_mq_unlink_enter_t: Callable[['CPUState', int, int], None]
+on_sys_mq_unlink_return_t: Callable[['CPUState', int, int], None]
+on_sys_mremap_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_mremap_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_msgctl_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_msgctl_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_msgget_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_msgget_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_msgrcv_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_msgrcv_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_msgsnd_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_msgsnd_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_msync_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_msync_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_munlock_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_munlock_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_munlockall_enter_t: Callable[['CPUState', int], None]
+on_sys_munlockall_return_t: Callable[['CPUState', int], None]
+on_sys_munmap_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_munmap_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_name_to_handle_at_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_name_to_handle_at_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_nanosleep_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_nanosleep_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_newfstat_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_newfstat_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_newlstat_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_newlstat_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_newstat_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_newstat_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_newuname_enter_t: Callable[['CPUState', int, int], None]
+on_sys_newuname_return_t: Callable[['CPUState', int, int], None]
+on_sys_nice_enter_t: Callable[['CPUState', int, int], None]
+on_sys_nice_return_t: Callable[['CPUState', int, int], None]
+on_sys_open_by_handle_at_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_open_by_handle_at_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_open_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_open_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_openat_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_openat_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_pause_enter_t: Callable[['CPUState', int], None]
+on_sys_pause_return_t: Callable[['CPUState', int], None]
+on_sys_pciconfig_iobase_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_pciconfig_iobase_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_pciconfig_read_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_pciconfig_read_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_pciconfig_write_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_pciconfig_write_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_perf_event_open_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_perf_event_open_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_personality_enter_t: Callable[['CPUState', int, int], None]
+on_sys_personality_return_t: Callable[['CPUState', int, int], None]
+on_sys_pipe2_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_pipe2_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_pipe_enter_t: Callable[['CPUState', int, int], None]
+on_sys_pipe_return_t: Callable[['CPUState', int, int], None]
+on_sys_pivot_root_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_pivot_root_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_poll_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_poll_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_ppoll_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_ppoll_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_prctl_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_prctl_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_pread64_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_pread64_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_preadv_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_preadv_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_prlimit64_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_prlimit64_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_process_vm_readv_enter_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_process_vm_readv_return_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_process_vm_writev_enter_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_process_vm_writev_return_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_pselect6_enter_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_pselect6_return_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_ptrace_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_ptrace_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_pwrite64_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_pwrite64_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_pwritev_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_pwritev_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_quotactl_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_quotactl_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_read_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_read_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_readahead_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_readahead_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_readlink_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_readlink_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_readlinkat_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_readlinkat_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_readv_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_readv_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_reboot_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_reboot_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_recv_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_recv_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_recvfrom_enter_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_recvfrom_return_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_recvmmsg_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_recvmmsg_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_recvmsg_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_recvmsg_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_remap_file_pages_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_remap_file_pages_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_removexattr_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_removexattr_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_rename_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_rename_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_renameat2_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_renameat2_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_renameat_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_renameat_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_request_key_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_request_key_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_restart_syscall_enter_t: Callable[['CPUState', int], None]
+on_sys_restart_syscall_return_t: Callable[['CPUState', int], None]
+on_sys_rmdir_enter_t: Callable[['CPUState', int, int], None]
+on_sys_rmdir_return_t: Callable[['CPUState', int, int], None]
+on_sys_rt_sigaction_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_rt_sigaction_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_rt_sigpending_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_rt_sigpending_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_rt_sigprocmask_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_rt_sigprocmask_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_rt_sigqueueinfo_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_rt_sigqueueinfo_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_rt_sigreturn_enter_t: Callable[['CPUState', int, int], None]
+on_sys_rt_sigreturn_return_t: Callable[['CPUState', int, int], None]
+on_sys_rt_sigsuspend_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_rt_sigsuspend_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_rt_sigtimedwait_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_rt_sigtimedwait_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_rt_tgsigqueueinfo_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_rt_tgsigqueueinfo_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_sched_get_priority_max_enter_t: Callable[['CPUState', int, int], None]
+on_sys_sched_get_priority_max_return_t: Callable[['CPUState', int, int], None]
+on_sys_sched_get_priority_min_enter_t: Callable[['CPUState', int, int], None]
+on_sys_sched_get_priority_min_return_t: Callable[['CPUState', int, int], None]
+on_sys_sched_getaffinity_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sched_getaffinity_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sched_getattr_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_sched_getattr_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_sched_getparam_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_sched_getparam_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_sched_getscheduler_enter_t: Callable[['CPUState', int, int], None]
+on_sys_sched_getscheduler_return_t: Callable[['CPUState', int, int], None]
+on_sys_sched_rr_get_interval_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_sched_rr_get_interval_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_sched_setaffinity_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sched_setaffinity_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sched_setattr_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sched_setattr_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sched_setparam_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_sched_setparam_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_sched_setscheduler_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sched_setscheduler_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sched_yield_enter_t: Callable[['CPUState', int], None]
+on_sys_sched_yield_return_t: Callable[['CPUState', int], None]
+on_sys_seccomp_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_seccomp_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_select_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_select_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_semctl_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_semctl_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_semget_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_semget_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_semop_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_semop_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_semtimedop_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_semtimedop_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_send_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_send_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_sendfile64_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_sendfile64_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_sendfile_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_sendfile_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_sendmmsg_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_sendmmsg_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_sendmsg_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sendmsg_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sendto_enter_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_sendto_return_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_set_mempolicy_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_set_mempolicy_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_set_robust_list_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_set_robust_list_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_set_tid_address_enter_t: Callable[['CPUState', int, int], None]
+on_sys_set_tid_address_return_t: Callable[['CPUState', int, int], None]
+on_sys_setdomainname_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_setdomainname_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_setfsgid16_enter_t: Callable[['CPUState', int, int], None]
+on_sys_setfsgid16_return_t: Callable[['CPUState', int, int], None]
+on_sys_setfsgid_enter_t: Callable[['CPUState', int, int], None]
+on_sys_setfsgid_return_t: Callable[['CPUState', int, int], None]
+on_sys_setfsuid16_enter_t: Callable[['CPUState', int, int], None]
+on_sys_setfsuid16_return_t: Callable[['CPUState', int, int], None]
+on_sys_setfsuid_enter_t: Callable[['CPUState', int, int], None]
+on_sys_setfsuid_return_t: Callable[['CPUState', int, int], None]
+on_sys_setgid16_enter_t: Callable[['CPUState', int, int], None]
+on_sys_setgid16_return_t: Callable[['CPUState', int, int], None]
+on_sys_setgid_enter_t: Callable[['CPUState', int, int], None]
+on_sys_setgid_return_t: Callable[['CPUState', int, int], None]
+on_sys_setgroups16_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_setgroups16_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_setgroups_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_setgroups_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_sethostname_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_sethostname_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_setitimer_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_setitimer_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_setns_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_setns_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_setpgid_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_setpgid_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_setpriority_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_setpriority_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_setregid16_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_setregid16_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_setregid_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_setregid_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_setresgid16_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_setresgid16_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_setresgid_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_setresgid_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_setresuid16_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_setresuid16_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_setresuid_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_setresuid_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_setreuid16_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_setreuid16_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_setreuid_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_setreuid_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_setrlimit_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_setrlimit_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_setsid_enter_t: Callable[['CPUState', int], None]
+on_sys_setsid_return_t: Callable[['CPUState', int], None]
+on_sys_setsockopt_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_setsockopt_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_settimeofday_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_settimeofday_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_setuid16_enter_t: Callable[['CPUState', int, int], None]
+on_sys_setuid16_return_t: Callable[['CPUState', int, int], None]
+on_sys_setuid_enter_t: Callable[['CPUState', int, int], None]
+on_sys_setuid_return_t: Callable[['CPUState', int, int], None]
+on_sys_setxattr_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_setxattr_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_shmat_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_shmat_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_shmctl_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_shmctl_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_shmdt_enter_t: Callable[['CPUState', int, int], None]
+on_sys_shmdt_return_t: Callable[['CPUState', int, int], None]
+on_sys_shmget_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_shmget_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_shutdown_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_shutdown_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_sigaction_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sigaction_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sigaltstack_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_sigaltstack_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_signalfd4_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_signalfd4_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_signalfd_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_signalfd_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sigpending_enter_t: Callable[['CPUState', int, int], None]
+on_sys_sigpending_return_t: Callable[['CPUState', int, int], None]
+on_sys_sigprocmask_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sigprocmask_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sigreturn_enter_t: Callable[['CPUState', int, int], None]
+on_sys_sigreturn_return_t: Callable[['CPUState', int, int], None]
+on_sys_sigsuspend_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sigsuspend_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_socket_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_socket_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_socketcall_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_socketcall_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_socketpair_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_socketpair_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_splice_enter_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_splice_return_t: Callable[['CPUState', int, int, int, int, int, int, int], None]
+on_sys_stat64_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_stat64_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_statfs64_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_statfs64_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_statfs_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_statfs_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_statx_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_statx_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_stime_enter_t: Callable[['CPUState', int, int], None]
+on_sys_stime_return_t: Callable[['CPUState', int, int], None]
+on_sys_swapoff_enter_t: Callable[['CPUState', int, int], None]
+on_sys_swapoff_return_t: Callable[['CPUState', int, int], None]
+on_sys_swapon_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_swapon_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_symlink_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_symlink_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_symlinkat_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_symlinkat_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sync_enter_t: Callable[['CPUState', int], None]
+on_sys_sync_file_range2_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_sync_file_range2_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_sync_return_t: Callable[['CPUState', int], None]
+on_sys_syncfs_enter_t: Callable[['CPUState', int, int], None]
+on_sys_syncfs_return_t: Callable[['CPUState', int, int], None]
+on_sys_sysctl_enter_t: Callable[['CPUState', int, int], None]
+on_sys_sysctl_return_t: Callable[['CPUState', int, int], None]
+on_sys_sysfs_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sysfs_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_sysinfo_enter_t: Callable[['CPUState', int, int], None]
+on_sys_sysinfo_return_t: Callable[['CPUState', int, int], None]
+on_sys_syslog_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_syslog_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_tee_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_tee_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_tgkill_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_tgkill_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_time_enter_t: Callable[['CPUState', int, int], None]
+on_sys_time_return_t: Callable[['CPUState', int, int], None]
+on_sys_timer_create_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_timer_create_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_timer_delete_enter_t: Callable[['CPUState', int, int], None]
+on_sys_timer_delete_return_t: Callable[['CPUState', int, int], None]
+on_sys_timer_getoverrun_enter_t: Callable[['CPUState', int, int], None]
+on_sys_timer_getoverrun_return_t: Callable[['CPUState', int, int], None]
+on_sys_timer_gettime_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_timer_gettime_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_timer_settime_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_timer_settime_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_timerfd_create_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_timerfd_create_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_timerfd_gettime_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_timerfd_gettime_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_timerfd_settime_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_timerfd_settime_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_times_enter_t: Callable[['CPUState', int, int], None]
+on_sys_times_return_t: Callable[['CPUState', int, int], None]
+on_sys_tkill_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_tkill_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_truncate64_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_truncate64_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_truncate_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_truncate_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_umask_enter_t: Callable[['CPUState', int, int], None]
+on_sys_umask_return_t: Callable[['CPUState', int, int], None]
+on_sys_umount_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_umount_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_unlink_enter_t: Callable[['CPUState', int, int], None]
+on_sys_unlink_return_t: Callable[['CPUState', int, int], None]
+on_sys_unlinkat_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_unlinkat_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_unshare_enter_t: Callable[['CPUState', int, int], None]
+on_sys_unshare_return_t: Callable[['CPUState', int, int], None]
+on_sys_uselib_enter_t: Callable[['CPUState', int, int], None]
+on_sys_uselib_return_t: Callable[['CPUState', int, int], None]
+on_sys_userfaultfd_enter_t: Callable[['CPUState', int, int], None]
+on_sys_userfaultfd_return_t: Callable[['CPUState', int, int], None]
+on_sys_ustat_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_ustat_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_utime_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_utime_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_utimensat_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_utimensat_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_utimes_enter_t: Callable[['CPUState', int, int, int], None]
+on_sys_utimes_return_t: Callable[['CPUState', int, int, int], None]
+on_sys_vfork_enter_t: Callable[['CPUState', int], None]
+on_sys_vfork_return_t: Callable[['CPUState', int], None]
+on_sys_vhangup_enter_t: Callable[['CPUState', int], None]
+on_sys_vhangup_return_t: Callable[['CPUState', int], None]
+on_sys_vmsplice_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_vmsplice_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_wait4_enter_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_wait4_return_t: Callable[['CPUState', int, int, int, int, int], None]
+on_sys_waitid_enter_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_waitid_return_t: Callable[['CPUState', int, int, int, int, int, int], None]
+on_sys_write_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_write_return_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_writev_enter_t: Callable[['CPUState', int, int, int, int], None]
+on_sys_writev_return_t: Callable[['CPUState', int, int, int, int], None]
+on_taint_change_t: Callable[['addr_struct', int], None]
+on_taint_prop_t: Callable[['addr_struct', 'addr_struct', int], None]
+on_task_change_t: Callable[['CPUState'], None]
+on_thread_end_t: Callable[['CPUState', bytes, int, int, int], None]
+on_thread_start_t: Callable[['CPUState', bytes, int, int, int], None]
+on_unknown_sys_enter_t: Callable[['CPUState', int, int], None]
+on_unknown_sys_return_t: Callable[['CPUState', int, int], None]
+class panda_arg:
+    argptr: bytes
+    key: bytes
+    value: bytes
 
-class panda_arg_list(CStructure):
-    nargs: 'ctypes.c_int'
-    list: 'ctypes._Pointer[panda_arg]'
-    plugin_name: 'ctypes._Pointer[ctypes.c_char]'
+class panda_arg_list:
+    nargs: int
+    list: 'panda_arg'
+    plugin_name: bytes
 
-class panda_cb(CUnion):
-    before_block_exec_invalidate_opt: 'Function'
-    before_tcg_codegen: 'Function'
-    before_block_exec: 'Function'
-    after_block_exec: 'Function'
-    before_block_translate: 'Function'
-    after_block_translate: 'Function'
-    after_cpu_exec_enter: 'Function'
-    before_cpu_exec_exit: 'Function'
-    insn_translate: 'Function'
-    insn_exec: 'Function'
-    after_insn_translate: 'Function'
-    after_insn_exec: 'Function'
-    virt_mem_before_read: 'Function'
-    virt_mem_before_write: 'Function'
-    phys_mem_before_read: 'Function'
-    phys_mem_before_write: 'Function'
-    virt_mem_after_read: 'Function'
-    virt_mem_after_write: 'Function'
-    phys_mem_after_read: 'Function'
-    phys_mem_after_write: 'Function'
-    mmio_after_read: 'Function'
-    mmio_before_write: 'Function'
-    hd_read: 'Function'
-    hd_write: 'Function'
-    guest_hypercall: 'Function'
-    monitor: 'Function'
-    qmp: 'Function'
-    cpu_restore_state: 'Function'
-    before_loadvm: 'Function'
-    asid_changed: 'Function'
-    replay_hd_transfer: 'Function'
-    replay_before_dma: 'Function'
-    replay_after_dma: 'Function'
-    replay_handle_packet: 'Function'
-    replay_net_transfer: 'Function'
-    replay_serial_receive: 'Function'
-    replay_serial_read: 'Function'
-    replay_serial_send: 'Function'
-    replay_serial_write: 'Function'
-    after_machine_init: 'Function'
-    after_loadvm: 'Function'
-    top_loop: 'Function'
-    during_machine_init: 'Function'
-    main_loop_wait: 'Function'
-    pre_shutdown: 'Function'
-    unassigned_io_read: 'Function'
-    unassigned_io_write: 'Function'
-    before_handle_exception: 'Function'
-    before_handle_interrupt: 'Function'
-    start_block_exec: 'Function'
-    end_block_exec: 'Function'
-    cbaddr: 'Function'
+class panda_cb:
+    before_block_exec_invalidate_opt: Callable[['CPUState', 'TranslationBlock'], bool]
+    before_tcg_codegen: Callable[['CPUState', 'TranslationBlock'], None]
+    before_block_exec: Callable[['CPUState', 'TranslationBlock'], None]
+    after_block_exec: Callable[['CPUState', 'TranslationBlock', int], None]
+    before_block_translate: Callable[['CPUState', int], None]
+    after_block_translate: Callable[['CPUState', 'TranslationBlock'], None]
+    after_cpu_exec_enter: Callable[['CPUState'], None]
+    before_cpu_exec_exit: Callable[['CPUState', bool], None]
+    insn_translate: Callable[['CPUState', int], bool]
+    insn_exec: Callable[['CPUState', int], int]
+    after_insn_translate: Callable[['CPUState', int], bool]
+    after_insn_exec: Callable[['CPUState', int], int]
+    virt_mem_before_read: Callable[['CPUState', int, int, int], None]
+    virt_mem_before_write: Callable[['CPUState', int, int, int, int], None]
+    phys_mem_before_read: Callable[['CPUState', int, int, int], None]
+    phys_mem_before_write: Callable[['CPUState', int, int, int, int], None]
+    virt_mem_after_read: Callable[['CPUState', int, int, int, int], None]
+    virt_mem_after_write: Callable[['CPUState', int, int, int, int], None]
+    phys_mem_after_read: Callable[['CPUState', int, int, int, int], None]
+    phys_mem_after_write: Callable[['CPUState', int, int, int, int], None]
+    mmio_after_read: Callable[['CPUState', int, int, int, int], None]
+    mmio_before_write: Callable[['CPUState', int, int, int, int], None]
+    hd_read: Callable[['CPUState'], None]
+    hd_write: Callable[['CPUState'], None]
+    guest_hypercall: Callable[['CPUState'], bool]
+    monitor: Callable[['Monitor', bytes], int]
+    qmp: Callable[[bytes, bytes, bytes], bool]
+    cpu_restore_state: Callable[['CPUState', 'TranslationBlock'], None]
+    before_loadvm: Callable[[], int]
+    asid_changed: Callable[['CPUState', int, int], bool]
+    replay_hd_transfer: Callable[['CPUState', int, int, int, int], None]
+    replay_before_dma: Callable[['CPUState', int, int, int, bool], None]
+    replay_after_dma: Callable[['CPUState', int, int, int, bool], None]
+    replay_handle_packet: Callable[['CPUState', int, int, int, int], None]
+    replay_net_transfer: Callable[['CPUState', int, int, int, int], None]
+    replay_serial_receive: Callable[['CPUState', int, int], None]
+    replay_serial_read: Callable[['CPUState', int, int, int], None]
+    replay_serial_send: Callable[['CPUState', int, int], None]
+    replay_serial_write: Callable[['CPUState', int, int, int], None]
+    after_machine_init: Callable[['CPUState'], None]
+    after_loadvm: Callable[['CPUState'], None]
+    top_loop: Callable[['CPUState'], None]
+    during_machine_init: Callable[['MachineState'], None]
+    main_loop_wait: Callable[[], None]
+    pre_shutdown: Callable[[], None]
+    unassigned_io_read: Callable[['CPUState', int, int, int, int], bool]
+    unassigned_io_write: Callable[['CPUState', int, int, int, int], bool]
+    before_handle_exception: Callable[['CPUState', int], int]
+    before_handle_interrupt: Callable[['CPUState', int], int]
+    start_block_exec: Callable[['CPUState', 'TranslationBlock'], None]
+    end_block_exec: Callable[['CPUState', 'TranslationBlock'], None]
+    cbaddr: Callable[[], None]
 
-class panda_cb_list(CStructure):
+class panda_cb_list:
     entry: 'panda_cb_with_context'
-    owner: 'ctypes.c_void_p'
-    next: 'ctypes._Pointer[_panda_cb_list]'
-    prev: 'ctypes._Pointer[_panda_cb_list]'
-    enabled: 'ctypes.c_bool'
-    context: 'ctypes.c_void_p'
+    owner: ctypes.c_void_p
+    next: '_panda_cb_list'
+    prev: '_panda_cb_list'
+    enabled: bool
+    context: ctypes.c_void_p
 
-panda_cb_type:ctypes.c_int
-class panda_cb_with_context(CUnion):
-    before_block_exec_invalidate_opt: 'Function'
-    before_tcg_codegen: 'Function'
-    before_block_exec: 'Function'
-    after_block_exec: 'Function'
-    before_block_translate: 'Function'
-    after_block_translate: 'Function'
-    after_cpu_exec_enter: 'Function'
-    before_cpu_exec_exit: 'Function'
-    insn_translate: 'Function'
-    insn_exec: 'Function'
-    after_insn_translate: 'Function'
-    after_insn_exec: 'Function'
-    virt_mem_before_read: 'Function'
-    virt_mem_before_write: 'Function'
-    phys_mem_before_read: 'Function'
-    phys_mem_before_write: 'Function'
-    virt_mem_after_read: 'Function'
-    virt_mem_after_write: 'Function'
-    phys_mem_after_read: 'Function'
-    phys_mem_after_write: 'Function'
-    mmio_after_read: 'Function'
-    mmio_before_write: 'Function'
-    hd_read: 'Function'
-    hd_write: 'Function'
-    guest_hypercall: 'Function'
-    monitor: 'Function'
-    qmp: 'Function'
-    cpu_restore_state: 'Function'
-    before_loadvm: 'Function'
-    asid_changed: 'Function'
-    replay_hd_transfer: 'Function'
-    replay_before_dma: 'Function'
-    replay_after_dma: 'Function'
-    replay_handle_packet: 'Function'
-    replay_net_transfer: 'Function'
-    replay_serial_receive: 'Function'
-    replay_serial_read: 'Function'
-    replay_serial_send: 'Function'
-    replay_serial_write: 'Function'
-    after_machine_init: 'Function'
-    after_loadvm: 'Function'
-    top_loop: 'Function'
-    during_machine_init: 'Function'
-    main_loop_wait: 'Function'
-    pre_shutdown: 'Function'
-    unassigned_io_read: 'Function'
-    unassigned_io_write: 'Function'
-    before_handle_exception: 'Function'
-    before_handle_interrupt: 'Function'
-    start_block_exec: 'Function'
-    end_block_exec: 'Function'
-    cbaddr: 'Function'
+class panda_cb_type(IntEnum):
+    PANDA_CB_LAST = 51
+    PANDA_CB_END_BLOCK_EXEC = 50
+    PANDA_CB_START_BLOCK_EXEC = 49
+    PANDA_CB_BEFORE_HANDLE_INTERRUPT = 48
+    PANDA_CB_BEFORE_HANDLE_EXCEPTION = 47
+    PANDA_CB_UNASSIGNED_IO_WRITE = 46
+    PANDA_CB_UNASSIGNED_IO_READ = 45
+    PANDA_CB_PRE_SHUTDOWN = 44
+    PANDA_CB_MAIN_LOOP_WAIT = 43
+    PANDA_CB_DURING_MACHINE_INIT = 42
+    PANDA_CB_TOP_LOOP = 41
+    PANDA_CB_AFTER_LOADVM = 40
+    PANDA_CB_AFTER_MACHINE_INIT = 39
+    PANDA_CB_BEFORE_CPU_EXEC_EXIT = 38
+    PANDA_CB_AFTER_CPU_EXEC_ENTER = 37
+    PANDA_CB_REPLAY_HANDLE_PACKET = 36
+    PANDA_CB_REPLAY_AFTER_DMA = 35
+    PANDA_CB_REPLAY_BEFORE_DMA = 34
+    PANDA_CB_REPLAY_SERIAL_WRITE = 33
+    PANDA_CB_REPLAY_SERIAL_SEND = 32
+    PANDA_CB_REPLAY_SERIAL_READ = 31
+    PANDA_CB_REPLAY_SERIAL_RECEIVE = 30
+    PANDA_CB_REPLAY_NET_TRANSFER = 29
+    PANDA_CB_REPLAY_HD_TRANSFER = 28
+    PANDA_CB_ASID_CHANGED = 27
+    PANDA_CB_BEFORE_LOADVM = 26
+    PANDA_CB_CPU_RESTORE_STATE = 25
+    PANDA_CB_QMP = 24
+    PANDA_CB_MONITOR = 23
+    PANDA_CB_GUEST_HYPERCALL = 22
+    PANDA_CB_HD_WRITE = 21
+    PANDA_CB_HD_READ = 20
+    PANDA_CB_MMIO_BEFORE_WRITE = 19
+    PANDA_CB_MMIO_AFTER_READ = 18
+    PANDA_CB_PHYS_MEM_AFTER_WRITE = 17
+    PANDA_CB_PHYS_MEM_AFTER_READ = 16
+    PANDA_CB_VIRT_MEM_AFTER_WRITE = 15
+    PANDA_CB_VIRT_MEM_AFTER_READ = 14
+    PANDA_CB_PHYS_MEM_BEFORE_WRITE = 13
+    PANDA_CB_PHYS_MEM_BEFORE_READ = 12
+    PANDA_CB_VIRT_MEM_BEFORE_WRITE = 11
+    PANDA_CB_VIRT_MEM_BEFORE_READ = 10
+    PANDA_CB_AFTER_INSN_EXEC = 9
+    PANDA_CB_AFTER_INSN_TRANSLATE = 8
+    PANDA_CB_INSN_EXEC = 7
+    PANDA_CB_INSN_TRANSLATE = 6
+    PANDA_CB_AFTER_BLOCK_EXEC = 5
+    PANDA_CB_BEFORE_BLOCK_EXEC = 4
+    PANDA_CB_BEFORE_TCG_CODEGEN = 3
+    PANDA_CB_BEFORE_BLOCK_EXEC_INVALIDATE_OPT = 2
+    PANDA_CB_AFTER_BLOCK_TRANSLATE = 1
+    PANDA_CB_BEFORE_BLOCK_TRANSLATE = 0
 
-class panda_plugin(CStructure):
-    name: 'ctypes._Pointer[ctypes.c_char]'
-    plugin: 'ctypes.c_void_p'
-    unload: 'ctypes.c_bool'
-    exported_symbols: 'ctypes.c_bool'
+class panda_cb_with_context:
+    before_block_exec_invalidate_opt: Callable[[ctypes.c_void_p, 'CPUState', 'TranslationBlock'], bool]
+    before_tcg_codegen: Callable[[ctypes.c_void_p, 'CPUState', 'TranslationBlock'], None]
+    before_block_exec: Callable[[ctypes.c_void_p, 'CPUState', 'TranslationBlock'], None]
+    after_block_exec: Callable[[ctypes.c_void_p, 'CPUState', 'TranslationBlock', int], None]
+    before_block_translate: Callable[[ctypes.c_void_p, 'CPUState', int], None]
+    after_block_translate: Callable[[ctypes.c_void_p, 'CPUState', 'TranslationBlock'], None]
+    after_cpu_exec_enter: Callable[[ctypes.c_void_p, 'CPUState'], None]
+    before_cpu_exec_exit: Callable[[ctypes.c_void_p, 'CPUState', bool], None]
+    insn_translate: Callable[[ctypes.c_void_p, 'CPUState', int], bool]
+    insn_exec: Callable[[ctypes.c_void_p, 'CPUState', int], int]
+    after_insn_translate: Callable[[ctypes.c_void_p, 'CPUState', int], bool]
+    after_insn_exec: Callable[[ctypes.c_void_p, 'CPUState', int], int]
+    virt_mem_before_read: Callable[[ctypes.c_void_p, 'CPUState', int, int, int], None]
+    virt_mem_before_write: Callable[[ctypes.c_void_p, 'CPUState', int, int, int, int], None]
+    phys_mem_before_read: Callable[[ctypes.c_void_p, 'CPUState', int, int, int], None]
+    phys_mem_before_write: Callable[[ctypes.c_void_p, 'CPUState', int, int, int, int], None]
+    virt_mem_after_read: Callable[[ctypes.c_void_p, 'CPUState', int, int, int, int], None]
+    virt_mem_after_write: Callable[[ctypes.c_void_p, 'CPUState', int, int, int, int], None]
+    phys_mem_after_read: Callable[[ctypes.c_void_p, 'CPUState', int, int, int, int], None]
+    phys_mem_after_write: Callable[[ctypes.c_void_p, 'CPUState', int, int, int, int], None]
+    mmio_after_read: Callable[[ctypes.c_void_p, 'CPUState', int, int, int, int], None]
+    mmio_before_write: Callable[[ctypes.c_void_p, 'CPUState', int, int, int, int], None]
+    hd_read: Callable[[ctypes.c_void_p, 'CPUState'], None]
+    hd_write: Callable[[ctypes.c_void_p, 'CPUState'], None]
+    guest_hypercall: Callable[[ctypes.c_void_p, 'CPUState'], bool]
+    monitor: Callable[[ctypes.c_void_p, 'Monitor', bytes], int]
+    qmp: Callable[[ctypes.c_void_p, bytes, bytes, bytes], bool]
+    cpu_restore_state: Callable[[ctypes.c_void_p, 'CPUState', 'TranslationBlock'], None]
+    before_loadvm: Callable[[ctypes.c_void_p], int]
+    asid_changed: Callable[[ctypes.c_void_p, 'CPUState', int, int], bool]
+    replay_hd_transfer: Callable[[ctypes.c_void_p, 'CPUState', int, int, int, int], None]
+    replay_before_dma: Callable[[ctypes.c_void_p, 'CPUState', int, int, int, bool], None]
+    replay_after_dma: Callable[[ctypes.c_void_p, 'CPUState', int, int, int, bool], None]
+    replay_handle_packet: Callable[[ctypes.c_void_p, 'CPUState', int, int, int, int], None]
+    replay_net_transfer: Callable[[ctypes.c_void_p, 'CPUState', int, int, int, int], None]
+    replay_serial_receive: Callable[[ctypes.c_void_p, 'CPUState', int, int], None]
+    replay_serial_read: Callable[[ctypes.c_void_p, 'CPUState', int, int, int], None]
+    replay_serial_send: Callable[[ctypes.c_void_p, 'CPUState', int, int], None]
+    replay_serial_write: Callable[[ctypes.c_void_p, 'CPUState', int, int, int], None]
+    after_machine_init: Callable[[ctypes.c_void_p, 'CPUState'], None]
+    after_loadvm: Callable[[ctypes.c_void_p, 'CPUState'], None]
+    top_loop: Callable[[ctypes.c_void_p, 'CPUState'], None]
+    during_machine_init: Callable[[ctypes.c_void_p, 'MachineState'], None]
+    main_loop_wait: Callable[[ctypes.c_void_p], None]
+    pre_shutdown: Callable[[ctypes.c_void_p], None]
+    unassigned_io_read: Callable[[ctypes.c_void_p, 'CPUState', int, int, int, int], bool]
+    unassigned_io_write: Callable[[ctypes.c_void_p, 'CPUState', int, int, int, int], bool]
+    before_handle_exception: Callable[[ctypes.c_void_p, 'CPUState', int], int]
+    before_handle_interrupt: Callable[[ctypes.c_void_p, 'CPUState', int], int]
+    start_block_exec: Callable[[ctypes.c_void_p, 'CPUState', 'TranslationBlock'], None]
+    end_block_exec: Callable[[ctypes.c_void_p, 'CPUState', 'TranslationBlock'], None]
+    cbaddr: Callable[[], None]
 
-powerpc_excp_t: ctypes.c_uint
-powerpc_input_t: ctypes.c_uint
-powerpc_mmu_t: ctypes.c_uint
-ppc_avr_t: ctypes.Array[ctypes.c_ubyte]
-ppc_tlb_t: ctypes.Array[ctypes.c_ubyte]
-pthread_cond_t: ctypes.Array[ctypes.c_ubyte]
-pthread_mutex_t: ctypes.Array[ctypes.c_ubyte]
-pthread_t: ctypes.c_ulong
-class qemu_work_item(CStructure):
-    next: 'ctypes._Pointer[qemu_work_item]'
-    func: 'ctypes.c_void_p'
-    data: 'ctypes.c_ulong'
-    free: 'ctypes.c_bool'
-    exclusive: 'ctypes.c_bool'
-    done: 'ctypes.c_bool'
+class panda_plugin:
+    name: bytes
+    plugin: ctypes.c_void_p
+    unload: bool
+    exported_symbols: bool
 
-ram_addr_t: ctypes.c_ulong
-class rcu_head(CStructure):
-    next: 'ctypes._Pointer[rcu_head]'
-    func: 'Function'
+powerpc_excp_t: int
+powerpc_input_t: int
+powerpc_mmu_t: int
+ppc_avr_t: list[int]
+ppc_tlb_t: list[int]
+pthread_cond_t: list[int]
+pthread_mutex_t: list[int]
+pthread_t: int
+class qemu_work_item:
+    next: 'qemu_work_item'
+    func: ctypes.c_void_p
+    data: int
+    free: bool
+    exclusive: bool
+    done: bool
 
-run_on_cpu_data: ctypes.c_ulong
+ram_addr_t: int
+class rcu_head:
+    next: 'rcu_head'
+    func: Callable[['rcu_head'], None]
+
+run_on_cpu_data: int
 run_on_cpu_func: ctypes.c_void_p
-sigjmp_buf: ctypes.Array[ctypes.c_ubyte]
-class subregions(CStructure):
-    tqh_first: 'ctypes._Pointer[MemoryRegion]'
-    tqh_last: 'ctypes._Pointer[ctypes._Pointer[MemoryRegion]]'
+sigjmp_buf: list[int]
+class subregions:
+    tqh_first: 'MemoryRegion'
+    tqh_last: 'MemoryRegion'
 
-syscall_argtype_t:ctypes.c_int
-class syscall_ctx_t(CStructure):
-    no: 'ctypes.c_int'
-    asid: 'ctypes.c_uint'
-    retaddr: 'ctypes.c_uint'
-    args: 'ctypes.Array[ctypes.Array[ctypes.c_ubyte]]'
+class syscall_argtype_t(IntEnum):
+    SYSCALL_ARG_ARR = 49
+    SYSCALL_ARG_STRUCT = 48
+    SYSCALL_ARG_STR_PTR = 34
+    SYSCALL_ARG_STRUCT_PTR = 33
+    SYSCALL_ARG_BUF_PTR = 32
+    SYSCALL_ARG_S16 = 18
+    SYSCALL_ARG_S32 = 17
+    SYSCALL_ARG_S64 = 16
+    SYSCALL_ARG_U16 = 2
+    SYSCALL_ARG_U32 = 1
+    SYSCALL_ARG_U64 = 0
 
-class syscall_info_t(CStructure):
-    no: 'ctypes.c_int'
-    name: 'ctypes._Pointer[ctypes.c_char]'
-    nargs: 'ctypes.c_int'
-    argt: 'ctypes._Pointer[ctypes.c_int]'
-    argsz: 'ctypes._Pointer[ctypes.c_ubyte]'
-    argn: 'ctypes._Pointer[ctypes._Pointer[ctypes.c_char]]'
-    argtn: 'ctypes._Pointer[ctypes._Pointer[ctypes.c_char]]'
-    noreturn: 'ctypes.c_bool'
+class syscall_ctx_t:
+    no: int
+    asid: int
+    retaddr: int
+    args: list[list[int]]
 
-class syscall_meta_t(CStructure):
-    max: 'ctypes.c_uint'
-    max_generic: 'ctypes.c_uint'
-    max_args: 'ctypes.c_uint'
+class syscall_info_t:
+    no: int
+    name: bytes
+    nargs: int
+    argt: 'syscall_argtype_t'
+    argsz: int
+    argn: bytes
+    argtn: bytes
+    noreturn: bool
 
-target_long: ctypes.c_int
-target_pid_t: ctypes.c_int
-target_ptr_t: ctypes.c_uint
-target_ulong: ctypes.c_uint
-tb_page_addr_t: ctypes.c_ulong
-vaddr: ctypes.c_ulong
-class watchpoints_head(CStructure):
-    tqh_first: 'ctypes._Pointer[CPUWatchpoint]'
-    tqh_last: 'ctypes._Pointer[ctypes._Pointer[CPUWatchpoint]]'
+class syscall_meta_t:
+    max: int
+    max_generic: int
+    max_args: int
 
-class AddressSpaceDispatch(CStructure):
+target_long: int
+target_pid_t: int
+target_ptr_t: int
+target_ulong: int
+tb_page_addr_t: int
+vaddr: int
+class watchpoints_head:
+    tqh_first: 'CPUWatchpoint'
+    tqh_last: 'CPUWatchpoint'
+
+class AddressSpaceDispatch:
     pass
 
-class BusChild(CStructure):
+class BusChild:
     pass
 
-class CoalescedMemoryRange(CStructure):
+class CoalescedMemoryRange:
     pass
 
-class FlatView(CStructure):
+class FlatView:
     pass
 
-class IOMMUNotifier(CStructure):
+class IOMMUNotifier:
     pass
 
-class KVMState(CStructure):
+class KVMState:
     pass
 
-class NamedGPIOList(CStructure):
+class NamedGPIOList:
     pass
 
-class QemuOpt(CStructure):
+class QemuOpt:
     pass
 
-class RAMBlockNotifier(CStructure):
+class RAMBlockNotifier:
     pass
 
-class _IO_FILE(CStructure):
+class _IO_FILE:
     pass
 
-class _panda_cb_list(CStructure):
+class _panda_cb_list:
     entry: 'panda_cb_with_context'
-    owner: 'ctypes.c_void_p'
-    next: 'ctypes._Pointer[_panda_cb_list]'
-    prev: 'ctypes._Pointer[_panda_cb_list]'
-    enabled: 'ctypes.c_bool'
-    context: 'ctypes.c_void_p'
+    owner: ctypes.c_void_p
+    next: '_panda_cb_list'
+    prev: '_panda_cb_list'
+    enabled: bool
+    context: ctypes.c_void_p
 
-class addr_struct(CStructure):
-    typ: 'ctypes.c_int'
-    val: 'ctypes.c_ulong'
-    off: 'ctypes.c_ushort'
-    flag: 'ctypes.c_int'
+class addr_struct:
+    typ: 'AddrType'
+    val: int
+    off: int
+    flag: 'AddrFlag'
 
-class arm_boot_info(CStructure):
+class arm_boot_info:
     pass
 
-class auxv_values(CStructure):
-    argc: 'ctypes.c_int'
-    argv_ptr_ptr: 'ctypes.c_uint'
-    arg_ptr: 'ctypes.Array[ctypes.c_uint]'
-    argv: 'ctypes.Array[ctypes.Array[ctypes.c_char]]'
-    envc: 'ctypes.c_int'
-    env_ptr_ptr: 'ctypes.c_uint'
-    env_ptr: 'ctypes.Array[ctypes.c_uint]'
-    envp: 'ctypes.Array[ctypes.Array[ctypes.c_char]]'
-    execfn_ptr: 'ctypes.c_uint'
-    execfn: 'ctypes.Array[ctypes.c_char]'
-    phdr: 'ctypes.c_uint'
-    entry: 'ctypes.c_uint'
-    ehdr: 'ctypes.c_uint'
-    hwcap: 'ctypes.c_uint'
-    hwcap2: 'ctypes.c_uint'
-    pagesz: 'ctypes.c_uint'
-    clktck: 'ctypes.c_uint'
-    phent: 'ctypes.c_uint'
-    phnum: 'ctypes.c_uint'
-    base: 'ctypes.c_uint'
-    flags: 'ctypes.c_uint'
-    uid: 'ctypes.c_uint'
-    euid: 'ctypes.c_uint'
-    gid: 'ctypes.c_uint'
-    egid: 'ctypes.c_uint'
-    secure: 'ctypes.c_bool'
-    random: 'ctypes.c_uint'
-    platform: 'ctypes.c_uint'
-    program_header: 'ctypes.c_uint'
-    minsigstksz: 'ctypes.c_uint'
+class auxv_values:
+    argc: int
+    argv_ptr_ptr: int
+    arg_ptr: list[int]
+    argv: list[list[bytes]]
+    envc: int
+    env_ptr_ptr: int
+    env_ptr: list[int]
+    envp: list[list[bytes]]
+    execfn_ptr: int
+    execfn: list[bytes]
+    phdr: int
+    entry: int
+    ehdr: int
+    hwcap: int
+    hwcap2: int
+    pagesz: int
+    clktck: int
+    phent: int
+    phnum: int
+    base: int
+    flags: int
+    uid: int
+    euid: int
+    gid: int
+    egid: int
+    secure: bool
+    random: int
+    platform: int
+    program_header: int
+    minsigstksz: int
 
-class cred_info(CStructure):
-    uid_offset: 'ctypes.c_int'
-    gid_offset: 'ctypes.c_int'
-    euid_offset: 'ctypes.c_int'
-    egid_offset: 'ctypes.c_int'
+class cred_info:
+    uid_offset: int
+    gid_offset: int
+    euid_offset: int
+    egid_offset: int
 
-class dynamic_symbol_hook(CStructure):
-    library_name: 'ctypes.Array[ctypes.c_char]'
-    symbol: 'ctypes.Array[ctypes.c_char]'
-    cb: 'Function'
+class dynamic_symbol_hook:
+    library_name: list[bytes]
+    symbol: list[bytes]
+    cb: Callable[['CPUState', 'TranslationBlock', 'hook'], bool]
 
-class fs_info(CStructure):
-    f_path_dentry_offset: 'ctypes.c_int'
-    f_dentry_offset: 'ctypes.c_int'
-    f_path_mnt_offset: 'ctypes.c_int'
-    f_vfsmnt_offset: 'ctypes.c_int'
-    f_pos_offset: 'ctypes.c_int'
-    fdt_offset: 'ctypes.c_int'
-    fdtab_offset: 'ctypes.c_int'
-    fd_offset: 'ctypes.c_int'
+class fs_info:
+    f_path_dentry_offset: int
+    f_dentry_offset: int
+    f_path_mnt_offset: int
+    f_vfsmnt_offset: int
+    f_pos_offset: int
+    fdt_offset: int
+    fdtab_offset: int
+    fd_offset: int
 
-class hax_state(CStructure):
+class hax_state:
     pass
 
-class hax_tunnel(CStructure):
+class hax_tunnel:
     pass
 
-class hook_symbol_resolve(CStructure):
-    name: 'ctypes.Array[ctypes.c_char]'
-    offset: 'ctypes.c_uint'
-    hook_offset: 'ctypes.c_bool'
-    section: 'ctypes.Array[ctypes.c_char]'
-    cb: 'Function'
-    enabled: 'ctypes.c_bool'
-    id: 'ctypes.c_int'
+class hook_symbol_resolve:
+    name: list[bytes]
+    offset: int
+    hook_offset: bool
+    section: list[bytes]
+    cb: Callable[['hook_symbol_resolve', 'symbol', int], None]
+    enabled: bool
+    id: int
 
-class kernelinfo(CStructure):
-    name: 'ctypes._Pointer[ctypes.c_char]'
+class kernelinfo:
+    name: bytes
     version: 'version'
     task: 'task_info'
     cred: 'cred_info'
@@ -2157,165 +2253,178 @@ class kernelinfo(CStructure):
     qstr: 'qstr_info'
     path: 'path_info'
 
-class kvm_run(CStructure):
+class kvm_run:
     pass
 
-class memory_access_desc(CStructure):
-    pc: 'ctypes.c_uint'
-    addr: 'ctypes.c_uint'
-    size: 'ctypes.c_ulong'
-    buf: 'ctypes._Pointer[ctypes.c_ubyte]'
-    on_before: 'ctypes.c_bool'
-    on_after: 'ctypes.c_bool'
-    on_read: 'ctypes.c_bool'
-    on_write: 'ctypes.c_bool'
-    on_virtual: 'ctypes.c_bool'
-    on_physical: 'ctypes.c_bool'
-    hook: 'ctypes._Pointer[memory_hooks_region]'
+class memory_access_desc:
+    pc: int
+    addr: int
+    size: int
+    buf: int
+    on_before: bool
+    on_after: bool
+    on_read: bool
+    on_write: bool
+    on_virtual: bool
+    on_physical: bool
+    hook: 'memory_hooks_region'
 
-class memory_hooks_region(CStructure):
-    start_address: 'ctypes.c_uint'
-    stop_address: 'ctypes.c_uint'
-    enabled: 'ctypes.c_bool'
-    on_before: 'ctypes.c_bool'
-    on_after: 'ctypes.c_bool'
-    on_read: 'ctypes.c_bool'
-    on_write: 'ctypes.c_bool'
-    on_virtual: 'ctypes.c_bool'
-    on_physical: 'ctypes.c_bool'
-    cb: 'Function'
+class memory_hooks_region:
+    start_address: int
+    stop_address: int
+    enabled: bool
+    on_before: bool
+    on_after: bool
+    on_read: bool
+    on_write: bool
+    on_virtual: bool
+    on_physical: bool
+    cb: Callable[['CPUState', 'memory_access_desc'], None]
 
-class mm_info(CStructure):
-    size: 'ctypes.c_ulong'
-    mmap_offset: 'ctypes.c_int'
-    pgd_offset: 'ctypes.c_int'
-    arg_start_offset: 'ctypes.c_int'
-    start_brk_offset: 'ctypes.c_int'
-    brk_offset: 'ctypes.c_int'
-    start_stack_offset: 'ctypes.c_int'
+class mm_info:
+    size: int
+    mmap_offset: int
+    pgd_offset: int
+    arg_start_offset: int
+    start_brk_offset: int
+    brk_offset: int
+    start_stack_offset: int
 
-class mon_fd_t(CStructure):
+class mon_fd_t:
     pass
 
-class osi_module_struct(CStructure):
-    modd: 'ctypes.c_uint'
-    base: 'ctypes.c_uint'
-    size: 'ctypes.c_uint'
-    file: 'ctypes._Pointer[ctypes.c_char]'
-    name: 'ctypes._Pointer[ctypes.c_char]'
-    offset: 'ctypes.c_uint'
-    flags: 'ctypes.c_uint'
+class osi_module_struct:
+    modd: int
+    base: int
+    size: int
+    file: bytes
+    name: bytes
+    offset: int
+    flags: int
 
-class osi_page_struct(CStructure):
-    start: 'ctypes.c_uint'
-    len: 'ctypes.c_uint'
+class osi_page_struct:
+    start: int
+    len: int
 
-class osi_proc_handle_struct(CStructure):
-    taskd: 'ctypes.c_uint'
-    asid: 'ctypes.c_uint'
+class osi_proc_handle_struct:
+    taskd: int
+    asid: int
 
-class osi_proc_mem(CStructure):
-    start_brk: 'ctypes.c_uint'
-    brk: 'ctypes.c_uint'
+class osi_proc_mem:
+    start_brk: int
+    brk: int
 
-class osi_proc_struct(CStructure):
-    taskd: 'ctypes.c_uint'
-    pgd: 'ctypes.c_uint'
-    asid: 'ctypes.c_uint'
-    pid: 'ctypes.c_int'
-    ppid: 'ctypes.c_int'
-    name: 'ctypes._Pointer[ctypes.c_char]'
-    pages: 'ctypes._Pointer[osi_page_struct]'
-    create_time: 'ctypes.c_ulong'
+class osi_proc_struct:
+    taskd: int
+    pgd: int
+    asid: int
+    pid: int
+    ppid: int
+    name: bytes
+    pages: 'osi_page_struct'
+    create_time: int
 
-class osi_thread_struct(CStructure):
-    pid: 'ctypes.c_int'
-    tid: 'ctypes.c_int'
+class osi_thread_struct:
+    pid: int
+    tid: int
 
-class path_info(CStructure):
-    d_name_offset: 'ctypes.c_int'
-    d_iname_offset: 'ctypes.c_int'
-    d_parent_offset: 'ctypes.c_int'
-    d_op_offset: 'ctypes.c_int'
-    d_dname_offset: 'ctypes.c_int'
-    mnt_root_offset: 'ctypes.c_int'
-    mnt_parent_offset: 'ctypes.c_int'
-    mnt_mountpoint_offset: 'ctypes.c_int'
+class path_info:
+    d_name_offset: int
+    d_iname_offset: int
+    d_parent_offset: int
+    d_op_offset: int
+    d_dname_offset: int
+    mnt_root_offset: int
+    mnt_parent_offset: int
+    mnt_mountpoint_offset: int
 
-class qstr_info(CStructure):
-    size: 'ctypes.c_ulong'
-    name_offset: 'ctypes.c_ulong'
+class qstr_info:
+    size: int
+    name_offset: int
 
-class query_result(CStructure):
-    num_labels: 'ctypes.c_uint'
-    ls: 'ctypes.c_void_p'
-    it_end: 'ctypes.c_void_p'
-    it_curr: 'ctypes.c_void_p'
-    tcn: 'ctypes.c_uint'
-    cb_mask: 'ctypes.c_ubyte'
+class query_result:
+    num_labels: int
+    ls: ctypes.c_void_p
+    it_end: ctypes.c_void_p
+    it_curr: ctypes.c_void_p
+    tcn: int
+    cb_mask: int
 
-class symbol(CStructure):
-    address: 'ctypes.c_uint'
-    value: 'ctypes.c_uint'
-    symtab_idx: 'ctypes.c_int'
-    reloc_type: 'ctypes.c_int'
-    name: 'ctypes.Array[ctypes.c_char]'
-    section: 'ctypes.Array[ctypes.c_char]'
+class symbol:
+    address: int
+    value: int
+    symtab_idx: int
+    reloc_type: int
+    name: list[bytes]
+    section: list[bytes]
 
-class symbol_hook(CStructure):
-    name: 'ctypes.Array[ctypes.c_char]'
-    offset: 'ctypes.c_uint'
-    hook_offset: 'ctypes.c_bool'
-    section: 'ctypes.Array[ctypes.c_char]'
-    type: 'ctypes.c_int'
+class symbol_hook:
+    name: list[bytes]
+    offset: int
+    hook_offset: bool
+    section: list[bytes]
+    type: 'panda_cb_type'
     cb: 'hooks_panda_cb'
 
-class syscall_ctx(CStructure):
-    no: 'ctypes.c_int'
-    asid: 'ctypes.c_uint'
-    retaddr: 'ctypes.c_uint'
-    args: 'ctypes.Array[ctypes.Array[ctypes.c_ubyte]]'
+class syscall_ctx:
+    no: int
+    asid: int
+    retaddr: int
+    args: list[list[int]]
 
-class task_info(CStructure):
-    per_cpu_offsets_addr: 'ctypes.c_ulong'
-    per_cpu_offset_0_addr: 'ctypes.c_ulong'
-    switch_task_hook_addr: 'ctypes.c_ulong'
-    current_task_addr: 'ctypes.c_ulong'
-    init_addr: 'ctypes.c_ulong'
-    size: 'ctypes.c_ulong'
-    tasks_offset: 'ctypes.c_int'
-    next_task_offset: 'ctypes.c_int'
-    pid_offset: 'ctypes.c_int'
-    tgid_offset: 'ctypes.c_int'
-    group_leader_offset: 'ctypes.c_int'
-    thread_group_offset: 'ctypes.c_int'
-    real_parent_offset: 'ctypes.c_int'
-    p_opptr_offset: 'ctypes.c_int'
-    parent_offset: 'ctypes.c_int'
-    p_pptr_offset: 'ctypes.c_int'
-    mm_offset: 'ctypes.c_int'
-    stack_offset: 'ctypes.c_int'
-    real_cred_offset: 'ctypes.c_int'
-    cred_offset: 'ctypes.c_int'
-    comm_offset: 'ctypes.c_int'
-    comm_size: 'ctypes.c_ulong'
-    files_offset: 'ctypes.c_int'
-    start_time_offset: 'ctypes.c_int'
+class task_info:
+    per_cpu_offsets_addr: int
+    per_cpu_offset_0_addr: int
+    switch_task_hook_addr: int
+    current_task_addr: int
+    init_addr: int
+    size: int
+    tasks_offset: int
+    next_task_offset: int
+    pid_offset: int
+    tgid_offset: int
+    group_leader_offset: int
+    thread_group_offset: int
+    real_parent_offset: int
+    p_opptr_offset: int
+    parent_offset: int
+    p_pptr_offset: int
+    mm_offset: int
+    stack_offset: int
+    real_cred_offset: int
+    cred_offset: int
+    comm_offset: int
+    comm_size: int
+    files_offset: int
+    start_time_offset: int
 
-class version(CStructure):
-    a: 'ctypes.c_int'
-    b: 'ctypes.c_int'
-    c: 'ctypes.c_int'
+class version:
+    a: int
+    b: int
+    c: int
 
-class vma_info(CStructure):
-    size: 'ctypes.c_ulong'
-    vm_mm_offset: 'ctypes.c_int'
-    vm_start_offset: 'ctypes.c_int'
-    vm_end_offset: 'ctypes.c_int'
-    vm_next_offset: 'ctypes.c_int'
-    vm_file_offset: 'ctypes.c_int'
-    vm_flags_offset: 'ctypes.c_int'
+class vma_info:
+    size: int
+    vm_mm_offset: int
+    vm_start_offset: int
+    vm_end_offset: int
+    vm_next_offset: int
+    vm_file_offset: int
+    vm_flags_offset: int
 
-device_endian:ctypes.c_int
-QemuOptType:ctypes.c_int
-kernel_mode:ctypes.c_int
+class device_endian(IntEnum):
+    DEVICE_LITTLE_ENDIAN = 2
+    DEVICE_BIG_ENDIAN = 1
+    DEVICE_NATIVE_ENDIAN = 0
+
+class QemuOptType(IntEnum):
+    QEMU_OPT_SIZE = 3
+    QEMU_OPT_NUMBER = 2
+    QEMU_OPT_BOOL = 1
+    QEMU_OPT_STRING = 0
+
+class kernel_mode(IntEnum):
+    MODE_USER_ONLY = 2
+    MODE_KERNEL_ONLY = 1
+    MODE_ANY = 0
+

@@ -6,7 +6,9 @@ from pandare import Panda
 from exert.utilities import version as ver
 from exert.usermode import osi, rules, context
 from exert.usermode import task_struct_stack as tss
-from exert.utilities.types.multi_arch import CPUState
+from exert.utilities.types.multi_arch import CPUState, ExertCallable
+from exert.utilities.types.x86_64_types import CPUState as X86_64CPUState
+from typing import cast
 
 PANDA_PLUGIN_PREFIX:str = """
 from exert.usermode import plugin
@@ -61,6 +63,7 @@ def get_tasks_offset(panda: Panda, cpu: CPUState) -> None:
     elif panda.arch_name == 'i386':
         task_address = tss.task_address_i386_callback(panda, cpu)
     elif panda.arch_name == 'x86_64':
+        cpu = cast(X86_64CPUState, cpu)
         task_address = tss.task_address_x86_64_callback(panda, cpu)
     else:
         assert False
@@ -69,7 +72,8 @@ def get_tasks_offset(panda: Panda, cpu: CPUState) -> None:
 
     fields_addresses = rules.TASK_STRUCT.get_field_addresses(tasks_context, task_address)
 
-    fields_offsets = set()
+    fields_offsets: set[int] = set()
+    fields_offset: (int | None) = None
     for field in fields_addresses["Field('tasks', _ListHead)"]:
         field_context = context.Context(panda)
         offset = field - task_address
@@ -77,9 +81,13 @@ def get_tasks_offset(panda: Panda, cpu: CPUState) -> None:
             fields_offsets.add(offset)
 
     if len(fields_offsets) == 1:
-        fields_offsets = fields_offsets.pop()
+        fields_offset = fields_offsets.pop()
 
-    valid_offsets = pickle.dumps(fields_offsets)
+    if fields_offset is not None:
+        valid_offsets = pickle.dumps(fields_offset)
+    else:
+        valid_offsets = pickle.dumps(fields_offsets)
+
     with open("tmp_data", "wb") as data:
         data.write(valid_offsets)
 
@@ -95,7 +103,7 @@ def get_osi_info(kernel: str, arch: str, version: str) -> None:
             version_supported = True
 
             osi_prog = ''
-            task_struct_callback = tss.task_address_arm_callback
+            task_struct_callback: ExertCallable = tss.task_address_arm_callback
 
             if (arch in ['armv4l', 'armv5l', 'armv6l', 'armv7l']):
                 osi_prog = 'osi-armv5l'
@@ -105,7 +113,7 @@ def get_osi_info(kernel: str, arch: str, version: str) -> None:
                 if arch == 'aarch64':
                     task_struct_callback = tss.task_address_aarch_callback
                 elif arch == 'x86_64':
-                    task_struct_callback = tss.task_address_x86_64_callback
+                    task_struct_callback = cast(ExertCallable, tss.task_address_x86_64_callback)
                 elif arch == 'i386':
                     task_struct_callback = tss.task_address_i386_callback
 

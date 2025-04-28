@@ -18,15 +18,15 @@ class Tokenizer:
     def has_next(self) -> bool:
         return self.index < self.len
 
-    def peek(self, size: int = 1, offset: int = 0):
+    def peek(self, size: int = 1, offset: int = 0) -> str:
         if size == 1 and self.index + offset < self.len:
             return self.data[self.index + offset]
         return self.data[self.index+offset:self.index+offset+size]
 
-    def bump(self, dist: int = 1):
+    def bump(self, dist: int = 1) -> None:
         self.index += dist
 
-    def consume(self, *strings: str):
+    def consume(self, *strings: str) -> (str | None):
         for string in strings:
             dist = len(string)
             if self.peek(dist) == string:
@@ -161,7 +161,7 @@ class Tokenizer:
         token = token or self.parse_operator()
         return token
 
-    def tokenize(self, data: str):
+    def tokenize(self, data: str) -> list[TokenType]:
         self.data = data
         self.len = len(data)
         self.index = 0

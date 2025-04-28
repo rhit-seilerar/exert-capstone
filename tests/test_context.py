@@ -1,6 +1,8 @@
 from typing import Literal
 from pandare import Panda
 from exert.usermode.context import Context
+from exert.utilities.types.multi_arch import CPUState
+
 class DummyPanda(Panda):
     def __init__(self, buf: bytes = b'', # pylint: disable=W0231
                  endianness: Literal['little', 'big'] = 'little',  bits: int = 32):
@@ -11,8 +13,8 @@ class DummyPanda(Panda):
     def get_cpu(self):
         return None
 
-    def virtual_memory_read(self, cpu, addr: int, length: int,
-                            fmt: str = 'bytearray'):
+    def virtual_memory_read(self, cpu: CPUState, addr: int, length: int,
+                            fmt: str = 'bytearray') -> bytes:
         if addr is None or addr + length > len(self.buf):
             raise ValueError
         return self.buf[addr:addr+length]

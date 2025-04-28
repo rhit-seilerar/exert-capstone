@@ -1,10 +1,10 @@
 import subprocess
-from collections.abc import Callable
 
 from exert.usermode import plugin
 import exert.usermode.task_struct_stack as tss
 from exert.utilities.debug import RUN_PLUGIN_TESTS
 from exert.utilities.types.multi_arch import ExertCallable
+from typing import cast
 
 CALLED_BACK: bool = False
 def set_called_back(called_back: bool) -> None:
@@ -45,7 +45,7 @@ def test_task_struct_i386_nongeneric():
             generic=False, kernel='./kernels/vmlinuz-i386-4.4.100')
 
 def test_task_struct_x86_64_nongeneric():
-    do_test(tss.task_address_x86_64_callback, 'x86_64',
+    do_test(cast(ExertCallable, tss.task_address_x86_64_callback), 'x86_64',
             generic=False, kernel='./kernels/vmlinuz-x86_64-4.4.100')
 
 def test_task_struct_aarch_nongeneric():

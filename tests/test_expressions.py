@@ -7,11 +7,11 @@ from exert.parser.tokenizer import Tokenizer
 
 TOKENIZER = Tokenizer()
 
-def expect_error(expr:str, bitsize:int, exception: type[AssertionError] = AssertionError):
+def expect_error(expr:str, bitsize:int, exception: type[AssertionError] = AssertionError) -> None:
     utils.expect_error(lambda: \
         parse_expression(TOKENIZER.tokenize(expr)), exception)
 
-def roundtrip(expr:str, bitsize:int, expected:(str | None) = None):
+def roundtrip(expr:str, bitsize:int, expected:(str | None) = None) -> None:
     if expected is None:
         expected = expr
     tokens = TOKENIZER.tokenize(expr)
@@ -45,9 +45,12 @@ def test_parse():
     roundtrip('+-!~1 * 2 / 3 % 4 + 5 - 6 << 7 >> 8 < 9 <= 10' \
         ' > 11 >= 12 == 13 != 14 & 15 ^ 16 | 17 && 18 || 19 ? 20 : 21', 32)
 
-def evaluate(expr:str, bitsize:int, expected, expected_unsigned:bool):
+def evaluate(expr:str, bitsize:int, expected: (int | bool), expected_unsigned:bool) -> None:
     tokens = TOKENIZER.tokenize(expr)
-    value, unsigned = Evaluator(bitsize).evaluate(tokens)
+    result = Evaluator(bitsize).evaluate(tokens)
+    assert isinstance(result, tuple)
+    value = result[0]
+    unsigned = result[1]
     assert value == expected
     assert unsigned == expected_unsigned
 

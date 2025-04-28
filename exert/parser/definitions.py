@@ -10,11 +10,11 @@ from exert.utilities.debug import dprint
 from exert.utilities.types.global_types import TokenType
 
 class DefEvaluator(expressions.Evaluator):
-    def __init__(self, bitsize: int, defmap):
+    def __init__(self, bitsize: int, defmap: DefMap):
         super().__init__(bitsize)
         self.defs = defmap
 
-    def evaluate(self, tokens: list[TokenType]):
+    def evaluate(self, tokens: list[TokenType]) -> tuple[bool, bool, DefMap]:
         self.matches = DefMap(self.defs)
 
         # First we run through and replace all defined(MACRO) with a special
@@ -87,7 +87,7 @@ class DefEvaluator(expressions.Evaluator):
         self.any_match = False
         self.all_match = True
 
-        def insert_permutation(lookup: dict[str | int, Def], tokens: list[TokenType]):
+        def insert_permutation(lookup: dict[str | int, Def], tokens: list[TokenType]) -> list[TokenType]:
             nex = []
             for tok in tokens:
                 if tok[0] == 'any' and len(tok) > 2 and len(tok[2]) > 0:
@@ -107,7 +107,7 @@ class DefEvaluator(expressions.Evaluator):
             if isinstance(result, expressions.Wildcard):
                 self.any_match = True
                 self.all_match = False
-            elif result.value == 0:
+            elif isinstance(result, expressions.Integer) and result.value == 0:
                 self.all_match = False
             else:
                 for expression, is_defined in self.defines.items():
@@ -157,7 +157,7 @@ class DefLayer:
             self.accumulator.combine(self.current.defs, replace = False)
             self.current = None
 
-    def add_map(self, cond_tokens: list[TokenType], closing: bool = False):
+    def add_map(self, cond_tokens: list[TokenType], closing: bool = False) -> None:
         self.depth += 1
         if self.skip_rest:
             self.apply()
@@ -188,10 +188,10 @@ class DefState:
     of symbols.
     """
 
-    def __init__(self, bitsize: int, initial = None):
+    def __init__(self, bitsize: int, initial: (dict[str, Def] | None) = None):
         self.bitsize = bitsize
         self.keys: set[str] = set()
-        self.layers = [DefLayer(DefMap(None, initial = initial), bitsize, False)]
+        self.layers = [DefLayer(DefMap(None, initial = cast(dict[ExpressionTypes, Def], initial)), bitsize, False)]
         self.layers[0].add_map([mk_int(1)], closing = True)
         if initial is not None:
             self.keys |= set(initial.keys())
@@ -206,8 +206,8 @@ class DefState:
     def is_guaranteed(self) -> bool:
         return not self.is_skipping() and self.layers[-1].skip_rest
 
-    def flat_defines(self) -> dict[str | int, Def]:
-        result: dict[str | int, Def] = {}
+    def flat_defines(self) -> dict[ExpressionTypes, Def]:
+        result: dict[ExpressionTypes, Def] = {}
         for key in self.keys:
             assert self.layers[-1].current is not None
             defn = self.layers[-1].current[key]
@@ -223,41 +223,41 @@ class DefState:
                 result.add(key)
         return result
 
-    def on_define(self, sym: str, tokens: list[TokenType], params = None):
+    def on_define(self, sym: str, tokens: list[TokenType], params: (list[str] | None) = None) -> None:
         if not self.is_skipping():
             dprint(3, '  ' * self.depth() + f'#define {sym} {tok_seq(tokens)}')
             self.keys.add(sym)
             assert self.layers[-1].current is not None
             self.layers[-1].current.define(sym, DefOption(tokens, params))
 
-    def on_undef(self, sym: str):
+    def on_undef(self, sym: str) -> None:
         if not self.is_skipping():
             dprint(3, '  ' * self.depth() + f'#undef {sym}')
             self.keys.add(sym)
             assert self.layers[-1].current is not None
             self.layers[-1].current.undefine(sym)
 
-    def on_if(self, cond_tokens: list[TokenType]):
+    def on_if(self, cond_tokens: list[TokenType]) -> None:
         dprint(2, '  ' * self.depth() + f'#if {tok_seq(cond_tokens)}')
         parent = self.layers[-1].current
         assert parent is not None
         self.layers.append(DefLayer(parent, self.bitsize, self.is_skipping()))
         self.layers[-1].add_map(cond_tokens)
 
-    def on_ifdef(self, sym: str | int):
+    def on_ifdef(self, sym: str | int) -> None:
         self.on_if([ mk_id('defined'), mk_id(sym) ])
 
-    def on_ifndef(self, sym: str | int):
+    def on_ifndef(self, sym: str | int) -> None:
         self.on_if([ mk_op('!'), mk_id('defined'), mk_id(sym) ])
 
-    def on_elif(self, cond_tokens: list[TokenType]):
+    def on_elif(self, cond_tokens: list[TokenType]) -> None:
         dprint(2, '  ' * self.depth() + f'#elif {tok_seq(cond_tokens)}')
         self.layers[-1].add_map(cond_tokens)
 
-    def on_elifdef(self, sym: str | int):
+    def on_elifdef(self, sym: str | int) -> None:
         self.on_elif([ mk_id('defined'), mk_id(sym) ])
 
-    def on_elifndef(self, sym: str | int):
+    def on_elifndef(self, sym: str | int) -> None:
         self.on_elif([ mk_op('!'), mk_id('defined'), mk_id(sym) ])
 
     def on_else(self) -> None:
@@ -271,7 +271,7 @@ class DefState:
         assert self.layers[-1].current is not None
         self.layers[-1].current.combine(layer.accumulator.defs, replace = layer.closed)
 
-    def get_replacements(self, tok: TokenType, params = None):
+    def get_replacements(self, tok: TokenType, params: (list[list[TokenType]] | None) = None) -> set[DefOption]:
         assert self.layers[-1].current is not None
         return self.layers[-1].current.get_replacements(tok, params)
 
@@ -279,6 +279,7 @@ class DefState:
         if isinstance(tokmgr, tuple):
             tok = tokmgr
             tokmgr = TokenManager([tok])
+        assert self.layers[-1].current is not None
         return substitute(tokmgr, self.layers[-1].current)
 
     def get_cond_tokens(self) -> list[TokenType]:
