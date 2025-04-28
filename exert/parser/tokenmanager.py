@@ -1,5 +1,5 @@
-from exert.utilities.types.global_types import TokenType
 from typing import NoReturn
+from exert.utilities.types.global_types import TokenType
 
 def tok_str(token: TokenType,
             newlines: bool = False) -> str:
@@ -112,7 +112,7 @@ class TokenManager:
         if (self.peek_type() in ['identifier', 'keyword']):
             res = self.next()
             assert res is not None
-            assert type(res[1]) == str
+            assert isinstance(res[1], str)
             return res[1]
         return ''
 

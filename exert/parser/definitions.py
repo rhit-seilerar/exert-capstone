@@ -1,330 +1,13 @@
 import itertools
 
+from exert.parser.defoption import DefOption
+from exert.parser.definition import Def
+from exert.parser.defmap import DefMap
+from exert.parser.substitute import substitute
 from exert.parser import expressions
 from exert.parser.tokenmanager import TokenManager, tok_seq, mk_id, mk_op, mk_int
 from exert.utilities.debug import dprint
-from exert.utilities.types.global_types import TokenType, ExpressionTypes
-
-class DefOption:
-    def __init__(self, tokens: list[TokenType], params: (list[str] | None) = None):
-        assert isinstance(tokens, list)
-        self.tokens = tokens
-        self.params = params
-        self.paramstr = '' if params is None else ','.join(params)
-        self.key = tok_seq(tokens)
-        if self.paramstr:
-            self.key = self.paramstr + '$' + self.key
-        self.len = len(tokens)
-        self.hash = hash(self.key)
-
-    def __eq__(self, other):
-        return isinstance(other, DefOption) and other.key == self.key
-
-    def __hash__(self):
-        return self.hash
-
-    def __len__(self):
-        return self.len
-
-    def __str__(self):
-        return self.key
-
-class Def:
-    """
-    This class stores potential values for a single definition. It consists of four states:
-    [ !defined, !undefined  {}      ]: The default value, representing definitions that
-      haven't been #defined or #undefined yet
-    [ !defined,  undefined  {}      ]: This has been explicitly #undefined
-    [  defined, !undefined, options ]: This has been explicitly #defined
-    [  defined,  undefined, options ]: This was defined in one sub-scope and undefined in another
-    """
-
-    def __init__(self, *options: DefOption, defined = False, undefined = False) -> None:
-        self.options: set[DefOption] = set()
-        self.undefined = undefined
-        self.defined = defined
-        if len(options) > 0:
-            for option in options:
-                self.define(option, keep = True)
-            self.undefined = undefined
-
-    def validate(self) -> None:
-        if self.is_invalid():
-            raise ValueError(self.options)
-
-    def copy(self) -> 'Def':
-        return Def(*self.options, defined = self.defined, undefined = self.undefined)
-
-    def is_invalid(self) -> bool:
-        return not self.defined and len(self.options) > 0
-
-    def is_initial(self) -> bool:
-        return not self.undefined and not self.defined
-
-    def is_undefined(self) -> bool:
-        return self.undefined and not self.defined
-
-    def is_defined(self) -> bool:
-        return not self.undefined and self.defined
-
-    def is_empty_def(self) -> bool:
-        return self.defined and len(self.options) == 0
-
-    def is_uncertain(self) -> bool:
-        return self.undefined and self.defined
-
-    def undefine(self, keep: bool = True):
-        self.undefined = True
-        if not keep:
-            self.defined = False
-            self.options.clear()
-
-    def define(self, option: DefOption, keep: bool = True):
-        if not isinstance(option, DefOption):
-            raise TypeError(option)
-        if self.is_undefined() or not keep:
-            self.undefined = False
-        self.options.add(option)
-        self.defined = True
-
-    def get_replacements(self, sym: TokenType, params: (list[str] | None) = None):
-        """
-        [ initial,   {}      ]: [[{}]]
-        [ undefined, {}      ]: [[sym]]
-        [ defined,   options ]: [options]
-        [ defined,   {}      ]: [[{}]]
-        [ uncertain, options ]: [[sym], options]
-        [ uncertain, {}      ]: [[sym], [{}]]
-        """
-        replacements: set[DefOption] = set()
-        for opt in self.options:
-            if (opt.params is not None and params is not None):
-                if len(opt.params) == len(params):
-                    replacements.add(opt)
-
-        if self.undefined:
-            replacements.add(DefOption([sym]))
-        elif len(self.options) == 0:
-            replacements.add(DefOption([('any', sym[1], set())]))
-        return replacements
-
-    def combine(self, other: 'Def', replace: bool):
-        if not isinstance(other, Def):
-            raise TypeError(other)
-        if replace:
-            self.defined = other.defined
-            self.undefined = other.undefined
-            if not other.is_empty_def():
-                self.options = other.options.copy()
-        else:
-            self.defined |= other.defined
-            self.undefined |= other.undefined
-            self.options |= other.options
-        return self
-
-    def matches(self, other: 'Def'):
-        if not isinstance(other, Def):
-            raise TypeError(other)
-        if other.is_initial() or self.is_initial():
-            return True
-        if other.is_undefined():
-            if self.is_undefined() or self.is_uncertain():
-                return True
-        if other.is_empty_def():
-            return True
-        if len(other.options & self.options) > 0:
-            return True
-        return False
-
-    def __len__(self):
-        return len(self.options)
-
-    def __eq__(self, other):
-        return isinstance(other, Def) \
-            and self.defined == other.defined \
-            and self.undefined == other.undefined \
-            and self.options == other.options
-
-    def __str__(self):
-        if self.is_invalid():
-            return '<invalid>'
-        if self.is_initial():
-            return '<initial>'
-        if self.is_undefined():
-            return '<undefined>'
-        replacements = self.get_replacements(('identifier', '<undefined>'))
-        return f'{{ {", ".join(str(r) for r in replacements).strip()} }}'
-
-class DefMap:
-    """
-    DefMaps represent a possible state of definitions within a macro scope.
-    They store a reference to the outer scope's defmap, as well as a set of
-    mappings between symbols to their definitions.
-    """
-
-    def __init__(self, parent, skipping: bool = False, initial: (dict[ExpressionTypes, Def] | None) = None):
-        assert parent is None or isinstance(parent, DefMap)
-        assert initial is None or isinstance(initial, dict)
-        self.skipping = skipping
-        self.parent = parent
-        self.defs = initial or {}
-        self.validate()
-
-    def getlocal(self, key: ExpressionTypes):
-        if key not in self.defs:
-            self.defs[key] = Def()
-        return self.defs[key]
-
-    def __getitem__(self, key):
-        if key in self.defs:
-            defn = self.getlocal(key)
-            if defn.is_empty_def() and self.parent is not None:
-                return Def(
-                    *self.parent[key].options,
-                    defined = defn.defined,
-                    undefined = defn.undefined)
-            return defn
-        if self.parent is not None:
-            return self.parent[key]
-        return Def()
-
-    def __setitem__(self, key, item: Def):
-        if not isinstance(item, Def):
-            raise TypeError(item)
-        self.defs[key] = item
-
-    def get_replacements(self, sym_tok: TokenType, params: (list[str] | None) = None):
-        return self[sym_tok[1]].get_replacements(sym_tok, params)
-
-    def validate(self) -> None:
-        for key in self.defs:
-            self[key].validate()
-
-    def undefine(self, key: str | int):
-        if not self.skipping:
-            self.getlocal(key).undefine(keep = False)
-
-    def define(self, key: str | int, option: DefOption):
-        if not self.skipping:
-            self.getlocal(key).define(option, keep = True)
-
-    def combine(self, other: dict[ExpressionTypes, Def], replace):
-        if not isinstance(other, dict):
-            raise TypeError(other)
-        if not self.skipping:
-            for key in other:
-                self[key] = self[key].copy().combine(other[key], replace = replace)
-        return self
-
-    def matches(self, conditions: object):
-        if not isinstance(conditions, DefMap):
-            raise TypeError(conditions)
-        for key in conditions.defs:
-            if not self[key].matches(conditions[key]):
-                return False
-        return True
-
-    def __eq__(self, other: object):
-        return isinstance(other, DefMap) \
-            and self.parent == other.parent \
-            and self.skipping == other.skipping \
-            and self.defs == other.defs
-
-    def __str__(self):
-        defs_strs = [f"'{key}': {str(self.defs[key])}" for key in self.defs]
-        return f'DefMap(parent = {self.parent}, skipping = {self.skipping}, ' \
-            f'defs = {{{", ".join(defs_strs)}}})'
-
-def substitute(tokmgr: TokenManager, defmap, replmap = None, keys = None):
-    def parse_macro(tokmgr: TokenManager):
-        bindex = tokmgr.index
-        if tokmgr.peek_type() not in ['identifier', 'keyword']:
-            return None, []
-        name = tokmgr.next()
-        assert name is not None
-        if not defmap[name[1]].defined:
-            tokmgr.index = bindex
-            return None, []
-        params = []
-
-        # If any options have params, we assert that they all must.
-        # Technically this is inaccurate, but we'd have to track multiple
-        # token cursors otherwise and it would be horribly impractical.
-        hasparams = False
-        for opt in defmap[name[1]].options:
-            hasparams |= opt.params is not None
-            assert hasparams == (opt.params is not None)
-
-        # If this is a function-like macro, parse its arguments
-        if hasparams and tokmgr.consume_operator('('):
-            depth = 1
-            pindex = tokmgr.index
-            while tokmgr.has_next() and depth > 0:
-                if tokmgr.consume_operator('('):
-                    depth += 1
-                elif tokmgr.consume_operator(')'):
-                    depth -= 1
-                elif tokmgr.consume_operator(',') and depth == 1:
-                    params.append(tokmgr.tokens[pindex:tokmgr.index])
-                    pindex = tokmgr.index + 1
-                else:
-                    tokmgr.bump()
-            if depth > 0:
-                tokmgr.index = bindex
-                return None, []
-            params.append(tokmgr.tokens[pindex:tokmgr.index])
-
-        return name, params
-
-    expansion_stack = []
-    # Recursively substitute macros with their ANY forms, and track the
-    # substitutions in replmap. Each macro will only be expanded once, e.g.
-    # '#define ABC ABC' won't infinitely loop.
-    def subst(tokmgr: TokenManager):
-        index = tokmgr.index
-        name, params = parse_macro(tokmgr)
-        if name is None or name[1] in expansion_stack or defmap[name[1]].is_initial():
-            # This isn't a macro, we've already expanded it, or it's default
-            tokmgr.index = index
-            return None
-        substitutions = set()
-        if isinstance(keys, set):
-            keys.add(name)
-        # Find all replacements that match the macro's invocation
-        opts = defmap.get_replacements(name, params)
-        if opts == {DefOption([name])}:
-            # The macro is solely undefined, so we'll just keep its identifier
-            tokmgr.index = index
-            return None
-        if opts == {DefOption([])}:
-            # The macro is solely empty, so replace it with nothing
-            return []
-        expansion_stack.append(name[1])
-        # Recursively substitute each replacement
-        for opt in opts:
-            tokens: list[TokenType] = []
-            optmgr = TokenManager(opt.tokens)
-            while optmgr.has_next():
-                tokens += subst(optmgr) or [optmgr.next()]
-            if tokens:
-                substitutions.add(DefOption(tokens))
-        expansion_stack.pop()
-        macroname = name[1]
-        if len(params) > 0:
-            macroname += '(' + ', '.join(tok_seq(p) for p in params) + ')'
-        if replmap is not None:
-            # Map macro name and arguments to a list of possible substitutions
-            if not name[1] in replmap:
-                replmap[name[1]] = {}
-            if not params in replmap[name[1]]:
-                replmap[name[1]][params] = []
-            replmap[name[1]][params].append(substitutions)
-        if len(substitutions) > 1:
-            return [('any', macroname, substitutions)]
-        return list(substitutions)[0].tokens
-
-    result = subst(tokmgr)
-    return [tokmgr.next()] if result is None else result
+from exert.utilities.types.global_types import TokenType
 
 class DefEvaluator(expressions.Evaluator):
     def __init__(self, bitsize: int, defmap):
@@ -339,7 +22,7 @@ class DefEvaluator(expressions.Evaluator):
         # serialized, but expressions.py knows how to handle it
         keys: set[TokenType] = set()
         identlike = ['identifier', 'keyword']
-        replmap: dict[str | int, dict[None, list[set[DefOption]]]] = {}
+        # replmap: dict[str | int, dict[None, list[set[DefOption]]]] = {}
         nex = []
         index = 0
         while index < len(tokens):
@@ -359,9 +42,10 @@ class DefEvaluator(expressions.Evaluator):
                 nex.append(tokens[index])
             else:
                 nex.append(('defined', deftok[1]))
-                if deftok[1] not in replmap:
-                    replmap[deftok[1]] = {None: []}
-                replmap[deftok[1]][None].append({DefOption([deftok])})
+                keys.add(deftok)
+                # if deftok[1] not in replmap:
+                #     replmap[deftok[1]] = {None: []}
+                # replmap[deftok[1]][None].append({DefOption([deftok])})
             index += delta
         tokens = nex
 
@@ -369,14 +53,15 @@ class DefEvaluator(expressions.Evaluator):
         # forms. The replacement itself isn't strictly necessary, the main goal
         # is to construct replmap, which is what we'll permute.
         nex = []
-        replmap = {}
+        # replmap = {}
         tokmgr = TokenManager(tokens)
         while tokmgr.has_next():
-            nex += substitute(tokmgr, self.defs, keys = keys, replmap = replmap)
+            nex += substitute(tokmgr, self.defs, keys = keys)#, replmap = replmap)
         tokens = nex
 
         lookups: list[dict[str | int, Def]] = []
-        if replmap:
+        if keys:
+        # if replmap:
             # Note that this currently doesn't consider open-ended definitions correctly
             # Also, wildcards could be improved in accuracy
             lists: list[list[Def]] = []

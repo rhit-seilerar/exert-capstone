@@ -10,6 +10,7 @@ TODO There are still a number of optimizations that can be done for better resul
 
 import os
 import types
+from typing import cast
 from collections.abc import Callable
 from exert.parser.tokenmanager import mk_int, tok_seq, TokenManager
 from exert.parser.definitions import DefState, Def, DefOption
@@ -17,7 +18,6 @@ from exert.parser.serializer import write_tokens, read_tokens
 from exert.parser.tokenizer import Tokenizer
 from exert.utilities.debug import dprint
 from exert.utilities.types.global_types import TokenType, TokenType3
-from typing import cast
 
 def read_file(path: str):
     try:
@@ -136,8 +136,7 @@ class Preprocessor(TokenManager):
 
     def handle_line(self) -> bool:
         if not (line := self.consume_type('integer')):
-            self.err('#line must be followed by a line number')
-            return
+            return self.err('#line must be followed by a line number')
         if (file := self.consume_type('string')):
             self.file = cast(str, file[1])
         if not self.consume_type('newline'):
@@ -381,9 +380,8 @@ class Preprocessor(TokenManager):
                     if prev[2] != '<':
                         curr = cast(TokenType3, self.next())
                         if curr[2] and prev[2] and curr[2] != prev[2]:
-                            self.err(f'String concatenation of different encodings! \
+                            return self.err(f'String concatenation of different encodings! \
                                 ({prev[2]} and {curr[2]})')
-                            continue
                         newstr = ('string', cast(str, prev[1]) + cast(str, curr[1]), prev[2] or curr[2])
                         self.defs.layers[-1].emitted[-1] = newstr
                         continue

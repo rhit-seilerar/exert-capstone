@@ -1,8 +1,7 @@
 from collections.abc import Callable
 import exert.parser.tokenmanager as tm
-from exert.parser.definitions import DefOption, Def
+from exert.parser.defoption import DefOption
 from exert.utilities.types.global_types import TokenType, ExpressionTypes
-from typing import NoReturn
 
 class Expression:
     def evaluate(self, evaluator: 'Evaluator') -> 'Expression':
@@ -62,7 +61,7 @@ class UnaryOperator(Operator):
         self.signop = (lambda asig: asig) if signop is None else signop
 
     def evaluate(self, evaluator):
-        assert isinstance(self.a, Integer)
+        assert isinstance(self.a, Expression)
         aint = self.a.evaluate(evaluator)
         if isinstance(aint, Wildcard):
             aint.options = set()
@@ -75,7 +74,8 @@ class UnaryOperator(Operator):
 
 class BinaryOperator(Operator):
     def __init__(self, a: ExpressionTypes, b: ExpressionTypes, opname: str,
-                 op: (Callable[[int, int], int] | None), signop: (Callable[[bool, bool], bool] | None) = None):
+        op: (Callable[[int, int], int] | None),
+        signop: (Callable[[bool, bool], bool] | None) = None):
         assert isinstance(a, Expression)
         assert isinstance(b, Expression)
         self.opname = opname
@@ -340,7 +340,7 @@ def parse_expression(tokens: list[TokenType]):
                 gstart = None
         elif gstart is None:
             if token[0] == 'integer':
-                assert type(token[1]) == int
+                assert isinstance(token[1], int)
                 assert len(token) > 2
                 nex.append(Integer(token[1], 'u' in token[2]))
             elif token[0] == 'defined':
@@ -384,7 +384,10 @@ def parse_expression(tokens: list[TokenType]):
                     assert issubclass(value, (UnaryPlus, UnaryMinus, LogicalNot, BitwiseNot))
                     nex.append(value(args[1]))
                 elif op[0] == 3:
-                    assert issubclass(value, (Multiply, Divide, Remainder, Add, Subtract, LeftShift, RightShift, LessThan, LessThanOrEqual, GreaterThan, GreaterThanOrEqual, Equal, NotEqual, BitwiseAnd, BitwiseXor, BitwiseOr, LogicalAnd, LogicalOr))
+                    assert issubclass(value, (Multiply, Divide, Remainder, Add, \
+                        Subtract, LeftShift, RightShift, LessThan, LessThanOrEqual, \
+                        GreaterThan, GreaterThanOrEqual, Equal, NotEqual, BitwiseAnd, \
+                            BitwiseXor, BitwiseOr, LogicalAnd, LogicalOr))
                     nex.append(value(args[0], args[2]))
                 else:
                     assert issubclass(value, Conditional)
@@ -411,7 +414,7 @@ def parse_expression(tokens: list[TokenType]):
 class Evaluator:
     def __init__(self, bitsize: int):
         self.bitsize = bitsize
-        self.lookup: (dict[str | int, Def] | None) = None
+        self.lookup: (dict[str | int, 'Def'] | None) = None
         self.defines: (dict[Expression | str, bool] | None) = None
 
     def evaluate(self, tokens: list[TokenType]):

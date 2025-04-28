@@ -1,6 +1,6 @@
 from exert.parser import tokenmanager as tm
 from exert.parser.tokenmanager import tok_str, TokenManager
-from exert.parser.definitions import Def, DefOption
+from exert.parser.defoption import DefOption
 
 def test_mk():
     assert tm.mk_op('&!=') == ('operator', '&!=')
@@ -23,7 +23,7 @@ def test_tok_str():
     assert tok_str(('any', 'a2', {
         DefOption([('integer', 1, 'u')]),
         DefOption([('string', '123', '"')])
-    })) == '<ANY a2>[2]{ { 1u }, { "123" } } '
+    })) == '<ANY a2>[2]{ 1u, "123" } '
 
 def test_reset():
     mgr = TokenManager()

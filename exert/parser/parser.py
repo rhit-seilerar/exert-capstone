@@ -2,15 +2,14 @@ import os
 import sys
 import time
 import glob
+from typing import Protocol
 from exert.parser.tokenizer import Tokenizer
 from exert.parser.tokenmanager import tok_seq, mk_kw, mk_op, mk_id, TokenManager
-from exert.parser.preprocessor import Preprocessor, DefOption
-# from exert.usermode import rules
+from exert.parser.defoption import DefOption
+from exert.parser.preprocessor import Preprocessor
 from exert.utilities.debug import dprint
 from exert.utilities.command import run_command
 from exert.utilities.types.global_types import TokenType
-from typing import Protocol
-from collections.abc import Callable
 
 REPO_URL: str = 'git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git'
 VERSION_PATH: str = './cache/linux-version.txt'
@@ -44,7 +43,22 @@ def switch_to_version(version: str):
         run_command(f'git clone --depth 1 {REPO_URL} -b v{version} {SOURCE_PATH}')
 
 SOURCE = """
-#include <linux/types.h>
+//#include <asm/posix_types.h>
+#ifndef _UAPI__ASM_GENERIC_BITS_PER_LONG
+#define _UAPI__ASM_GENERIC_BITS_PER_LONG
+
+/*
+ * There seems to be no way of detecting this automatically from user
+ * space, so 64 bit architectures should override this in their
+ * bitsperlong.h. In particular, an architecture that supports
+ * both 32 and 64 bit user space must not rely on CONFIG_64BIT
+ * to decide it, but rather check a compiler provided macro.
+ */
+#ifndef __BITS_PER_LONG
+#define __BITS_PER_LONG 32
+#endif
+
+#endif /* _UAPI__ASM_GENERIC_BITS_PER_LONG */
 """
 
 PREPROCESSOR_CACHE = './cache/linux-preprocessor'
@@ -57,9 +71,11 @@ def parse(filename: str, arch: str):
         64, #TODO bitsize
         includes = [
             f'{SOURCE_PATH}/include/',
-            # f'{SOURCE_PATH}/include/uapi/',
+            f'{SOURCE_PATH}/include/uapi/',
             f'{SOURCE_PATH}/arch/{arch}/include/',
             lambda path: f'{SOURCE_PATH}/include/asm-generic/{path[4:]}'
+                if path.startswith('asm/') else None,
+            lambda path: f'{SOURCE_PATH}/include/uapi/asm-generic/{path[4:]}'
                 if path.startswith('asm/') else None
         ],
         defns = {
