@@ -16,6 +16,7 @@ class Def:
         self.options: set[DefOption] = set()
         self.undefined = undefined
         self.defined = defined
+        self.plen = None
         if len(options) > 0:
             for option in options:
                 self.define(option, keep = True)
@@ -58,6 +59,10 @@ class Def:
         if self.is_undefined() or not keep:
             self.undefined = False
         self.options.add(option)
+        if self.plen is None:
+            self.plen = -1 if option.params is None else len(option.params)
+        else:
+            assert self.plen == (-1 if option.params is None else len(option.params))
         self.defined = True
 
     def get_replacements(self, sym: TokenType, params: (list[str] | None) = None) -> set[DefOption]:
@@ -71,8 +76,7 @@ class Def:
         """
         replacements: set[DefOption] = set()
         for opt in self.options:
-            if (opt.params is None and params is None or len(opt.params) == len(params)):
-                replacements.add(opt)
+            replacements.add(opt)
         if self.undefined:
             replacements.add(DefOption([sym]))
         if (self.defined or not self.undefined) and len(self.options) == 0:
@@ -82,6 +86,7 @@ class Def:
     def combine(self, other: 'Def', replace: bool) -> Self:
         if not isinstance(other, Def):
             raise TypeError(other)
+        assert other.plen is None or self.plen is None or other.plen == self.plen
         if replace:
             self.defined = other.defined
             self.undefined = other.undefined

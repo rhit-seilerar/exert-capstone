@@ -28,5 +28,5 @@ def test_defoption_len():
     assert len(DefOption([('identifier', 'a'), ('identifier', 'b')])) == 2
 
 def test_defoption_str():
-    assert str(DefOption([])) == ''
-    assert str(DefOption([('identifier', 'a'), ('identifier', 'b')])) == 'a b'
+    assert str(DefOption([])) == '$'
+    assert str(DefOption([('identifier', 'a'), ('identifier', 'b')])) == '$a b'

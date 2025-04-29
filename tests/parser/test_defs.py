@@ -173,9 +173,9 @@ def test_def_str():
     assert str(defs[0]) == '<initial>'
     assert str(defs[1]) == '<undefined>'
     assert str(defs[2]).startswith('{ ') and str(defs[2]).endswith(' }') \
-        and set(str(defs[2])[2:-2].split(', ')) == {'1', '2'}
+        and set(str(defs[2])[2:-2].split(', ')) == {'$1', '$2'}
     assert str(defs[3]).startswith('{ ') and str(defs[3]).endswith(' }') \
-        and set(str(defs[3])[2:-2].split(', ')) == {'1', '2', '<undefined>'}
+        and set(str(defs[3])[2:-2].split(', ')) == {'$1', '$2', '$<undefined>'}
     invl = Def(DefOption([('integer', 1, '')]))
     invl.defined = False
     assert str(invl) == '<invalid>'

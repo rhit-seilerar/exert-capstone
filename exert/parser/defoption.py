@@ -15,10 +15,8 @@ class DefOption:
         assert isinstance(tokens, list)
         self.tokens = tokens
         self.params = params
-        self.paramstr = '' if params is None else ','.join(params)
-        self.key = tok_seq(tokens)
-        if self.paramstr:
-            self.key = self.paramstr + '$' + self.key
+        self.paramstr = '' if params is None else '(' + ','.join(params) + ')'
+        self.key = self.paramstr + '$' + tok_seq(tokens)
         self.len = len(tokens)
         self.hash = hash(self.key)
 
