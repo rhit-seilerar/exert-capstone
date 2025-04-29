@@ -1,8 +1,8 @@
-import exert.parser.definitions as dm
+from collections.abc import Callable
+from exert.parser.defoption import DefOption
 import exert.parser.tokenmanager as tm
 from exert.parser.tokenizer import Tokenizer
 from exert.parser.preprocessor import Preprocessor, read_file
-from collections.abc import Callable
 
 FILES: dict[str, str] = {
     'base.h': """
@@ -113,15 +113,15 @@ def test_blocks():
     """, CACHE, True).load(CACHE)
     assert pp.tokens == [
         ('any', '', {
-            dm.DefOption(TK.tokenize('int A = 1;')),
-            dm.DefOption(TK.tokenize('int A = 2;'))
+            DefOption(TK.tokenize('int A = 1;')),
+            DefOption(TK.tokenize('int A = 2;'))
         }),
         tm.mk_kw('int'),
         tm.mk_id('B'),
         tm.mk_op('='),
         ('any', 'ABC', {
-            dm.DefOption([tm.mk_int(1)]),
-            dm.DefOption([tm.mk_int(2)])
+            DefOption([tm.mk_int(1)]),
+            DefOption([tm.mk_int(2)])
         }),
         tm.mk_op(';')
     ]
@@ -136,9 +136,9 @@ def test_blocks():
     """, CACHE, True).load(CACHE)
     assert pp.tokens == [
         ('any', '', {
-            dm.DefOption(TK.tokenize('int A;')),
-            dm.DefOption(TK.tokenize('int B;')),
-            dm.DefOption([])
+            DefOption(TK.tokenize('int A;')),
+            DefOption(TK.tokenize('int B;')),
+            DefOption([])
         }),
     ]
 
@@ -171,15 +171,15 @@ def test_blocks():
     print([str(p) for p in pp.tokens[0][2]])
     assert pp.tokens == [
         ('any', '', {
-            dm.DefOption([
+            DefOption([
                 ('any', '', {
-                    dm.DefOption(TK.tokenize('int A = 2;')),
-                    dm.DefOption([])
+                    DefOption(TK.tokenize('int A = 2;')),
+                    DefOption([])
                 }),
                 *TK.tokenize('int B = 3;')
             ]),
-            dm.DefOption(TK.tokenize('int B = 1;')),
-            dm.DefOption(TK.tokenize('int B = 7;'))
+            DefOption(TK.tokenize('int B = 1;')),
+            DefOption(TK.tokenize('int B = 7;'))
         }),
         *TK.tokenize('int C = 6;')
     ]

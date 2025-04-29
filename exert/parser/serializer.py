@@ -1,5 +1,5 @@
 from io import BufferedReader, BufferedWriter
-from exert.parser.definitions import DefOption
+from exert.parser.defoption import DefOption
 from exert.utilities.types.global_types import TokenType
 
 TOK_TYPES: list[str] = [

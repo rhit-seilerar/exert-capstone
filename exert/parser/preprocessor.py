@@ -10,15 +10,16 @@ TODO There are still a number of optimizations that can be done for better resul
 
 import os
 import types
-from typing import cast
+from typing import cast, Self
 from collections.abc import Callable
 from exert.parser.tokenmanager import mk_int, tok_seq, TokenManager
-from exert.parser.definitions import DefState, Def, DefOption
+from exert.parser.defoption import DefOption
+from exert.parser.definition import Def
+from exert.parser.defstate import DefState
 from exert.parser.serializer import write_tokens, read_tokens
 from exert.parser.tokenizer import Tokenizer
 from exert.utilities.debug import dprint
 from exert.utilities.types.global_types import TokenType, TokenType3
-from typing import cast, Self
 
 def read_file(path: str) -> (str | None):
     try:
@@ -383,7 +384,8 @@ class Preprocessor(TokenManager):
                         if curr[2] and prev[2] and curr[2] != prev[2]:
                             return self.err(f'String concatenation of different encodings! \
                                 ({prev[2]} and {curr[2]})')
-                        newstr = ('string', cast(str, prev[1]) + cast(str, curr[1]), prev[2] or curr[2])
+                        newstr = ('string', cast(str, prev[1]) + cast(str, curr[1]), \
+                            prev[2] or curr[2])
                         self.defs.layers[-1].emitted[-1] = newstr
                         continue
 

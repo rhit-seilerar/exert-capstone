@@ -9,7 +9,9 @@ def make_def_variants() -> list[Def]:
         Def(),
         Def(undefined = True),
         Def(option1, option2, defined = True),
-        Def(option1, option2, defined = True, undefined = True)
+        Def(option1, option2, defined = True, undefined = True),
+        Def(defined = True),
+        Def(undefined = True, defined = True),
     ]
 
 def test_def_states():
@@ -88,10 +90,14 @@ def test_def_get_replacements():
     defs = make_def_variants()
     sym = ('identifier', 'abc')
     options = {DefOption([('number', 1)]), DefOption([('number', 2)])}
-    assert defs[0].get_replacements(sym) == {DefOption([('any', 'abc', set())])}
-    assert defs[1].get_replacements(sym) == {DefOption([sym])}
+    ident_opt = DefOption([sym])
+    wildcard_opt = DefOption([('any', 'abc', set())])
+    assert defs[0].get_replacements(sym) == {wildcard_opt}
+    assert defs[1].get_replacements(sym) == {ident_opt}
     assert defs[2].get_replacements(sym) == options
-    assert defs[3].get_replacements(sym) == options | {DefOption([sym])}
+    assert defs[3].get_replacements(sym) == options | {ident_opt}
+    assert defs[4].get_replacements(sym) == {wildcard_opt}
+    assert defs[5].get_replacements(sym) == {wildcard_opt, ident_opt}
 
 def test_def_combine():
     replace_defs = make_def_variants()
@@ -114,7 +120,7 @@ def test_def_combine():
             test.combine(other, replace = True)
             assert test.defined == other.defined
             assert test.undefined == other.undefined
-            assert test.options == other.options
+            assert test.options == (defn.options if other.is_empty_def() else other.options)
             if other.defined:
                 other_other = other.copy()
                 other_other.options = set()

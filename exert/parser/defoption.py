@@ -10,6 +10,7 @@ class DefOption:
     parameter names are replaced with other token lists, which then constructs
     the substituted form.
     """
+
     def __init__(self, tokens: list[TokenType], params: (list[str] | None) = None):
         assert isinstance(tokens, list)
         self.tokens = tokens
@@ -20,19 +21,6 @@ class DefOption:
             self.key = self.paramstr + '$' + self.key
         self.len = len(tokens)
         self.hash = hash(self.key)
-
-    # def withParams(self, params: list[list[TokenType]]) -> list[TokenType]:
-    #     """
-    #     If this is a function-like macro, substitute params with the provided
-    #     token lists. Otherwise, return this option's replacement list.
-    #     """
-    #     if self.params is None:
-    #         return self.tokens
-    #     assert len(params) == len(self.params)
-    #     idtypes = ['identifier', 'keyword']
-    #     pparams = { p: params[i] for i, p in enumerate(self.params) }
-    #     return [ts for t in self.tokens for ts in \
-    #         (pparams.get(t[1], [t]) if t[0] in idtypes else [t])]
 
     def __eq__(self, other):
         return isinstance(other, DefOption) and other.key == self.key

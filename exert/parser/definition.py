@@ -1,6 +1,6 @@
+from typing import Self
 from exert.parser.defoption import DefOption
 from exert.utilities.types.global_types import TokenType
-from typing import Self
 
 class Def:
     """
@@ -71,13 +71,11 @@ class Def:
         """
         replacements: set[DefOption] = set()
         for opt in self.options:
-            if (opt.params is not None and params is not None):
-                if len(opt.params) == len(params):
-                    replacements.add(opt)
-
+            if (opt.params is None and params is None or len(opt.params) == len(params)):
+                replacements.add(opt)
         if self.undefined:
             replacements.add(DefOption([sym]))
-        elif len(self.options) == 0:
+        if (self.defined or not self.undefined) and len(self.options) == 0:
             replacements.add(DefOption([('any', sym[1], set())]))
         return replacements
 

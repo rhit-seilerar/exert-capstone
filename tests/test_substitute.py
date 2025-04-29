@@ -2,7 +2,7 @@ from exert.parser.tokenizer import Tokenizer
 import exert.parser.tokenmanager as tm
 from exert.parser.defoption import DefOption
 from exert.parser.definition import Def
-from exert.parser.definitions import DefState
+from exert.parser.defstate import DefState
 
 TK = Tokenizer()
 
@@ -68,3 +68,10 @@ def test_substitute():
     new_result = defstate.substitute(tm.mk_id('SECOND'))
     assert new_result[0] is not None
     assert new_result[0][0] == 'any'
+
+def test_substitute_func():
+    defstate = DefState(64)
+    defstate.on_define('DEFN', [tm.mk_id('a'), tm.mk_op('*'), tm.mk_int(3)], ['a'])
+
+    assert defstate.substitute(tm.TokenManager(TK.tokenize('DEFN(1)'))) == \
+        TK.tokenize('1 * 3')

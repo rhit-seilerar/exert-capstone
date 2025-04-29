@@ -1,7 +1,7 @@
 from tests import utils
-from exert.parser import definitions
 from exert.parser import expressions
 import exert.parser.tokenmanager as tm
+from exert.parser.definition import Def
 from exert.parser.expressions import Evaluator, parse_expression
 from exert.parser.tokenizer import Tokenizer
 
@@ -80,7 +80,7 @@ def test_eval():
     evaluate('true', 32, 1, False)
 
     evlr = Evaluator(32)
-    evlr.lookup = {'abc': definitions.Def(defined = True)}
+    evlr.lookup = {'abc': Def(defined = True)}
     evlr.defines = {}
     assert isinstance(evlr.evaluate([('any', 'abc', set())]), expressions.Wildcard)
     assert str(expressions.Wildcard()) == '<wildcard>'
