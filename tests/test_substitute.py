@@ -5,6 +5,7 @@ from exert.parser.defoption import DefOption
 from exert.parser.definition import Def
 from exert.parser.defmap import DefMap
 from exert.parser.defstate import DefState
+from exert.utilities.types.global_types import TokenType
 
 TK = Tokenizer()
 
@@ -31,7 +32,7 @@ def test_substitute_parse_macro_variable():
     assert parse_macro(tm, dm) == (mk_id('abc'), None)
 
 def test_substitute_empty():
-    keys = set()
+    keys: set[TokenType] = set()
     tm = TokenManager([])
     dm = DefMap(None)
     assert substitute(tm, dm, keys = keys) == []

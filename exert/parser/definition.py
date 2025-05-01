@@ -16,7 +16,7 @@ class Def:
         self.options: set[DefOption] = set()
         self.undefined = undefined
         self.defined = defined
-        self.plen = None
+        self.plen: (int | None) = None
         if len(options) > 0:
             for option in options:
                 self.define(option, keep = True)

@@ -6,7 +6,7 @@ from exert.utilities.logic import or_else
 from exert.utilities.types.global_types import TokenType
 
 def parse_macro(tokmgr: TokenManager, defmap: DefMap) \
-    -> tuple[None | TokenType, list[list[TokenType]]]:
+    -> tuple[None | TokenType, None | list[list[TokenType]]]:
     """
     Consume macro application syntax, e.g. an identifier for a variable-like
     macro and name(p1, p2, ...) for a function-like macro. Note that, for
