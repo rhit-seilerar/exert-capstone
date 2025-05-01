@@ -24,7 +24,7 @@ class DefMap:
             self.defs[key] = Def()
         return self.defs[key]
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: ExpressionTypes) -> Def:
         if key in self.defs:
             defn = self.getlocal(key)
             if defn.is_empty_def() and self.parent is not None:
@@ -53,7 +53,7 @@ class DefMap:
         if not self.skipping:
             self.getlocal(key).undefine(keep = False)
 
-    def define(self, key: str | int, option: DefOption) -> None:
+    def define(self, key: ExpressionTypes, option: DefOption) -> None:
         if not self.skipping:
             self.getlocal(key).define(option, keep = True)
 
@@ -79,7 +79,7 @@ class DefMap:
             and self.skipping == other.skipping \
             and self.defs == other.defs
 
-    def __str__(self):
+    def __str__(self) -> str:
         defs_strs = [f"'{key}': {str(self.defs[key])}" for key in self.defs]
         return f'DefMap(parent = {self.parent}, skipping = {self.skipping}, ' \
             f'defs = {{{", ".join(defs_strs)}}})'

@@ -8,7 +8,7 @@ from pandare.pypluginmanager import PyPluginManager
 from exert.usermode import task_struct_stack
 from exert.utilities.command import run_command
 from exert.utilities import version as ver
-from exert.utilities.types.multi_arch import ExertCallable, CPUState
+from exert.utilities.types.multi_arch import ExertCallable, CPUState, TranslationBlock
 
 class Exert(PyPlugin):
     """The Exert plugin"""
@@ -32,16 +32,17 @@ class Exert(PyPlugin):
             panda.enable_callback('hypercall')
 
         @panda.cb_guest_hypercall
-        def hypercall(cpu):
+        def hypercall(cpu: CPUState) -> bool:
             panda.disable_callback('hypercall')
             self.called_back = True
             if self.hypercall_callback:
                 self.hypercall_callback(panda, cpu)
             else:
                 IPython.embed()
+            return False
 
         @panda.cb_start_block_exec
-        def single_step(cpu, tb):
+        def single_step(cpu: CPUState, tb: TranslationBlock) -> None:
             if panda.in_kernel_mode(cpu):
                 panda.disable_callback('single_step')
                 self.called_back = True
@@ -100,7 +101,7 @@ def run(arch: str = 'i386', callback: (ExertCallable | None) = None,
     })
 
     @panda.queue_blocking
-    def drive():
+    def drive() -> None:
         if generic:
             panda.revert_sync("root")
         print(panda.run_serial_cmd('uname -r'))

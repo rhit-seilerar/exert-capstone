@@ -1,7 +1,7 @@
 import os
 from exert.usermode import osi
 
-def test_file_print():
+def test_file_print() -> None:
     header_line = osi.HeaderLine()
     osi_name = osi.Name()
     osi_version = osi.Version()

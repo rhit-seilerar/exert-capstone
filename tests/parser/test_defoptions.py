@@ -1,6 +1,6 @@
 from exert.parser.defoption import DefOption
 
-def test_defoption_eq():
+def test_defoption_eq() -> None:
     empty = DefOption([])
     defoption12 = DefOption([('number', 1), ('number', 2)])
     defoptionab = DefOption([('identifier', 'a'), ('identifier', 'b')])
@@ -10,7 +10,7 @@ def test_defoption_eq():
     assert defoption12 != defoptionab
     assert defoption12 == DefOption([('number', 1), ('number', 2)])
 
-def test_defoption_hash():
+def test_defoption_hash() -> None:
     options = {
         DefOption([]),
         DefOption([('number', 1), ('number', 2)]),
@@ -22,11 +22,11 @@ def test_defoption_hash():
         options_dup.add(defoption)
     assert options == options_dup
 
-def test_defoption_len():
+def test_defoption_len() -> None:
     assert len(DefOption([])) == 0
     assert len(DefOption([('number', 1)])) == 1
     assert len(DefOption([('identifier', 'a'), ('identifier', 'b')])) == 2
 
-def test_defoption_str():
+def test_defoption_str() -> None:
     assert str(DefOption([])) == '$'
     assert str(DefOption([('identifier', 'a'), ('identifier', 'b')])) == '$a b'

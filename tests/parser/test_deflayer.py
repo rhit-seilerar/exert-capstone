@@ -7,12 +7,12 @@ from exert.parser.deflayer import DefLayer
 
 TK = Tokenizer()
 
-def test_deflayer_skip_all():
+def test_deflayer_skip_all() -> None:
     dl = DefLayer(DefMap(None), 32, True)
     dl.add_map([mk_id('abc')], closing = True)
     assert dl.current == DefMap(None, skipping = True)
 
-def test_deflayer_first():
+def test_deflayer_first() -> None:
     parent = DefMap(None, initial = {'abc': Def(DefOption([mk_int(1)]),
         DefOption([mk_int(2)]), undefined = True)})
     dl = DefLayer(parent, 32, False)
@@ -32,7 +32,7 @@ def test_deflayer_first():
     assert not dl.skip_rest
     assert not dl.closed
 
-def test_deflayer_next():
+def test_deflayer_next() -> None:
     parent = DefMap(None, initial = {
         'abc': Def(DefOption([mk_int(1)]), DefOption([mk_int(2)]), undefined = True),
         'def': Def(undefined = True)

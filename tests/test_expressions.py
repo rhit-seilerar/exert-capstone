@@ -18,11 +18,11 @@ def roundtrip(expr:str, bitsize:int, expected:(str | None) = None) -> None:
     parsed = parse_expression(tokens)
     assert str(parsed) == expected
 
-def test_base():
+def test_base() -> None:
     utils.expect_error(lambda: expressions.Expression().evaluate(32)) # type: ignore
     assert str(expressions.Expression()) == '<err>'
 
-def test_parse():
+def test_parse() -> None:
     expect_error('', 32)
     expect_error('#if', 32)
     roundtrip('1', 32)
@@ -54,7 +54,7 @@ def evaluate(expr:str, bitsize:int, expected: (int | bool), expected_unsigned:bo
     assert value == expected
     assert unsigned == expected_unsigned
 
-def test_eval():
+def test_eval() -> None:
     evaluate('1u', 32, 1, True)
     evaluate('(1u)', 32, 1, True)
     evaluate('-(1u)', 32, -1, False)
@@ -145,7 +145,7 @@ def test_eval():
     assert not evlr.defines['def']
     assert str(parse_expression([('defined', 'abc')])) == 'defined(abc)'
 
-def test_bitsize():
+def test_bitsize() -> None:
     evaluate('1 << 32', 32, 0, False)
     evaluate('1 << 32', 64, 2**32, False)
     evaluate('0xffffffffu + 1', 32, 0, True)

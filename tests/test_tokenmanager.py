@@ -2,7 +2,7 @@ from exert.parser import tokenmanager as tm
 from exert.parser.tokenmanager import tok_str, TokenManager
 from exert.parser.defoption import DefOption
 
-def test_mk():
+def test_mk() -> None:
     assert tm.mk_op('&!=') == ('operator', '&!=')
     assert tm.mk_id('hello') == ('identifier', 'hello')
     assert tm.mk_int(123) == ('integer', 123, '')
@@ -10,7 +10,7 @@ def test_mk():
     assert tm.mk_str('abc') == ('string', 'abc', '"')
     assert tm.mk_str('abc', '<') == ('string', 'abc', '<')
 
-def test_tok_str():
+def test_tok_str() -> None:
     assert tok_str(('directive', '#')) == '#'
     assert tok_str(('keyword', 'abcdef')) == 'abcdef '
     assert tok_str(('identifier', 'ghi')) == 'ghi '
@@ -25,7 +25,7 @@ def test_tok_str():
         DefOption([('string', '123', '"')])
     })) in ['<ANY a2>[2]{ $1u, $"123" } ', '<ANY a2>[2]{ $"123", $1u } ']
 
-def test_reset():
+def test_reset() -> None:
     mgr = TokenManager()
     mgr.has_error = True
     mgr.tokens = [("Howdy", "Howdy")]
@@ -43,7 +43,7 @@ def test_reset():
     assert mgr.tokens_added == 0
     assert mgr.progress_counter == 0
 
-def test():
+def test() -> None:
     mgr = TokenManager()
     mgr.tokens = [
         ('keyword', 'if'),

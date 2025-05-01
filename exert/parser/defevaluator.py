@@ -4,7 +4,7 @@ from exert.parser.definition import Def
 from exert.parser.defmap import DefMap
 from exert.parser.substitute import substitute
 from exert.parser.expressions import Evaluator, Wildcard, Integer, parse_expression
-from exert.utilities.types.global_types import TokenType
+from exert.utilities.types.global_types import TokenType, ExpressionTypes
 
 class DefEvaluator(Evaluator):
     def __init__(self, bitsize: int, defmap: DefMap):
@@ -56,7 +56,7 @@ class DefEvaluator(Evaluator):
             nex += substitute(tokmgr, self.defs, keys = keys)#, replmap = replmap)
         tokens = nex
 
-        lookups: list[dict[str | int, Def]] = []
+        lookups: list[dict[ExpressionTypes, Def]] = []
         if keys:
         # if replmap:
             # Note that this currently doesn't consider open-ended definitions correctly
@@ -85,7 +85,7 @@ class DefEvaluator(Evaluator):
         self.any_match = False
         self.all_match = True
 
-        def insert_permutation(lookup: dict[str | int, Def], tokens: list[TokenType]) \
+        def insert_permutation(lookup: dict[ExpressionTypes, Def], tokens: list[TokenType]) \
             -> list[TokenType]:
             nex = []
             for tok in tokens:

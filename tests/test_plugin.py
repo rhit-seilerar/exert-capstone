@@ -42,7 +42,7 @@ def callback_test_ground_truth_tasklist(panda: Panda, cpu: CPUState) -> None:
     parent_addr = tss.read_word(init_task, parent_offset)
     assert parent_addr == init_addr
 
-def test_ground_truth_tasklist():
+def test_ground_truth_tasklist() -> None:
     do_test(callback_test_ground_truth_tasklist, 'i386')
 
 def callback_test_get_task_from_current(panda: Panda, cpu: CPUState) -> None:
@@ -51,7 +51,7 @@ def callback_test_get_task_from_current(panda: Panda, cpu: CPUState) -> None:
     results = TASK_STRUCT.test(context, task_addr)
     assert results
 
-def test_get_task_from_current():
+def test_get_task_from_current() -> None:
     do_test(callback_test_get_task_from_current, 'arm')
 
 def callback_test_nongeneric_kernel(panda: Panda, cpu: CPUState) -> None:
@@ -60,25 +60,25 @@ def callback_test_nongeneric_kernel(panda: Panda, cpu: CPUState) -> None:
     # assert context.read(0x4, 4) is None
     # assert context.read(0x0, 1) == b'\x05'
 
-def test_nongeneric_kernel_armv5l():
+def test_nongeneric_kernel_armv5l() -> None:
     do_test(callback_test_nongeneric_kernel, 'armv5l', generic=False,
             kernel='./kernels/vmlinuz-arm-3.2.51-1')
 
-def test_nongeneric_kernel_aarch64():
+def test_nongeneric_kernel_aarch64() -> None:
     do_test(callback_test_nongeneric_kernel, 'aarch64',
             generic=False, kernel='./kernels/vmlinuz-aarch64-4.4.100')
 
-def test_nongeneric_kernel_x86_64():
+def test_nongeneric_kernel_x86_64() -> None:
     do_test(callback_test_nongeneric_kernel, 'x86_64',
             generic=False, kernel='./kernels/vmlinuz-x86_64-4.4.100')
 
-def test_plugin_kernel_supported():
+def test_plugin_kernel_supported() -> None:
     if not RUN_PLUGIN_TESTS:
         return
     subprocess.run(['python', '-u', '-m', 'exert.usermode.plugin', './kernels/vmlinuz-arm-3.2.51-1',
                     'armv5l', '3.2.51-1-versatile'], check = True)
 
-def test_plugin_kernel_unsupported():
+def test_plugin_kernel_unsupported() -> None:
     if not RUN_PLUGIN_TESTS:
         return
     subprocess.run(['python', '-u', '-m', 'exert.usermode.plugin', './kernels/vmlinuz-arm-3.2.51-1',

@@ -7,10 +7,10 @@ from exert.utilities.types.global_types import TokenType, ExpressionTypes
 from typing import cast
 
 class Expression:
-    def evaluate(self, evaluator: 'Evaluator') -> 'Expression':
+    def evaluate(self, evaluator: 'Evaluator') -> 'Wildcard | Integer':
         assert False
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '<err>'
 
 class Integer(Expression):
@@ -25,7 +25,7 @@ class Integer(Expression):
             value -= base
         return Integer(value, self.unsigned)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.value) + ('u' if self.unsigned else '')
 
 class Identifier(Integer):
@@ -35,20 +35,20 @@ class Identifier(Integer):
 class Wildcard(Expression):
     options: set[DefOption] = set()
 
-    def evaluate(self, evaluator):
+    def evaluate(self, evaluator: 'Evaluator') -> 'Wildcard | Integer':
         return self
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '<wildcard>'
 
 class Group(Expression):
     def __init__(self, expression: Expression):
         self.expression = expression
 
-    def evaluate(self, evaluator):
+    def evaluate(self, evaluator: 'Evaluator') -> (Wildcard | Integer):
         return self.expression.evaluate(evaluator)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'({str(self.expression)})'
 
 class Operator(Expression):
@@ -63,17 +63,16 @@ class UnaryOperator(Operator):
         self.a: Expression | str = a
         self.signop = (lambda asig: asig) if signop is None else signop
 
-    def evaluate(self, evaluator):
+    def evaluate(self, evaluator: 'Evaluator') -> (Wildcard | Integer):
         assert isinstance(self.a, Expression)
         aint = self.a.evaluate(evaluator)
         if isinstance(aint, Wildcard):
             aint.options = set()
             return aint
-        aint = cast(Integer, aint) # This makes the type checker happy, doesn't impact logic
         unsigned = self.signop(aint.unsigned)
         return Integer(self.op(aint.value), unsigned)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.opname + str(self.a)
 
 class BinaryOperator(Operator):
@@ -88,7 +87,7 @@ class BinaryOperator(Operator):
         self.b = b
         self.signop = (lambda asig, bsig: asig or bsig) if signop is None else signop
 
-    def evaluate(self, evaluator):
+    def evaluate(self, evaluator: 'Evaluator') -> (Wildcard | Integer):
         aint = self.a.evaluate(evaluator)
         bint = self.b.evaluate(evaluator)
         if isinstance(aint, Wildcard):
@@ -103,7 +102,7 @@ class BinaryOperator(Operator):
         assert self.op is not None
         return Integer(self.op(aint.value, bint.value), unsigned)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.a) + f' {self.opname} ' + str(self.b)
 
 class UnaryDefined(UnaryOperator):
@@ -111,14 +110,16 @@ class UnaryDefined(UnaryOperator):
         assert isinstance(a, (Expression, str))
         super().__init__(a, 'defined', lambda a: a)
 
-    def evaluate(self, evaluator):
+    def evaluate(self, evaluator: 'Evaluator') -> (Wildcard | Integer):
+        assert evaluator.lookup is not None
+        assert evaluator.defines is not None
         if self.a in evaluator.lookup and evaluator.lookup[self.a].defined:
             evaluator.defines[self.a] = True
             return Integer(1, False)
         evaluator.defines[self.a] = False
         return Integer(0, False)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'defined({self.a})'
 
 class UnaryPlus(UnaryOperator):
@@ -169,7 +170,7 @@ class LeftShift(BinaryOperator):
     def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
         super().__init__(a, b, '<<', None)
 
-    def evaluate(self, evaluator):
+    def evaluate(self, evaluator: 'Evaluator') -> (Wildcard | Integer):
         aint = self.a.evaluate(evaluator)
         bint = self.b.evaluate(evaluator)
         if isinstance(aint, Wildcard):
@@ -188,7 +189,7 @@ class RightShift(BinaryOperator):
     def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
         super().__init__(a, b, '>>', None)
 
-    def evaluate(self, evaluator):
+    def evaluate(self, evaluator: 'Evaluator') -> (Wildcard | Integer):
         aint = self.a.evaluate(evaluator)
         bint = self.b.evaluate(evaluator)
         if isinstance(aint, Wildcard):
@@ -247,7 +248,7 @@ class Conditional(Operator):
         self.b = b
         self.c = c
 
-    def evaluate(self, evaluator):
+    def evaluate(self, evaluator: 'Evaluator') -> (Wildcard | Integer):
         assert isinstance(self.a, Expression)
         assert isinstance(self.b, Expression)
         assert isinstance(self.c, Expression)
@@ -263,13 +264,10 @@ class Conditional(Operator):
         if isinstance(cint, Wildcard):
             cint.options = set()
             return cint
-        assert isinstance(bint, Integer)
-        assert isinstance(cint, Integer)
-        assert isinstance(aint, Integer)
         unsigned = bint.unsigned or cint.unsigned
         return Integer(bint.value if aint.value else cint.value, unsigned)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{str(self.a)} ? {str(self.b)} : {str(self.c)}'
 
 PRECEDENCE_MAP: list[dict[str, tuple[int, type[Operator]]]] = [
@@ -418,7 +416,7 @@ def parse_expression(tokens: list[TokenType]) -> Expression:
 class Evaluator:
     def __init__(self, bitsize: int):
         self.bitsize = bitsize
-        self.lookup: (dict[str | int, 'Def'] | None) = None
+        self.lookup: (dict[ExpressionTypes, 'Def'] | None) = None
         self.defines: (dict[Expression | str, bool] | None) = None
 
     def evaluate(self, tokens: list[TokenType]) -> (Wildcard | tuple[int, bool] | tuple[bool, bool, DefMap]):

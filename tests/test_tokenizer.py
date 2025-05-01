@@ -6,7 +6,7 @@ TK = Tokenizer()
 def roundtrip(string: str, out: (str | None) = None) -> None:
     assert tm.tok_seq(TK.tokenize(string)) == (string if out is None else out)
 
-def test():
+def test() -> None:
     roundtrip('0')
     roundtrip('<:', '[')
     roundtrip('%:%:', '##')

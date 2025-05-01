@@ -46,23 +46,23 @@ def file_reader_callback(panda:Panda, cpu: CPUState) -> None:
     assert magic == 0
     assert typ == 3
 
-def test_i386_file_reader():
+def test_i386_file_reader() -> None:
     do_test(file_reader_callback, 'i386',
             generic=False, kernel='./kernels/vmlinuz-i386-4.4.100')
 
-def test_x86_file_reader():
+def test_x86_file_reader() -> None:
     do_test(file_reader_callback, 'x86_64',
             generic=False, kernel='./kernels/vmlinuz-x86_64-4.4.100')
 
-def test_armv5l_file_reader():
+def test_armv5l_file_reader() -> None:
     do_test(file_reader_callback, 'armv5l',
             generic=False, kernel='./kernels/vmlinuz-arm-3.2.51-1')
 
-def test_aarch64_file_reader():
+def test_aarch64_file_reader() -> None:
     do_test(file_reader_callback, 'aarch64',
             generic=False, kernel='./kernels/vmlinuz-aarch64-4.4.100')
 
-def _test_compile():
+def _test_compile() -> None:
     cmd.run_command('pushd usermode')
     cmd.run_command('make clean')
     cmd.run_command('make all ARCH=arm LIBC=musleabi')

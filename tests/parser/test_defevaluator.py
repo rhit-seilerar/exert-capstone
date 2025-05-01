@@ -7,7 +7,7 @@ from exert.parser.defevaluator import DefEvaluator
 
 TK = Tokenizer()
 
-def test_defevaluator_none():
+def test_defevaluator_none() -> None:
     de = DefEvaluator(64, DefMap(None))
     assert de.evaluate([tm.mk_int(0)]) == (False, False, DefMap(de.defs))
     assert de.evaluate([tm.mk_int(1)]) == (True, True, DefMap(de.defs))
@@ -16,7 +16,7 @@ def test_defevaluator_none():
     de.defs['abc'] = Def(DefOption([tm.mk_int(1)]), undefined = True)
     assert de.evaluate(TK.tokenize('abc == 2')) == (False, False, DefMap(de.defs))
 
-def test_defevaluator_single():
+def test_defevaluator_single() -> None:
     de = DefEvaluator(64, DefMap(None))
     de.defs['abc'] = Def(defined = True)
     assert de.evaluate([tm.mk_id('defined'), tm.mk_op('('),
@@ -33,7 +33,7 @@ def test_defevaluator_single():
     assert de.evaluate([tm.mk_id('defined'), tm.mk_id('abc')]) == \
         (False, False, DefMap(de.defs))
 
-def test_defevaluator_multiple():
+def test_defevaluator_multiple() -> None:
     de = DefEvaluator(64, DefMap(None))
     assert de.evaluate(TK.tokenize('defined abc')) == \
         (True, False, DefMap(de.defs, initial = {'abc': Def(defined = True)}))

@@ -8,3 +8,8 @@ type CPUState = (aarch64_types.CPUState |
                  x86_64_types.CPUState)
 
 type ExertCallable = Callable[[Panda, CPUState], (int | None)]
+
+type TranslationBlock = (aarch64_types.TranslationBlock |
+                         arm_types.TranslationBlock |
+                         i386_types.TranslationBlock |
+                         x86_64_types.TranslationBlock)

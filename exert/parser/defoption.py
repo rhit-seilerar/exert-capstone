@@ -20,14 +20,14 @@ class DefOption:
         self.len = len(tokens)
         self.hash = hash(self.key)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, DefOption) and other.key == self.key
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return self.hash
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.len
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.key

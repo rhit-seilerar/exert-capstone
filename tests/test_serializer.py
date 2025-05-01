@@ -3,7 +3,7 @@ from exert.parser.serializer import write_tokens, read_tokens
 from exert.parser.defoption import DefOption
 from exert.utilities.types.global_types import TokenType
 
-def test_roundtrip():
+def test_roundtrip() -> None:
     tokens: list[TokenType] = [
         ('integer', 10923827539238, 'U'),
         ('integer', -947891238, 'L'),
@@ -31,7 +31,7 @@ def test_roundtrip():
 
     assert tokens == new_tokens
 
-def test_invalid():
+def test_invalid() -> None:
     with open('./cache/test-tokenmanager-round-trip', mode = 'bw') as file:
         utils.expect_error(lambda: write_tokens(file, [('abc')]), ValueError) # type: ignore
         file.write(b'\x08')

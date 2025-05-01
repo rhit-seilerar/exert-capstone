@@ -14,7 +14,7 @@ def make_def_variants() -> list[Def]:
         Def(undefined = True, defined = True),
     ]
 
-def test_def_states():
+def test_def_states() -> None:
     try:
         assert Def(DefOption([]), defined = False)
     except ValueError:
@@ -33,7 +33,7 @@ def test_def_states():
         and not defs[3].is_defined() and defs[3].is_uncertain() \
         and defs[3].options == {DefOption([('number', 1)]), DefOption([('number', 2)])}
 
-def test_def_copy():
+def test_def_copy() -> None:
     defs = make_def_variants()
     for defn in defs:
         new_def = defn.copy()
@@ -43,12 +43,12 @@ def test_def_copy():
         new_def.options |= {5} # type: ignore
         assert new_def.options != defn.options
 
-def test_def_invalid():
+def test_def_invalid() -> None:
     defn = Def(DefOption([('integer', 1, '')]))
     defn.defined = False
     expect_error(defn.validate, ValueError)
 
-def test_def_undefine():
+def test_def_undefine() -> None:
     defs1 = make_def_variants()
     for defn in defs1:
         was_defined = defn.defined
@@ -64,7 +64,7 @@ def test_def_undefine():
         assert not defn.defined
         assert len(defn.options) == 0
 
-def test_def_define():
+def test_def_define() -> None:
     defs1 = make_def_variants()
     try:
         assert defs1[0].define('abc') # type: ignore
@@ -86,7 +86,7 @@ def test_def_define():
         assert not defn.undefined
         assert defn.defined
 
-def test_def_get_replacements():
+def test_def_get_replacements() -> None:
     defs = make_def_variants()
     sym = ('identifier', 'abc')
     options = {DefOption([('number', 1)]), DefOption([('number', 2)])}
@@ -99,7 +99,7 @@ def test_def_get_replacements():
     assert defs[4].get_replacements(sym) == {wildcard_opt}
     assert defs[5].get_replacements(sym) == {wildcard_opt, ident_opt}
 
-def test_def_combine():
+def test_def_combine() -> None:
     replace_defs = make_def_variants()
     other_defs = make_def_variants()
     try:
@@ -128,14 +128,14 @@ def test_def_combine():
                 test.combine(other_other, replace = True)
                 assert test.options == defn.options
 
-def test_def_len():
+def test_def_len() -> None:
     defs = make_def_variants()
     assert len(defs[0]) == 0
     assert len(defs[1]) == 0
     assert len(defs[2]) == 2
     assert len(defs[3]) == 2
 
-def test_def_matches():
+def test_def_matches() -> None:
     defs = make_def_variants()
     others = make_def_variants()
     assert defs[0].matches(others[0])
@@ -161,14 +161,14 @@ def test_def_matches():
     except TypeError:
         pass
 
-def test_def_eq():
+def test_def_eq() -> None:
     defs1 = make_def_variants()
     defs2 = make_def_variants()
     for i in range(0, 4):
         for j in range(0, 4):
             assert (i == j) == (defs1[i] == defs2[j])
 
-def test_def_str():
+def test_def_str() -> None:
     defs = make_def_variants()
     assert str(defs[0]) == '<initial>'
     assert str(defs[1]) == '<undefined>'

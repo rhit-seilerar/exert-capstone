@@ -6,7 +6,7 @@ from exert.parser.defstate import DefState
 
 TK = Tokenizer()
 
-def test_defstate():
+def test_defstate() -> None:
     ds = DefState(64, initial = {
         'abc': Def(DefOption([tm.mk_int(1)])),
         'def': Def(DefOption([]), undefined = True)
@@ -34,7 +34,7 @@ def test_defstate():
     assert ds.is_skipping()
     ds.on_endif()
 
-def test_defstate_multilayer():
+def test_defstate_multilayer() -> None:
     ds = DefState(64)
     wild_abc = DefOption([('any', 'ABC', set())])
     wild_def = DefOption([('any', 'DEF', set())])

@@ -1,15 +1,16 @@
 import time
 from exert.parser.parser import Parser
+from exert.parser.parser import ContinuationTypes
 
 class DummyParser(Parser):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.time = time.time()
 
-    def dfail(self, p, f):
+    def dfail(self, p: ContinuationTypes, f: ContinuationTypes) -> ContinuationTypes:
         return f
 
-    def dpass(self, p, f):
+    def dpass(self, p: ContinuationTypes, f: ContinuationTypes) -> ContinuationTypes:
         self.index += 10
         return p
 

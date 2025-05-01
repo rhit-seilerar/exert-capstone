@@ -46,10 +46,10 @@ FILES: dict[str, str] = {
     """
 }
 
-def dummy_reader(path):
+def dummy_reader(path: str) -> (str | None):
     return FILES.get(path)
 
-def test_read_file():
+def test_read_file() -> None:
     assert read_file('exert.py')
     assert not read_file('__dummy_does_not_exist__.abc')
 
@@ -62,7 +62,7 @@ def check(incls: list[str | Callable[[str], (str | None)]], defns: dict[str, str
     pp.load(CACHE)
     assert pp.tokens == TK.tokenize(str_out)
 
-def test_string_concat():
+def test_string_concat() -> None:
     check([], {}, '"Hello " "there!\n"', '"Hello there!\n"')
     check([], {}, 'L"Hello " "there!\n"', 'L"Hello there!\n"')
     check([], {}, '"Hello " u"there!\n"', 'u"Hello there!\n"')
@@ -72,7 +72,7 @@ def test_string_concat():
     except AssertionError:
         pass
 
-def test_standard():
+def test_standard() -> None:
     check([], {}, """
         typedef int dummy;
         int main(int argc, char **argv) {
@@ -87,7 +87,7 @@ def test_standard():
         }
     """)
 
-def test_defines():
+def test_defines() -> None:
     check([], {}, """
         #define ABC typedef int[3] vec3
         ABC;
@@ -98,7 +98,7 @@ def test_defines():
         ABC;
     """)
 
-def test_blocks():
+def test_blocks() -> None:
     pp = Preprocessor(TK, 32, [], {}, filereader = dummy_reader)
     pp.preprocess("""
         #ifndef ABC
@@ -184,8 +184,8 @@ def test_blocks():
         *TK.tokenize('int C = 6;')
     ]
 
-def test_line_and_include():
+def test_line_and_include() -> None:
     pass
 
-def test_misc_directives():
+def test_misc_directives() -> None:
     pass

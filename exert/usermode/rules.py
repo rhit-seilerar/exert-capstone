@@ -48,7 +48,7 @@ class Any(Rule):
         super().__init__()
         self.rules = rules
 
-    def _get_key(self):
+    def _get_key(self) -> str:
         return f"Any({', '.join(str(r) for r in self.rules)})"
 
     def _test(self, context: Context, address: int) -> set[int]:
@@ -64,7 +64,7 @@ class Int(Rule):
         self.min_value = min_value
         self.max_value = max_value if max_value is not None else min_value
 
-    def _get_key(self):
+    def _get_key(self) -> str:
         return f'Int({self.size}, {self.signed}, {self.min_value}, {self.max_value})'
 
     def _test(self, context: Context, address: int) -> set[int]:
@@ -82,7 +82,7 @@ class Bool(Int):
     def __init__(self) -> None:
         super().__init__(size = 1, min_value = 0, max_value = 1)
 
-    def _get_key(self):
+    def _get_key(self) -> str:
         return 'Bool'
 
 class Pointer(Rule):
@@ -90,7 +90,7 @@ class Pointer(Rule):
         super().__init__()
         self.rule = rule
 
-    def _get_key(self):
+    def _get_key(self) -> str:
         return f'Pointer({str(self.rule)})'
 
     def _test(self, context: Context, address: int) -> set[int]:
@@ -105,7 +105,7 @@ class Union(Rule):
         self.rules = rules
         super().__init__()
 
-    def _test(self, context, address):
+    def _test(self, context: Context, address: int) -> set[int]:
         results: set[int] = set()
 
         for rule in self.rules:
@@ -113,7 +113,7 @@ class Union(Rule):
 
         return results
 
-    def _get_key(self):
+    def _get_key(self) -> str:
         rule_string = '['
 
         for rule in self.rules:
@@ -130,10 +130,10 @@ class Array(Rule):
         self.count_min = count_min
         self.count_max = count_max
 
-    def _get_key(self):
+    def _get_key(self) -> str:
         return f'Array({str(self.rule)}, {self.count_min}, {self.count_max})'
 
-    def _test(self, context, address):
+    def _test(self, context: Context, address: int) -> set[int]:
         passing = {address}
         for _ in range(0, self.count_min):
             passing = self.rule.test_all(context, passing)
@@ -150,7 +150,7 @@ class Field(Rule):
         self.name = name
         self.rule = rule
 
-    def _get_key(self):
+    def _get_key(self) -> str:
         return f"Field('{self.name}', {str(self.rule)})"
 
     def _test(self, context: Context, address: int) -> set[int]:
@@ -173,7 +173,7 @@ class FieldGroup:
             passing |= field_addresses
         return passing
 
-    def __str__(self):
+    def __str__(self) -> str:
         fields_str = ', '.join(str(f) for f in self.fields)
         cond_str = 'None' if self.condition is None else f"'{self.condition}'"
         return f'FieldGroup([{fields_str}], {cond_str})'
@@ -192,7 +192,7 @@ class Struct(Rule):
         self.field_groups = field_groups
         self.fields_addresses: dict[str, set[int]] = {}
 
-    def _get_key(self):
+    def _get_key(self) -> str:
         groups_str = ', '.join([str(g) for g in self.field_groups])
         return f"Struct('{self.name}', [{groups_str}])"
 

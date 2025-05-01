@@ -399,7 +399,7 @@ class Preprocessor(TokenManager):
         self.tokens = read_tokens(cache)
         return self
 
-    def __str__(self):
+    def __str__(self) -> str:
         tokens = tok_seq(self.tokens, newlines = True)
         definitions = '\n'.join(f'{d[0]}: {str(d[1])}' for d in self.defs.flat_defines().items())
         unknowns = '\n'.join(self.defs.flat_unknowns())

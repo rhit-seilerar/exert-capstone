@@ -65,7 +65,7 @@ class Def:
             assert self.plen == (-1 if option.params is None else len(option.params))
         self.defined = True
 
-    def get_replacements(self, sym: TokenType, params: (list[str] | None) = None) -> set[DefOption]:
+    def get_replacements(self, sym: TokenType, params: (list[list[TokenType]] | list[str] | None) = None) -> set[DefOption]:
         """
         [ initial,   {}      ]: [[{}]]
         [ undefined, {}      ]: [[sym]]
@@ -112,16 +112,16 @@ class Def:
             return True
         return False
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.options)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, Def) \
             and self.defined == other.defined \
             and self.undefined == other.undefined \
             and self.options == other.options
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.is_invalid():
             return '<invalid>'
         if self.is_initial():

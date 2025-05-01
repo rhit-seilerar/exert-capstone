@@ -1,12 +1,12 @@
 from exert.utilities import version as ver
 
-def test_version_from_string():
+def test_version_from_string() -> None:
     version = ver.version_from_string("4.4.100")
     version.x = 4
     version.y = 4
     version.z = 100
 
-def test_version_comparison():
+def test_version_comparison() -> None:
     version1 = ver.Version(4, 4, 100)
     version2 = ver.Version(4, 4, 101)
     version3 = ver.Version(4, 4, 99)

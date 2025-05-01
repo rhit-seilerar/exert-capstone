@@ -2,7 +2,7 @@ from exert.parser.defoption import DefOption
 from exert.parser.definition import Def
 from exert.parser.defmap import DefMap
 
-def test_defmap_local():
+def test_defmap_local() -> None:
     abc = Def(defined = True)
     defmap = DefMap(None, initial = {'abc': abc})
     assert defmap.getlocal('abc') == abc
@@ -10,7 +10,7 @@ def test_defmap_local():
     defmap.getlocal('def').undefine(keep = False)
     assert defmap.getlocal('def').is_undefined()
 
-def test_defmap_lookup():
+def test_defmap_lookup() -> None:
     abc = Def(defined = True)
     ghi = Def(undefined = True)
     parent = DefMap(None, initial = {'ghi': ghi})
@@ -32,7 +32,7 @@ def test_defmap_lookup():
     except TypeError:
         pass
 
-def test_defmap_undefine():
+def test_defmap_undefine() -> None:
     skipping = DefMap(None, skipping = True, initial = {'abc': Def(defined = True)})
     skipping.undefine('abc')
     assert not skipping['abc'].undefined
@@ -41,7 +41,7 @@ def test_defmap_undefine():
     assert keeping['abc'].undefined
     assert not keeping['abc'].defined
 
-def test_defmap_define():
+def test_defmap_define() -> None:
     skipping = DefMap(None, skipping = True, initial = {'abc': Def(undefined = True)})
     skipping.define('abc', DefOption([]))
     assert not skipping['abc'].defined
@@ -52,7 +52,7 @@ def test_defmap_define():
     keeping.define('abc', DefOption([]))
     assert keeping['abc'].undefined
 
-def test_defmap_combine():
+def test_defmap_combine() -> None:
     defmap = DefMap(None, skipping = True, initial = {'abc': Def(undefined = True)})
     defn = Def(DefOption([]), defined = True)
     defmap.combine({'abc': defn}, replace = True)
@@ -66,12 +66,12 @@ def test_defmap_combine():
     assert defmap['abc'].defined
     assert len(defmap['abc']) == 1
     try:
-        defmap.combine(defn, replace = True) # type: ignore
+        defmap.combine(defn, replace = True)
         assert False
     except TypeError:
         pass
 
-def test_defmap_matches():
+def test_defmap_matches() -> None:
     defmap = DefMap(None, skipping = True, initial = {
         'abc': Def(undefined = True),
         'def': Def(undefined = True, defined = True)
@@ -90,7 +90,7 @@ def test_defmap_matches():
     except TypeError:
         pass
 
-def test_defmap_str():
+def test_defmap_str() -> None:
     defmap = DefMap(None, skipping = True, initial = {'abc': Def(undefined = True)})
     assert str(defmap) == 'DefMap(parent = None, skipping = True, defs = ' \
         "{'abc': <undefined>})"

@@ -9,36 +9,36 @@ from exert.utilities.types.global_types import TokenType
 
 TK = Tokenizer()
 
-def test_substitute_parse_macro_empty():
+def test_substitute_parse_macro_empty() -> None:
     tm = TokenManager([])
     dm = DefMap(None)
     assert parse_macro(tm, dm) == (None, None)
 
-def test_substitute_parse_macro_non_identifier():
+def test_substitute_parse_macro_non_identifier() -> None:
     tm = TokenManager([mk_int(3)])
     dm = DefMap(None)
     assert parse_macro(tm, dm) == (None, None)
 
-def test_substitute_parse_macro_undefined():
+def test_substitute_parse_macro_undefined() -> None:
     tm = TokenManager([mk_id('abc')])
     dm = DefMap(None, initial = {'abc': Def()})
     assert parse_macro(tm, dm) == (None, None)
     dm = DefMap(None, initial = {'abc': Def(undefined = True)})
     assert parse_macro(tm, dm) == (None, None)
 
-def test_substitute_parse_macro_variable():
+def test_substitute_parse_macro_variable() -> None:
     tm = TokenManager([mk_id('abc')])
     dm = DefMap(None, initial = {'abc': Def(DefOption([mk_id('def')]))})
     assert parse_macro(tm, dm) == (mk_id('abc'), None)
 
-def test_substitute_empty():
+def test_substitute_empty() -> None:
     keys: set[TokenType] = set()
     tm = TokenManager([])
     dm = DefMap(None)
     assert substitute(tm, dm, keys = keys) == []
     assert not keys
 
-def test_substitute():
+def test_substitute() -> None:
     defstate = DefState(64)
 
     nosubst = TK.tokenize('static int a = b;')
@@ -101,7 +101,7 @@ def test_substitute():
     assert new_result[0] is not None
     assert new_result[0][0] == 'any'
 
-def test_substitute_func():
+def test_substitute_func() -> None:
     defstate = DefState(64)
     defstate.on_define('DEFN', [mk_id('a'), mk_op('*'), mk_int(3)], ['a'])
 
