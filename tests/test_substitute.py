@@ -4,7 +4,6 @@ from exert.parser.substitute import substitute, parse_macro
 from exert.parser.defoption import DefOption
 from exert.parser.definition import Def
 from exert.parser.defmap import DefMap
-from exert.parser.defstate import DefState
 from exert.utilities.types.global_types import TokenType
 
 TK = Tokenizer()
@@ -143,72 +142,33 @@ def test_substitute_undefined() -> None:
     assert substitute(tm, dm, keys = keys) == [mk_id('var')]
     assert keys == {mk_id('var')}
 
-def test_substitute() -> None:
-    defstate = DefState(64)
+def test_substitute_unsure() -> None:
+    keys: set[TokenType] = set()
+    tm = TokenManager([mk_id('var')])
+    opt = DefOption([mk_int(1)])
+    dm = DefMap(None, initial = {'var': Def(opt, undefined = True)})
+    assert substitute(tm, dm, keys = keys) == [('any', 'var', {opt, DefOption([mk_id('var')])})]
+    assert keys == {mk_id('var')}
 
-    nosubst = TK.tokenize('static int a = b;')
-    tokmgr = TokenManager(nosubst)
-    assert defstate.substitute(tokmgr) == [mk_kw('static')]
-    assert tokmgr.index == 1
+def test_substitute_multiple_results() -> None:
+    keys: set[TokenType] = set()
+    tm = TokenManager([mk_id('var')])
+    options = {DefOption([mk_int(1)]), DefOption([mk_int(2)])}
+    dm = DefMap(None, initial = {'var': Def(*options)})
+    assert substitute(tm, dm, keys = keys) == [('any', 'var', options)]
+    assert keys == {mk_id('var')}
 
-    defstate.on_define('STRING', [('string', '%d', '"')])
-    assert defstate.substitute(mk_id('STRING')) == [('string', '%d', '"')]
+def test_substitute_no_results() -> None:
+    keys: set[TokenType] = set()
+    tm = TokenManager([mk_id('var')])
+    dm = DefMap(None, initial = {'var': Def(defined = True)})
+    assert substitute(tm, dm, keys = keys) == []
+    assert keys == {mk_id('var')}
 
-    defstate.on_undef('STRING')
-    assert defstate.substitute(mk_id('STRING')) == [mk_id('STRING')]
-
-    defstate.on_undef('STRING')
-    defstate.on_define('STRING', [mk_id('SECOND')])
-    defstate.on_define('SECOND', [mk_id('THIRD')])
-    assert defstate.substitute(mk_id('STRING')) == [mk_id('THIRD')]
-
-    defstate.on_undef('SECOND')
-    defstate.on_define('SECOND', [mk_id('STRING')])
-    assert defstate.substitute(mk_id('STRING')) == [mk_id('STRING')]
-
-    defstate.on_undef('STRING')
-    defstate.on_define('STRING', [])
-    assert defstate.substitute(mk_id('STRING')) == []
-
-    defstate.on_undef('STRING')
-    assert defstate.layers[-1].current is not None
-    defstate.layers[-1].current['STRING'] = Def()
-    assert defstate.substitute(mk_id('STRING')) == [mk_id('STRING')]
-    defstate.layers[-1].current['STRING'] = Def(undefined = True)
-    assert defstate.substitute(mk_id('STRING')) == [mk_id('STRING')]
-    defstate.layers[-1].current['STRING'] = Def(defined = True)
-    assert defstate.substitute(mk_id('STRING')) == [('any', 'STRING', set())]
-    defstate.on_undef('SECOND')
-    defstate.on_undef('THIRD')
-    defstate.layers[-1].current['STRING'] = Def(
-        DefOption([('string', '%d', '"')]),
-        DefOption([mk_id('SECOND'), mk_id('THIRD')]),
-        undefined = True,
-        defined = True)
-    result = defstate.substitute(mk_id('STRING'))
-    assert len(result) == 1
-    assert result[0] is not None
-    assert len(result[0]) > 2
-    assert result[0][0] == 'any'
-    assert result[0][1] == 'STRING'
-    assert isinstance(result[0][2], set)
-    opts = [opt.tokens for opt in result[0][2]]
-    assert [('string', '%d', '"')] in opts
-    assert [mk_id('STRING')] in opts
-    assert [mk_id('SECOND'), (mk_id('THIRD'))] in opts
-
-    defstate.layers[-1].current['SECOND'] = Def(
-        DefOption([mk_int(0)]),
-        DefOption([mk_int(1)]),
-    )
-
-    new_result = defstate.substitute(mk_id('SECOND'))
-    assert new_result[0] is not None
-    assert new_result[0][0] == 'any'
-
-def test_substitute_func() -> None:
-    defstate = DefState(64)
-    defstate.on_define('DEFN', [mk_id('a'), mk_op('*'), mk_int(3)], ['a'])
-
-    assert defstate.substitute(TokenManager(TK.tokenize('DEFN(1)'))) == \
-        TK.tokenize('1 * 3')
+def test_substitute_function() -> None:
+    keys: set[TokenType] = set()
+    tm = TokenManager([mk_id('var(1, 2, 3)')])
+    opt = DefOption(TK.tokenize('__VA_ARGS__ a'), ['a', '__VA_ARGS__'])
+    dm = DefMap(None, initial = {'var': Def(opt)})
+    assert substitute(tm, dm, keys = keys) == TK.tokenize('2, 3 1')
+    assert keys == {mk_id('var')}

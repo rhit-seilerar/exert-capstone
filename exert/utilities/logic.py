@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 class OrElse[T]:
     def __call__(self, value: Optional[T], default: T | Callable[[], T]) -> T:
