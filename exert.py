@@ -63,8 +63,7 @@ def main():
     dev_test_parser.add_argument('-r', '--reset', action='store_true',
         help='Reset the container first')
     dev_test_parser.set_defaults(func = lambda parsed:
-            dev_rta(in_docker=parsed.docker, reset=parsed.reset, rta_mode=1)
-            )
+        dev_rta(in_docker=parsed.docker, reset=parsed.reset, rta_mode=1))
 
     compile_parser = dev_subparsers.add_parser('compile',
         help='Compile the usermode program')
@@ -87,6 +86,7 @@ def main():
     parsed.func(parsed)
 
 def dev_reset():
+    run_command('docker stop xmake', True, False)
     run_command('docker stop pandare', True, False)
     run_command('docker stop pandare-init', True, False)
     volume_srd(2)
@@ -121,7 +121,7 @@ def dev_rta(in_docker: bool, reset: bool, version: str=None,
             container = PANDA_CONTAINER
         elif container == 'XMAKE':
             print('Container is xmake')
-            name = 'XMAKE'
+            name = 'xmake'
             container = XMAKE_CONTAINER
         else:
             print('Container not recognized, defaulting')
@@ -160,7 +160,7 @@ def init(parsed:argparse.ArgumentParser):
     print('EXERT successfully initialized!')
 
 # srd = Sync Reverse Delete. 0 = sync, 1 = reverse, 2 = delete
-def volume_srd(srd: int =0):
+def volume_srd(srd: int = 0):
     local_mount = f'-v "{os.path.dirname(os.path.realpath(__file__))}:/local"'
     exclude = '--exclude .git --exclude .venv'
 
