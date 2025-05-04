@@ -6,7 +6,7 @@ from exert.parser.deflayer import DefLayer
 from exert.parser.substitute import substitute
 from exert.parser.tokenmanager import TokenManager, tok_seq, mk_id, mk_op, mk_int
 from exert.utilities.debug import dprint
-from exert.utilities.types.global_types import TokenType, ExpressionTypes
+from exert.utilities.types.global_types import TokenType, TokenSeq, DefmapBacking
 
 class DefState:
     """
@@ -19,7 +19,7 @@ class DefState:
     def __init__(self, bitsize: int, initial: (dict[str, Def] | None) = None):
         self.bitsize = bitsize
         self.keys: set[str] = set()
-        self.layers = [DefLayer(DefMap(None, initial = cast(dict[ExpressionTypes, Def], initial)), \
+        self.layers = [DefLayer(DefMap(None, initial = cast(DefmapBacking, initial)), \
             bitsize, False)]
         self.layers[0].add_map([mk_int(1)], closing = True)
         if initial is not None:
@@ -35,8 +35,8 @@ class DefState:
     def is_guaranteed(self) -> bool:
         return not self.is_skipping() and self.layers[-1].skip_rest
 
-    def flat_defines(self) -> dict[ExpressionTypes, Def]:
-        result: dict[ExpressionTypes, Def] = {}
+    def flat_defines(self) -> DefmapBacking:
+        result: DefmapBacking = {}
         for key in self.keys:
             assert self.layers[-1].current is not None
             defn = self.layers[-1].current[key]
@@ -52,7 +52,7 @@ class DefState:
                 result.add(key)
         return result
 
-    def on_define(self, sym: str, tokens: list[TokenType], params: (list[str] | None) = None) \
+    def on_define(self, sym: str, tokens: TokenSeq, params: (list[str] | None) = None) \
         -> None:
         if not self.is_skipping():
             dprint(3, '  ' * self.depth() + f'#define {sym} {tok_seq(tokens)}')
@@ -67,7 +67,7 @@ class DefState:
             assert self.layers[-1].current is not None
             self.layers[-1].current.undefine(sym)
 
-    def on_if(self, cond_tokens: list[TokenType]) -> None:
+    def on_if(self, cond_tokens: TokenSeq) -> None:
         dprint(2, '  ' * self.depth() + f'#if {tok_seq(cond_tokens)}')
         parent = self.layers[-1].current
         assert parent is not None
@@ -101,17 +101,17 @@ class DefState:
         assert self.layers[-1].current is not None
         self.layers[-1].current.combine(layer.accumulator.defs, replace = layer.closed)
 
-    def get_replacements(self, tok: TokenType, params: (list[list[TokenType]] | None) = None) \
+    def get_replacements(self, tok: TokenType, params: (list[TokenSeq] | None) = None) \
     -> set[DefOption]:
         assert self.layers[-1].current is not None
         return self.layers[-1].current.get_replacements(tok, params)
 
-    def substitute(self, tokmgr: (TokenManager | TokenType)) -> list[TokenType]:
+    def substitute(self, tokmgr: (TokenManager | TokenType)) -> TokenSeq:
         if isinstance(tokmgr, tuple):
             tok = tokmgr
             tokmgr = TokenManager([tok])
         assert self.layers[-1].current is not None
         return substitute(tokmgr, self.layers[-1].current)
 
-    def get_cond_tokens(self) -> list[TokenType]:
+    def get_cond_tokens(self) -> TokenSeq:
         return self.layers[-1].cond

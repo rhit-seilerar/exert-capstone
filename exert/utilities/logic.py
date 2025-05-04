@@ -1,5 +1,9 @@
-from typing import TypeVar, Callable
+from typing import Any, Callable, Optional
 
-T = TypeVar('T')
-def or_else(value: T | None, default: T | Callable[[], T]) -> T:
-    return (default() if callable(default) else default) if value is None else value
+class OrElse[T]:
+    def __call__(self, value: Optional[T], default: T | Callable[[], T]) -> T:
+        if value is not None:
+            return value
+        if callable(default):
+            return default()
+        return default

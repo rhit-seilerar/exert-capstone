@@ -133,9 +133,7 @@ def test_substitute_expand_repeat_args() -> None:
         'var1': Def(DefOption([mk_id('var2'), mk_id('var2')])),
         'var2': Def(DefOption([mk_id('var1')]))
     })
-    r = substitute(tm, dm, keys = keys)
-    print(r)
-    assert r == [mk_id('var1'), mk_id('var1')]
+    assert substitute(tm, dm, keys = keys) == [mk_id('var1'), mk_id('var1')]
     assert keys == {mk_id('var1'), mk_id('var2')}
 
 def test_substitute_undefined() -> None:

@@ -1,4 +1,4 @@
-from typing import Self
+from typing import Self, Optional
 from exert.parser.defoption import DefOption
 from exert.utilities.types.global_types import TokenType
 
@@ -16,7 +16,7 @@ class Def:
         self.options: set[DefOption] = set()
         self.undefined = undefined
         self.defined = defined
-        self.plen: (int | None) = None
+        self.plen: Optional[int] = None
         if len(options) > 0:
             for option in options:
                 self.define(option, keep = True)

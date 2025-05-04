@@ -1,12 +1,12 @@
-from typing import cast
+from typing import Optional, cast
 from exert.parser.tokenmanager import TokenManager
 from exert.parser.defoption import DefOption
 from exert.parser.defmap import DefMap
-from exert.utilities.logic import or_else
-from exert.utilities.types.global_types import TokenType
+from exert.utilities.logic import OrElse
+from exert.utilities.types.global_types import TokenType, TokenSeq
 
 def parse_macro(tokmgr: TokenManager, defmap: DefMap) \
-    -> tuple[None | TokenType, None | list[list[TokenType]]]:
+    -> tuple[Optional[TokenType], Optional[list[TokenSeq]]]:
     """
     Consume macro application syntax, e.g. an identifier for a variable-like
     macro and name(p1, p2, ...) for a function-like macro. Note that, for
@@ -30,11 +30,12 @@ def parse_macro(tokmgr: TokenManager, defmap: DefMap) \
         return None, None
 
     # This is a variable-like macro, so just return the name
-    if defn.plen == -1:
+    plen = OrElse[int]()(defn.plen, -1)
+    if plen == -1:
         return name, None
 
     # This is a function-like macro
-    params = []
+    params: list[TokenSeq] = []
     if not tokmgr.consume_operator('('):
         tokmgr.index = bindex
         return None, None
@@ -53,7 +54,7 @@ def parse_macro(tokmgr: TokenManager, defmap: DefMap) \
             # If we're at the base paren level and haven't reached the last param, add another.
             # This handles varargs by just treating everything at the last param and past as
             # one big param.
-            elif tokmgr.consume_operator(',') and depth == 1 and len(params) < defn.plen-1:
+            elif tokmgr.consume_operator(',') and depth == 1 and len(params) < plen-1:
                 params.append(tokmgr.tokens[pindex:tokmgr.index-1])
                 pindex = tokmgr.index
             # Otherwise, increment and continue
@@ -69,7 +70,7 @@ def parse_macro(tokmgr: TokenManager, defmap: DefMap) \
             return None, None
 
     # We had fewer params. That's a problem, so return none
-    elif len(params) < defn.plen:
+    elif len(params) < plen:
         tokmgr.index = bindex
         return None, None
 
@@ -77,7 +78,7 @@ def parse_macro(tokmgr: TokenManager, defmap: DefMap) \
     return name, params
 
 def substitute(tokmgr: TokenManager, defmap: DefMap, replmap: None = None,
-    keys: set[TokenType] | None = None) -> list[TokenType]:
+    keys: Optional[set[TokenType]] = None) -> TokenSeq:
     """
     Consume the tokmgr's next token and, if applicable, substitute it with the
     ANY-form of its relevant definition in defmap. Additionally, register substituted
@@ -85,16 +86,16 @@ def substitute(tokmgr: TokenManager, defmap: DefMap, replmap: None = None,
     """
 
     # Each macro is only expanded once, so we track that here
-    expansion_stack = []
+    expansion_stack: TokenSeq = []
 
     # Recursion helper function
-    def subst(tokmgr: TokenManager) -> list[TokenType] | None:
+    def subst(tokmgr: TokenManager) -> Optional[TokenSeq]:
         # First, try to parse a macro invocation
         index = tokmgr.index
         name, params = parse_macro(tokmgr, defmap)
 
         # If this is a macro, add it to the keys set
-        macroname = or_else(name, tokmgr.peek())
+        macroname = OrElse[TokenType]()(name, cast(TokenType, tokmgr.peek()))
         if isinstance(keys, set) and not defmap[macroname[1]].is_initial():
             keys.add(macroname)
 
@@ -103,24 +104,24 @@ def substitute(tokmgr: TokenManager, defmap: DefMap, replmap: None = None,
             return None
 
         # We've already expanded this one
-        if name[1] in expansion_stack:
+        if name in expansion_stack:
             tokmgr.index = index
             return None
 
         # Let's proceed to expand
-        substitutions = set()
+        substitutions: set[DefOption] = set()
+        expansion_stack.append(name)
 
-        # Find all replacements for this macro and mark it as expanded
+        # Find all replacements for this macro
         opts = defmap.get_replacements(name, params)
-        expansion_stack.append(name[1])
 
         # Recursively substitute each replacement
         for opt in opts:
-            tokens: list[TokenType] = []
+            tokens: TokenSeq = []
             optmgr = TokenManager(opt.tokens)
-            print(opt.tokens)
             while optmgr.has_next():
-                tokens += or_else(subst(optmgr), lambda: [cast(TokenType, optmgr.next())])
+                tokens += OrElse[TokenSeq]()(subst(optmgr),
+                    lambda: cast(TokenSeq, [optmgr.next()]))
             substitutions.add(DefOption(tokens))
 
         # We're done here, so we can pop the stack
@@ -143,4 +144,4 @@ def substitute(tokmgr: TokenManager, defmap: DefMap, replmap: None = None,
         return []
 
     # Try to substitute the next token, return it unmodified otherwise
-    return or_else(subst(tokmgr), lambda: [cast(TokenType, tokmgr.next())])
+    return OrElse[TokenSeq]()(subst(tokmgr), lambda: cast(TokenSeq, [tokmgr.next()]))

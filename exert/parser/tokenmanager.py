@@ -1,6 +1,6 @@
-from typing import NoReturn, Union
+from typing import NoReturn, Optional
 
-type OptionalToken = Union['TokenType', None]
+type OptionalToken = Optional['TokenType']
 
 def tok_str(token: 'TokenType',
             newlines: bool = False) -> str:

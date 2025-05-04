@@ -1,3 +1,4 @@
+from typing import Optional
 from exert.utilities.logic import or_else
 
 OR_ELSE_COUNTER: int = 0
@@ -21,5 +22,6 @@ def test_or_else_default_value() -> None:
 def test_or_else_default_lambda() -> None:
     global OR_ELSE_COUNTER
     OR_ELSE_COUNTER = 0
-    assert or_else(None, or_else_helper) == 'Whoops!'
+    val: Optional[str] = None
+    assert or_else(val, or_else_helper) == 'Whoops!'
     assert OR_ELSE_COUNTER == 1

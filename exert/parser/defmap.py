@@ -1,7 +1,7 @@
+from typing import Self
 from exert.parser.defoption import DefOption
 from exert.parser.definition import Def
-from exert.utilities.types.global_types import TokenType, ExpressionTypes
-from typing import Self
+from exert.utilities.types.global_types import TokenType, DefmapKey
 
 class DefMap:
     """
@@ -11,7 +11,7 @@ class DefMap:
     """
 
     def __init__(self, parent: 'DefMap | None', skipping: bool = False,
-        initial: (dict[ExpressionTypes, Def] | None) = None):
+        initial: (dict[DefmapKey, Def] | None) = None):
         assert parent is None or isinstance(parent, DefMap)
         assert initial is None or isinstance(initial, dict)
         self.skipping = skipping
@@ -19,12 +19,12 @@ class DefMap:
         self.defs = initial or {}
         self.validate()
 
-    def getlocal(self, key: ExpressionTypes) -> Def:
+    def getlocal(self, key: DefmapKey) -> Def:
         if key not in self.defs:
             self.defs[key] = Def()
         return self.defs[key]
 
-    def __getitem__(self, key: ExpressionTypes) -> Def:
+    def __getitem__(self, key: DefmapKey) -> Def:
         if key in self.defs:
             defn = self.getlocal(key)
             if defn.is_empty_def() and self.parent is not None:
@@ -37,12 +37,13 @@ class DefMap:
             return self.parent[key]
         return Def()
 
-    def __setitem__(self, key: ExpressionTypes, item: Def) -> None:
+    def __setitem__(self, key: DefmapKey, item: Def) -> None:
         if not isinstance(item, Def):
             raise TypeError(item)
         self.defs[key] = item
 
-    def get_replacements(self, sym_tok: TokenType, params: (list[list[TokenType]] | list[str] | None) = None) -> set[DefOption]:
+    def get_replacements(self, sym_tok: TokenType,
+        params: (list[list[TokenType]] | list[str] | None) = None) -> set[DefOption]:
         return self[sym_tok[1]].get_replacements(sym_tok, params)
 
     def validate(self) -> None:
@@ -53,11 +54,11 @@ class DefMap:
         if not self.skipping:
             self.getlocal(key).undefine(keep = False)
 
-    def define(self, key: ExpressionTypes, option: DefOption) -> None:
+    def define(self, key: DefmapKey, option: DefOption) -> None:
         if not self.skipping:
             self.getlocal(key).define(option, keep = True)
 
-    def combine(self, other: dict[ExpressionTypes, Def], replace: bool) -> Self:
+    def combine(self, other: dict[DefmapKey, Def], replace: bool) -> Self:
         if not isinstance(other, dict):
             raise TypeError(other)
         if not self.skipping:
