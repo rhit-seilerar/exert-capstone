@@ -65,7 +65,8 @@ class Def:
             assert self.plen == (-1 if option.params is None else len(option.params))
         self.defined = True
 
-    def get_replacements(self, sym: TokenType, params: (list[list[TokenType]] | list[str] | None) = None) -> set[DefOption]:
+    def get_replacements(self, sym: TokenType, params: (list[list[TokenType]] | list[str] | None) \
+        = None) -> set[DefOption]:
         """
         [ initial,   {}      ]: [[{}]]
         [ undefined, {}      ]: [[sym]]

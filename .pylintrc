@@ -21,4 +21,5 @@ disable=
     too-many-locals,
     too-many-positional-arguments,
     anomalous-backslash-in-string,
-    too-many-lines
+    too-many-lines,
+    cell-var-from-loop

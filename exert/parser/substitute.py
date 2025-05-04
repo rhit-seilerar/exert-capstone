@@ -14,12 +14,15 @@ def parse_macro(tokmgr: TokenManager, defmap: DefMap) \
     or function-like with the same number of arguments.
     """
 
+    # Back up the index in case of failure
     bindex = tokmgr.index
+
     # We only substitute identifiers or keywords
     if tokmgr.peek_type() not in ['identifier', 'keyword']:
         return None, None
     name = tokmgr.next()
     assert name is not None
+
     # If the identifier isn't defined, we won't touch it
     defn = defmap[name[1]]
     if not defn.defined or defn.is_empty_def():
@@ -36,27 +39,41 @@ def parse_macro(tokmgr: TokenManager, defmap: DefMap) \
         tokmgr.index = bindex
         return None, None
 
-    # Parse all invocation arguments
-    depth = 1
-    pindex = tokmgr.index
-    while tokmgr.has_next() and depth > 0:
-        if tokmgr.consume_operator('('):
-            depth += 1
-        elif tokmgr.consume_operator(')'):
-            depth -= 1
-        elif tokmgr.consume_operator(',') and depth == 1:
-            params.append(tokmgr.tokens[pindex:tokmgr.index])
-            pindex = tokmgr.index + 1
-        else:
-            tokmgr.bump()
+    # Don't try to parse unless there's at least one param
+    if not tokmgr.consume_operator(')'):
+        # Parse all invocation arguments
+        depth = 1
+        pindex = tokmgr.index
+        while tokmgr.has_next() and depth > 0:
+            # Handle nested parentheses
+            if tokmgr.consume_operator('('):
+                depth += 1
+            elif tokmgr.consume_operator(')'):
+                depth -= 1
+            # If we're at the base paren level and haven't reached the last param, add another.
+            # This handles varargs by just treating everything at the last param and past as
+            # one big param.
+            elif tokmgr.consume_operator(',') and depth == 1 and len(params) < defn.plen-1:
+                params.append(tokmgr.tokens[pindex:tokmgr.index-1])
+                pindex = tokmgr.index
+            # Otherwise, increment and continue
+            else:
+                tokmgr.bump()
 
-    # We ended up with mismatched parentheses
-    if depth > 0:
+        # Add the last parameter
+        params.append(tokmgr.tokens[pindex:tokmgr.index-1])
+
+        # We ended up with mismatched parentheses
+        if depth > 0:
+            tokmgr.index = bindex
+            return None, None
+
+    # We had fewer params. That's a problem, so return none
+    elif len(params) < defn.plen:
         tokmgr.index = bindex
         return None, None
 
-    # Add the last parameter and return
-    params.append(tokmgr.tokens[pindex:tokmgr.index])
+    # Everything else checks out, return the result
     return name, params
 
 def substitute(tokmgr: TokenManager, defmap: DefMap, replmap: None = None,
@@ -76,7 +93,12 @@ def substitute(tokmgr: TokenManager, defmap: DefMap, replmap: None = None,
         index = tokmgr.index
         name, params = parse_macro(tokmgr, defmap)
 
-        # This isn't a macro
+        # If this is a macro, add it to the keys set
+        macroname = or_else(name, tokmgr.peek())
+        if isinstance(keys, set) and not defmap[macroname[1]].is_initial():
+            keys.add(macroname)
+
+        # This isn't a macro, or it doesn't have any options
         if name is None:
             return None
 
@@ -87,8 +109,6 @@ def substitute(tokmgr: TokenManager, defmap: DefMap, replmap: None = None,
 
         # Let's proceed to expand
         substitutions = set()
-        if isinstance(keys, set):
-            keys.add(name)
 
         # Find all replacements for this macro and mark it as expanded
         opts = defmap.get_replacements(name, params)
@@ -98,8 +118,9 @@ def substitute(tokmgr: TokenManager, defmap: DefMap, replmap: None = None,
         for opt in opts:
             tokens: list[TokenType] = []
             optmgr = TokenManager(opt.tokens)
+            print(opt.tokens)
             while optmgr.has_next():
-                tokens += or_else(subst(optmgr), [cast(TokenType, optmgr.next())])
+                tokens += or_else(subst(optmgr), lambda: [cast(TokenType, optmgr.next())])
             substitutions.add(DefOption(tokens))
 
         # We're done here, so we can pop the stack
@@ -122,4 +143,4 @@ def substitute(tokmgr: TokenManager, defmap: DefMap, replmap: None = None,
         return []
 
     # Try to substitute the next token, return it unmodified otherwise
-    return or_else(subst(tokmgr), [cast(TokenType, tokmgr.next())])
+    return or_else(subst(tokmgr), lambda: [cast(TokenType, tokmgr.next())])
