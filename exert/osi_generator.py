@@ -150,7 +150,7 @@ def get_osi_info(kernel: str, arch: str, version: str) -> None:
                                                                  second_callback_name)
             subprocess.run(['python'], input = task_struct_size_prefix, check = True, text = True)
             with open("tmp_data", "rb") as data:
-                task_struct_size = pickle.load(data)
+                task_struct_size = int(pickle.load(data))
 
             tasks_addresses_prefix = PANDA_PLUGIN_PREFIX.format(arch, False, kernel, osi_prog,
                                                                 './user_prog data_address',
@@ -159,8 +159,21 @@ def get_osi_info(kernel: str, arch: str, version: str) -> None:
 
             subprocess.run(['python'], input = tasks_addresses_prefix, check = True, text = True)
 
+            tasks_offsets: set[int] | int
             with open("tmp_data", "rb") as data:
                 tasks_offsets = pickle.load(data)
+
+            if isinstance(tasks_offsets, set):
+                real_offsets: set[int] = set()
+
+                for tasks_offset in tasks_offsets:
+                    if tasks_offset < task_struct_size:
+                        real_offsets.add(tasks_offset)
+                
+                tasks_offsets = real_offsets
+
+                if len(tasks_offsets) == 1:
+                    tasks_offsets = tasks_offsets.pop()
 
             print(tasks_offsets)
 
@@ -238,7 +251,6 @@ def get_osi_info(kernel: str, arch: str, version: str) -> None:
 
     if not version_supported:
         print("Version not supported")
-print('not an octopus')
 
 if __name__ == '__main__':
     get_osi_info(sys.argv[1], sys.argv[2], sys.argv[3])

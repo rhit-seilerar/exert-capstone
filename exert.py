@@ -128,8 +128,7 @@ def dev_rta(in_docker: bool, reset: bool, version: str=None,
     run_docker(interactive = interactive, command = command, in_docker = in_docker,
         name = name, container=container)
 
-    if rta_mode == 2 or not in_docker:
-        volume_srd(1)
+    volume_srd(1)
 
 # pylint: disable=unused-argument
 def init(parsed:argparse.ArgumentParser):
@@ -193,6 +192,7 @@ def osi(parsed:argparse.ArgumentParser):
     path:str = parsed.image_path
     arch:str = parsed.image_arch
     version:str = parsed.image_version
+    volume_srd(0)
     run_docker(command=f'python -m exert.osi_generator {path} {arch} {version}')
 
 def run_docker(container:str = PANDA_CONTAINER, *, name: str = 'pandare', command: str = '',

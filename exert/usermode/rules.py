@@ -718,6 +718,27 @@ class _RcuSpecial(_Union):
         ])
 RCU_READ_UNLOCK_SPECIAL=_RcuSpecial('rcu_read_unlock_special')
 
+class _PlistNode(_Struct):
+    def __init__(self) -> None:
+        super().__init__('plist_node', [
+            FieldGroup([
+                Field('prio', Int()),
+                Field('prio_list', LIST_HEAD),
+                Field('node_list', LIST_HEAD)
+            ])
+        ])
+PLIST_NODE = _PlistNode()
+
+class _TaskRSSStat(_Struct):
+    def __init__(self) -> None:
+        super().__init__('task_rss_stat', [
+            FieldGroup([
+                Field('events', Int()),
+                Field('count', Array(Int(), 3, 3))
+            ])
+        ])
+TASK_RSS_STAT = _TaskRSSStat()
+
 class _TaskStruct(_Struct):
     def __init__(self) -> None:
         super().__init__('task_struct', [
@@ -780,6 +801,26 @@ class _TaskStruct(_Struct):
             ], 'CONFIG_SCHED_INFO'),
             FieldGroup([
                 Field('tasks', LIST_HEAD)
+            ]),
+            FieldGroup([
+                Field('pushable_tasks', PLIST_NODE),
+                Field('pushable_dl_tasks', RB_NODE)
+            ], 'CONFIG_SMP'),
+            FieldGroup([
+                Field('mm', Pointer()), # struct mm
+                Field('active_mm', Pointer()), # struct mm
+                Field('vmacache_seqnum', Int(4, False)),
+                Field('vmacache', Array(Pointer(), 4, 4)) # struct vm_area_struct
+            ]),
+            FieldGroup([
+                Field('rss_stat', TASK_RSS_STAT)
+            ], 'SPLIT_RSS_COUNTING'),
+            FieldGroup([
+                Field('exit_state', Int()),
+                Field('exit_code', Int()),
+                Field('exit_signal', Int()),
+                Field('pdeath_signal', Int()),
+                Field('jobctl', Int())
             ])
         ])
 TASK_STRUCT = _TaskStruct()

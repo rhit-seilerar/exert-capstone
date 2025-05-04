@@ -36,7 +36,7 @@ class Task():
                  current_task_addr: int | None = 54272,
                  init_addr: int | None = 18446744071593596160,
                  size: int | None = 6848,
-                 tasks_offset: int | None = 848,
+                 tasks_offset: int | set[int] | None = 848,
                  pid_offset: int | None = 1096,
                  tgid_offset: int | None = 1100,
                  group_leader_offset: int | None = 1160,
