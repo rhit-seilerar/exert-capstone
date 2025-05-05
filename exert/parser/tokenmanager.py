@@ -47,6 +47,12 @@ def mk_op(op: str) -> 'TokenType':
 def mk_str(string: str, suffix: str = '"') -> 'TokenType':
     return ('string', string, suffix)
 
+def mk_dir(string: str) -> 'TokenType':
+    return ('directive', string)
+
+def mk_nl() -> 'TokenType':
+    return ('newline', '')
+
 def is_id_or_kw(tok: Optional['TokenType']) -> bool:
     return bool(tok and tok[0] in ['identifier', 'keyword'])
 

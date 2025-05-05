@@ -68,8 +68,8 @@ def parse_macro(tokmgr: TokenManager, defmap: DefMap) \
             tokmgr.index = bindex
             return None, None
 
-    # We had fewer params. That's a problem, so return none
-    elif len(params) < plen:
+    # We had too few params. That's a problem, so return none
+    if len(params) < plen:
         tokmgr.index = bindex
         return None, None
 

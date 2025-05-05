@@ -71,6 +71,18 @@ def test_parse_macro_function_mismatched_parens() -> None:
     assert parse_macro(tm, dm) == (None, None)
     assert tm.has_next()
 
+def test_parse_macro_function_none_too_few_params() -> None:
+    tm = TokenManager(TK.tokenize('macro()'))
+    dm = DefMap(None, initial = {'macro': Def(DefOption([], ['a', 'b', 'c']))})
+    assert parse_macro(tm, dm) == (None, None)
+    assert tm.has_next()
+
+def test_parse_macro_function_multi_too_few_params() -> None:
+    tm = TokenManager(TK.tokenize('macro(1, 2)'))
+    dm = DefMap(None, initial = {'macro': Def(DefOption([], ['a', 'b', 'c']))})
+    assert parse_macro(tm, dm) == (None, None)
+    assert tm.has_next()
+
 def test_parse_macro_function_vararg_not() -> None:
     tm = TokenManager(TK.tokenize('not(1, 2)'))
     dm = DefMap(None, initial = {'not': Def(DefOption([], ['a']))})

@@ -38,7 +38,10 @@ class DefEvaluator(Evaluator):
                 # If the token is an identifier, replace it with a marker
                 if tok and tok[0] in ['identifier', 'keyword']:
                     marker = ('defined', tok[1])
-                    tokmgr.tokens[tokmgr.index - 1 - parens] = marker
+                    delta = 2 + 2 * parens
+                    start = tokmgr.index - delta
+                    tokmgr.tokens[start:tokmgr.index] = [marker]
+                    tokmgr.len -= delta - 1
                     keys.add(tok)
             else:
                 tokmgr.bump()
