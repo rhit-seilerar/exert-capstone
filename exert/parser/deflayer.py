@@ -47,11 +47,11 @@ class DefLayer:
 
         wrapped = [mk_op('(')] + cond_tokens + [mk_op(')')]
         if len(self.cond_acc) > 0:
-            _, _, matches = self.evaluator.evaluate(self.cond_acc)
+            _, _, matches = self.evaluator.evaluate_with_defs(self.cond_acc)
             self.evaluator.defs = matches
             self.cond_acc.append(mk_op('&&'))
         self.cond = self.cond_acc + wrapped
-        any_match, all_match, matches = self.evaluator.evaluate(self.cond)
+        any_match, all_match, matches = self.evaluator.evaluate_with_defs(self.cond)
         self.cond_acc += [mk_op('!')] + wrapped
 
         self.apply()

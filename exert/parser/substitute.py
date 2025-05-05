@@ -1,5 +1,5 @@
 from typing import Optional, cast
-from exert.parser.tokenmanager import TokenManager
+from exert.parser.tokenmanager import TokenManager, is_id_or_kw
 from exert.parser.defoption import DefOption
 from exert.parser.defmap import DefMap
 from exert.utilities.logic import OrElse
@@ -18,13 +18,12 @@ def parse_macro(tokmgr: TokenManager, defmap: DefMap) \
     bindex = tokmgr.index
 
     # We only substitute identifiers or keywords
-    if tokmgr.peek_type() not in ['identifier', 'keyword']:
-        return None, None
     name = tokmgr.next()
-    assert name is not None
+    if not name or not is_id_or_kw(name):
+        return None, None
 
     # If the identifier isn't defined, we won't touch it
-    defn = defmap[name[1]]
+    defn = defmap[cast(str, name[1])]
     if not defn.defined or defn.is_empty_def():
         tokmgr.index = bindex
         return None, None
@@ -100,7 +99,8 @@ def subst(tokmgr: TokenManager, defmap: DefMap, keys: KeysType,
 
     # If this is a macro, add it to the keys set
     macroname = OrElse[TokenType]()(name, cast(TokenType, tokmgr.peek()))
-    if isinstance(keys, set) and not defmap[macroname[1]].is_initial():
+    if isinstance(keys, set) and is_id_or_kw(macroname) \
+        and not defmap[cast(str, macroname[1])].is_initial():
         keys.add(macroname)
 
     # This isn't a macro, or it doesn't have any options

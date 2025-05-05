@@ -44,8 +44,11 @@ def mk_kw(sym: str) -> 'TokenType':
 def mk_op(op: str) -> 'TokenType':
     return ('operator', op)
 
-def mk_str(string:str, suffix: str = '"') -> 'TokenType':
+def mk_str(string: str, suffix: str = '"') -> 'TokenType':
     return ('string', string, suffix)
+
+def is_id_or_kw(tok: 'TokenType') -> bool:
+    return tok[0] in ['identifier', 'keyword']
 
 class TokenManager:
     def __init__(self, tokens: (list['TokenType'] | None) = None):

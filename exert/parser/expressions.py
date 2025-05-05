@@ -1,10 +1,9 @@
+from typing import cast
 from collections.abc import Callable
-import exert.parser.tokenmanager as tm
+from exert.parser.tokenmanager import mk_op
 from exert.parser.defoption import DefOption
 from exert.parser.definition import Def
-from exert.parser.defmap import DefMap
-from exert.utilities.types.global_types import TokenType, ExpressionTypes
-from typing import cast
+from exert.utilities.types.global_types import TokenType
 
 class Expression:
     def evaluate(self, evaluator: 'Evaluator') -> 'Wildcard | Integer':
@@ -12,6 +11,8 @@ class Expression:
 
     def __str__(self) -> str:
         return '<err>'
+
+type ExpressionTypes = Expression | str
 
 class Integer(Expression):
     def __init__(self, value: int, unsigned: bool):
@@ -106,13 +107,13 @@ class BinaryOperator(Operator):
         return str(self.a) + f' {self.opname} ' + str(self.b)
 
 class UnaryDefined(UnaryOperator):
-    def __init__(self, a: Expression | str | int):
-        assert isinstance(a, (Expression, str))
+    def __init__(self, a: str):
         super().__init__(a, 'defined', lambda a: a)
 
     def evaluate(self, evaluator: 'Evaluator') -> (Wildcard | Integer):
         assert evaluator.lookup is not None
         assert evaluator.defines is not None
+        assert isinstance(self.a, str)
         if self.a in evaluator.lookup and evaluator.lookup[self.a].defined:
             evaluator.defines[self.a] = True
             return Integer(1, False)
@@ -330,11 +331,11 @@ def parse_expression(tokens: list[TokenType]) -> Expression:
     i = 0
     while i < len(tokens):
         token = tokens[i]
-        if token == tm.mk_op('('):
+        if token == mk_op('('):
             if indent == 0:
                 gstart = i+1
             indent += 1
-        elif token == tm.mk_op(')'):
+        elif token == mk_op(')'):
             indent -= 1
             if indent == 0:
                 assert gstart is not None
@@ -346,11 +347,11 @@ def parse_expression(tokens: list[TokenType]) -> Expression:
                 assert len(token) > 2
                 nex.append(Integer(token[1], 'u' in token[2]))
             elif token[0] == 'defined':
-                nex.append(UnaryDefined(token[1]))
+                nex.append(UnaryDefined(cast(str, token[1])))
             elif token[0] in ['identifier', 'keyword']:
                 nex.append(Identifier(token[1]))
             elif token[0] == 'operator':
-                nex.append(token[1])
+                nex.append(cast(str, token[1]))
             elif token[0] == 'any' and len(token) > 2 and len(token[2]) == 0:
                 nex.append(Wildcard())
         i += 1
@@ -416,14 +417,15 @@ def parse_expression(tokens: list[TokenType]) -> Expression:
 class Evaluator:
     def __init__(self, bitsize: int):
         self.bitsize = bitsize
-        self.lookup: (dict[ExpressionTypes, 'Def'] | None) = None
-        self.defines: (dict[Expression | str, bool] | None) = None
+        self.lookup: dict[str, 'Def'] = {}
+        self.defines: dict[str, bool] = {}
 
-    def evaluate(self, tokens: list[TokenType]) -> (Wildcard | tuple[int, bool] | tuple[bool, bool, DefMap]):
+    def evaluate(self, tokens: list[TokenType]) \
+        -> (Wildcard | tuple[int, bool]):
         parsed = parse_expression(tokens)
         result = parsed.evaluate(self).evaluate(self)
         if isinstance(result, Wildcard):
             return result
-        
+
         assert isinstance(result, Integer)
         return result.value, result.unsigned
