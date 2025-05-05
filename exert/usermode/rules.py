@@ -741,6 +741,48 @@ class _TaskRSSStat(_Struct):
         ])
 TASK_RSS_STAT = _TaskRSSStat()
 
+class _RestartBlock(_Struct):
+    def __init__(self) -> None:
+        super().__init__('restart_block', [
+            FieldGroup([
+                Field('fn', Pointer()),
+                Field('', _Union('', [
+                    _Struct('futex', [
+                        FieldGroup([
+                            Field('uaddr', Pointer()),
+                            Field('val', Int(signed=False)),
+                            Field('flags', Int(signed=False)),
+                            Field('bitset', Int(signed=False)),
+                            Field('time', Int(size=8, signed=False)),
+                            Field('uaddr2', Pointer())
+                        ])
+                    ]),
+                    _Struct('nanosleep', [
+                        FieldGroup([
+                            Field('clockid', Int()),
+                            Field('rmtp', Pointer())
+                        ]),
+                        FieldGroup([
+                            Field('compat_rmtp', Pointer())
+                        ], 'CONFIG_COMPAT'),
+                        FieldGroup([
+                            Field('expires', Int(size=8, signed=False))
+                        ])
+                    ]),
+                    _Struct('poll', [
+                        FieldGroup([
+                            Field('ufds', Pointer()),
+                            Field('nfds', Int()),
+                            Field('has_timeout', Int()),
+                            Field('tv_sec', Int(size=None, signed=False)),
+                            Field('tv_nsec', Int(size=None, signed=False))
+                        ])
+                    ])
+                ]))
+            ])
+        ])
+RESTART_BLOCK = _RestartBlock()
+
 class _TaskStruct(_Struct):
     def __init__(self) -> None:
         super().__init__('task_struct', [
@@ -822,7 +864,14 @@ class _TaskStruct(_Struct):
                 Field('exit_code', Int()),
                 Field('exit_signal', Int()),
                 Field('pdeath_signal', Int()),
-                Field('jobctl', Int())
+                Field('jobctl', Int(size = None, signed = False)),
+                Field('personality', Int(signed = False)),
+                Field('sched_bits', Int()), # The sched bit fields
+                Field('mem_io_bits', Int()), # Various mem related bits,
+                Field('atomic_flags', Int(size = None, signed = False)),
+                Field('restart_block', RESTART_BLOCK),
+                Field('pid', Int()),
+                Field('tgid', Int())
             ])
         ])
 TASK_STRUCT = _TaskStruct()

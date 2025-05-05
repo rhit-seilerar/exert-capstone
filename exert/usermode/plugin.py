@@ -99,6 +99,9 @@ def run(arch: str = 'i386', callback: (ExertCallable | None) = None,
         'hypercall_callback': hypercall_callback
     })
 
+    panda.load_plugin('osi', args={'disable-autoload':True})
+    panda.load_plugin('osi_linux', args={'kconf_file':'kernelinfo.osi', 'kconf_group':'linux:4.4.100:32'})
+
     @panda.queue_blocking
     def drive() -> None:
         if generic:
