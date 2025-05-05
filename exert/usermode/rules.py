@@ -9,7 +9,9 @@ class Rule:
     def test(self, context: Context, address: int, clear_cache: bool = False) -> set[int]:
         return self.test_all(context, {address}, clear_cache)
 
-    def test_all(self, context: Context, addresses: set[int], clear_cache: bool = False) -> set[int]:
+    def test_all(self, context: Context, addresses: set[int],
+        clear_cache: bool = False) -> set[int]:
+
         assert isinstance(context, Context)
         assert isinstance(addresses, set)
 

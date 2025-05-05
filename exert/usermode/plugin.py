@@ -1,7 +1,6 @@
 """The core file for the plugin component of the EXERT system"""
 
 import sys
-from collections.abc import Callable
 import IPython
 from pandare import PyPlugin, Panda
 from pandare.pypluginmanager import PyPluginManager

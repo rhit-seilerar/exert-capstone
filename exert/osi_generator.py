@@ -2,15 +2,15 @@ import sys
 import subprocess
 import os
 import pickle
+from typing import cast
 from pandare import Panda
 from exert.utilities import version as ver
 from exert.usermode import osi, rules, context
 from exert.usermode import task_struct_stack as tss
 from exert.utilities.types.multi_arch import CPUState, ExertCallable
 from exert.utilities.types.x86_64_types import CPUState as X86_64CPUState
-from typing import cast
 
-PANDA_PLUGIN_PREFIX:str = """
+PANDA_PLUGIN_PREFIX: str = """
 from exert.usermode import plugin
 from exert import osi_generator as osi
 from exert.usermode import task_struct_stack as tss
@@ -169,7 +169,7 @@ def get_osi_info(kernel: str, arch: str, version: str) -> None:
                 for tasks_offset in tasks_offsets:
                     if tasks_offset < task_struct_size:
                         real_offsets.add(tasks_offset)
-                
+
                 tasks_offsets = real_offsets
 
                 if len(tasks_offsets) == 1:

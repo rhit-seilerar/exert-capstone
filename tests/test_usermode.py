@@ -1,8 +1,6 @@
 import os
 import subprocess
-
 from pandare import Panda
-
 import exert.utilities.command as cmd
 from exert.utilities.debug import RUN_PLUGIN_TESTS
 from exert.usermode import plugin
@@ -18,7 +16,9 @@ import tests.test_usermode as ttu
 ttu.run_test('{}', {}, '{}', ttu.{})
 """
 
-def do_test(test: ExertCallable, arch:str, generic: bool = True, kernel: (str | None) = None) -> None:
+def do_test(test: ExertCallable, arch:str, generic: bool = True,
+    kernel: (str | None) = None) -> None:
+
     if not RUN_PLUGIN_TESTS:
         return
     formatted = TEST_PREFIX.format(arch, generic, kernel, test.__name__)

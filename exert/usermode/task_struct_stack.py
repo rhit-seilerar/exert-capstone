@@ -1,6 +1,6 @@
 import pickle
-from pandare import Panda
 from typing import cast
+from pandare import Panda
 from exert.utilities.types.multi_arch import CPUState
 from exert.utilities.types.x86_64_types import CPUState as X86_64CPUState
 

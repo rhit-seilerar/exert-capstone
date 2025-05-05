@@ -166,6 +166,7 @@ def volume_srd(srd: int = 0):
         "--exclude .git",
         "--exclude .venv",
         "--exclude .coverage",
+        "--exclude .mypy_cache",
         "--exclude '*/__pycache__'"
     ])
 

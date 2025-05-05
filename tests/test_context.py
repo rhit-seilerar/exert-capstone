@@ -1,8 +1,7 @@
-from typing import Literal
+from typing import cast, Literal
 from pandare import Panda
 from exert.usermode.context import Context
 from exert.utilities.types.multi_arch import CPUState
-from typing import cast
 
 class DummyPanda(Panda):
     def __init__(self, buf: bytes = b'', # pylint: disable=W0231

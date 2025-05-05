@@ -1,9 +1,9 @@
-from tests import utils
 from exert.parser import expressions
 import exert.parser.tokenmanager as tm
 from exert.parser.definition import Def
 from exert.parser.expressions import Evaluator, parse_expression
 from exert.parser.tokenizer import Tokenizer
+from tests import utils
 
 TOKENIZER = Tokenizer()
 

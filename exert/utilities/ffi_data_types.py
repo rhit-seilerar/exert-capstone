@@ -127,7 +127,9 @@ def get_ffi_datatypes(panda: Panda) -> (Exception | str):
 
     return python_file_str
 
-def get_struct_union_definition(struct_type: CType, struct_name: str, prefix: str, is_union: bool) -> str:
+def get_struct_union_definition(struct_type: CType, struct_name: str,
+    prefix: str, is_union: bool) -> str:
+
     class_str = ''
 
     if is_union:
@@ -164,7 +166,7 @@ def get_struct_union_definition(struct_type: CType, struct_name: str, prefix: st
                                                      '    ',
                                                      local_is_union)
             class_str += '\n'
-        
+
         # if field_reserved:
             # reserved_str = f'{prefix}setattr'
             # reserved_str += f'({struct_name}, "{field_name}", {field_python_type}())\n'
@@ -219,8 +221,7 @@ def get_python_type(c_data_type: CType, struct_type: (str | None) = None,
 
         if args == '':
             return f'Callable[[], {restype}]'
-        else:
-            return f'Callable[[{args}], {restype}]'
+        return f'Callable[[{args}], {restype}]'
 
     if c_data_type_kind == 'void':
         return 'None'
@@ -235,40 +236,38 @@ def get_primitive_type_name(prim_name: str) -> str:
         if key == prim_name:
             ctype = value.__name__
             break
-    
+
     if ctype == '':
         assert False, prim_name
-    else:
-        if ctype == 'c_char':
-            return 'bytes'
-        elif ctype == 'c_short':
-            return 'int'
-        elif ctype == 'c_int':
-            return 'int'
-        elif ctype == 'c_long':
-            return 'int'
-        elif ctype == 'c_longlong':
-            return 'int'
-        elif ctype == 'c_byte':
-            return 'int'
-        elif ctype == 'c_ubyte':
-            return 'int'
-        elif ctype == 'c_ushort':
-            return 'int'
-        elif ctype == 'c_uint':
-            return 'int'
-        elif ctype == 'c_ulong':
-            return 'int'
-        elif ctype == 'c_ulonglong':
-            return 'int'
-        elif ctype == 'c_float':
-            return 'float'
-        elif ctype == 'c_double':
-            return 'float'
-        elif ctype == 'c_bool':
-            return 'bool'
-        else:
-            assert False, prim_name
+    if ctype == 'c_char':
+        return 'bytes'
+    if ctype == 'c_short':
+        return 'int'
+    if ctype == 'c_int':
+        return 'int'
+    if ctype == 'c_long':
+        return 'int'
+    if ctype == 'c_longlong':
+        return 'int'
+    if ctype == 'c_byte':
+        return 'int'
+    if ctype == 'c_ubyte':
+        return 'int'
+    if ctype == 'c_ushort':
+        return 'int'
+    if ctype == 'c_uint':
+        return 'int'
+    if ctype == 'c_ulong':
+        return 'int'
+    if ctype == 'c_ulonglong':
+        return 'int'
+    if ctype == 'c_float':
+        return 'float'
+    if ctype == 'c_double':
+        return 'float'
+    if ctype == 'c_bool':
+        return 'bool'
+    assert False, prim_name
 
 def get_struct_type_name(struct_name: str) -> str:
     struct_names = struct_name.split()

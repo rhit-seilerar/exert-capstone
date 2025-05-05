@@ -1,5 +1,5 @@
-from pandare import Panda
 from typing import cast
+from pandare import Panda
 
 class Context:
     def __init__(self, panda: Panda):

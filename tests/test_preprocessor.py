@@ -56,7 +56,9 @@ def test_read_file() -> None:
 TK = Tokenizer()
 CACHE = './cache/test-preprocessor'
 
-def check(incls: list[str | Callable[[str], (str | None)]], defns: dict[str, str], str_in: str, str_out: str) -> None:
+def check(incls: list[str | Callable[[str], (str | None)]],
+    defns: dict[str, str], str_in: str, str_out: str) -> None:
+
     pp = Preprocessor(TK, 32, incls, defns, filereader = dummy_reader)
     pp.preprocess(str_in, CACHE, reset_cache = True)
     pp.load(CACHE)

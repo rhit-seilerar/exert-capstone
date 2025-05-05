@@ -1,10 +1,10 @@
 import subprocess
+from typing import cast
 from pandare.panda import Panda
 from exert.usermode import plugin
 import exert.usermode.task_struct_stack as tss
 from exert.utilities.debug import RUN_PLUGIN_TESTS
 from exert.utilities.types.multi_arch import ExertCallable, CPUState
-from typing import cast
 
 CALLED_BACK: bool = False
 def set_called_back(called_back: bool) -> None:

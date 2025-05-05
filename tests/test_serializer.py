@@ -1,7 +1,7 @@
-from tests import utils
 from exert.parser.serializer import write_tokens, read_tokens
 from exert.parser.defoption import DefOption
 from exert.utilities.types.global_types import TokenType
+from tests import utils
 
 def test_roundtrip() -> None:
     tokens: list[TokenType] = [

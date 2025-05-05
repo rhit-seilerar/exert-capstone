@@ -18,7 +18,9 @@ TEST_PREFIX: str = """
 import tests.test_plugin
 tests.test_plugin.run_test('{}', {}, '{}', tests.test_plugin.{})
 """
-def do_test(test: ExertCallable, arch: str, generic: bool = True, kernel: (str | None) = None) -> None:
+def do_test(test: ExertCallable, arch: str, generic: bool = True,
+    kernel: (str | None) = None) -> None:
+
     if not RUN_PLUGIN_TESTS:
         return
     formatted = TEST_PREFIX.format(arch, generic, kernel, test.__name__)
