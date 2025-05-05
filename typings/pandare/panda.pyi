@@ -80,3 +80,4 @@ class Panda:
     endianness: Literal["little", "big"]
     bits: int
     arch_name: str
+    def load_plugin(self, name: str, args: dict[str, Any]) -> None: ...
