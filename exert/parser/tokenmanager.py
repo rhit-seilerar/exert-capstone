@@ -47,8 +47,8 @@ def mk_op(op: str) -> 'TokenType':
 def mk_str(string: str, suffix: str = '"') -> 'TokenType':
     return ('string', string, suffix)
 
-def is_id_or_kw(tok: 'TokenType') -> bool:
-    return tok[0] in ['identifier', 'keyword']
+def is_id_or_kw(tok: Optional['TokenType']) -> bool:
+    return bool(tok and tok[0] in ['identifier', 'keyword'])
 
 class TokenManager:
     def __init__(self, tokens: (list['TokenType'] | None) = None):

@@ -84,8 +84,10 @@ def subst_all(tokmgr: TokenManager, defmap: DefMap, keys: KeysType,
     # For each token in tokmgr, try to substitute it and return the result
     result: TokenSeq = []
     while tokmgr.has_next():
-        result += OrElse[TokenSeq]()(subst(tokmgr, defmap, keys, expansion_stack),
-            lambda: cast(TokenSeq, [tokmgr.next()]))
+        res = subst(tokmgr, defmap, keys, expansion_stack)
+        if res is None:
+            res = cast(TokenSeq, [tokmgr.next()])
+        result += res
 
     return result
 
@@ -105,6 +107,7 @@ def subst(tokmgr: TokenManager, defmap: DefMap, keys: KeysType,
 
     # This isn't a macro, or it doesn't have any options
     if name is None:
+        tokmgr.index = index
         return None
 
     # We've already expanded this one

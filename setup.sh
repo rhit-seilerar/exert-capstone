@@ -48,7 +48,7 @@ cd ..
 
 # Install some pip dependencies
 python -m pip install --upgrade pip
-pip install --upgrade ipython pytest pytest-cov pandare
+pip install --upgrade ipython pylint pytest pytest-cov pytest-timeout pandare
 
 chmod +x /mount/make_initrd.sh
 
