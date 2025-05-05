@@ -1,6 +1,9 @@
+from exert.parser.tokenizer import Tokenizer
 from exert.parser.defoption import DefOption
 from exert.parser.definition import Def
 from tests.utils import expect_error
+
+TK = Tokenizer()
 
 def make_def_variants() -> list[Def]:
     option1 = DefOption([('number', 1)])

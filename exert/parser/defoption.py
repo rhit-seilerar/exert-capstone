@@ -1,5 +1,5 @@
 from exert.parser.tokenmanager import tok_seq
-from exert.utilities.types.global_types import TokenType
+from exert.utilities.types.global_types import TokenSeq
 
 class DefOption:
     """
@@ -11,7 +11,7 @@ class DefOption:
     the substituted form.
     """
 
-    def __init__(self, tokens: list[TokenType], params: (list[str] | None) = None):
+    def __init__(self, tokens: TokenSeq, params: (list[str] | None) = None):
         assert isinstance(tokens, list)
         self.tokens = tokens
         self.params = params

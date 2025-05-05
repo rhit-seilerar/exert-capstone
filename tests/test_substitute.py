@@ -8,72 +8,82 @@ from exert.utilities.types.global_types import TokenType
 
 TK = Tokenizer()
 
-def test_substitute_parse_macro_empty() -> None:
+def test_parse_macro_empty() -> None:
     tm = TokenManager([])
     dm = DefMap(None)
     assert parse_macro(tm, dm) == (None, None)
 
-def test_substitute_parse_macro_non_identifier() -> None:
+def test_parse_macro_non_identifier() -> None:
     tm = TokenManager([mk_int(3)])
     dm = DefMap(None)
     assert parse_macro(tm, dm) == (None, None)
 
-def test_substitute_parse_macro_undefined() -> None:
+def test_parse_macro_undefined() -> None:
     tm = TokenManager([mk_id('abc')])
     dm = DefMap(None, initial = {'abc': Def()})
     assert parse_macro(tm, dm) == (None, None)
     dm = DefMap(None, initial = {'abc': Def(undefined = True)})
     assert parse_macro(tm, dm) == (None, None)
 
-def test_substitute_parse_macro_variable() -> None:
+def test_parse_macro_unsure() -> None:
+    tm = TokenManager([mk_id('abc')])
+    dm = DefMap(None, initial = {'abc': Def(DefOption([]), undefined = True)})
+    assert parse_macro(tm, dm) == (mk_id('abc'), None)
+
+def test_parse_macro_no_options() -> None:
+    tm = TokenManager([mk_id('abc')])
+    dm = DefMap(None, initial = {'abc': Def(defined = True)})
+    assert parse_macro(tm, dm) == (None, None)
+
+def test_parse_macro_variable() -> None:
     tm = TokenManager(TK.tokenize('abc()'))
     dm = DefMap(None, initial = {'abc': Def(DefOption([mk_id('def')]))})
     assert parse_macro(tm, dm) == (mk_id('abc'), None)
     assert tm.next() == mk_op('(')
 
-def test_substitute_parse_macro_function_no_parens() -> None:
+def test_parse_macro_function_no_parens() -> None:
     tm = TokenManager(TK.tokenize('none'))
     dm = DefMap(None, initial = {'none': Def(DefOption([], []))})
     assert parse_macro(tm, dm) == (None, None)
     assert tm.next() == mk_id('none')
 
-def test_substitute_parse_macro_function_no_args() -> None:
+def test_parse_macro_function_no_args() -> None:
     tm = TokenManager(TK.tokenize('none()'))
     dm = DefMap(None, initial = {'none': Def(DefOption([], []))})
     assert parse_macro(tm, dm) == (mk_id('none'), [])
     assert not tm.has_next()
 
-def test_substitute_parse_macro_function_one_arg() -> None:
+def test_parse_macro_function_one_arg() -> None:
     tm = TokenManager(TK.tokenize('one(1)'))
     dm = DefMap(None, initial = {'one': Def(DefOption([], ['a']))})
     assert parse_macro(tm, dm) == (mk_id('one'), [[mk_int(1)]])
     assert not tm.has_next()
 
-def test_substitute_parse_macro_function_several_args() -> None:
+def test_parse_macro_function_several_args() -> None:
     tm = TokenManager(TK.tokenize('multi(1, (2), 3)'))
     dm = DefMap(None, initial = {'multi': Def(DefOption([], ['a', 'b', 'c']))})
     assert parse_macro(tm, dm) == (mk_id('multi'), [[mk_int(1)], TK.tokenize('(2)'), [mk_int(3)]])
     assert not tm.has_next()
 
-def test_substitute_parse_macro_function_mismatched_parens() -> None:
+def test_parse_macro_function_mismatched_parens() -> None:
     tm = TokenManager(TK.tokenize('multi(1, ((2), 3)'))
     dm = DefMap(None, initial = {'multi': Def(DefOption([], ['a', 'b', 'c']))})
     assert parse_macro(tm, dm) == (None, None)
     assert tm.has_next()
 
-def test_substitute_parse_macro_function_vararg_not() -> None:
+def test_parse_macro_function_vararg_not() -> None:
     tm = TokenManager(TK.tokenize('not(1, 2)'))
     dm = DefMap(None, initial = {'not': Def(DefOption([], ['a']))})
     assert parse_macro(tm, dm) == (mk_id('not'), [TK.tokenize('1, 2')])
     assert not tm.has_next()
 
-def test_substitute_parse_macro_function_vararg_only() -> None:
+def test_parse_macro_function_vararg_only() -> None:
     tm = TokenManager(TK.tokenize('only(1, 2, 3)'))
     dm = DefMap(None, initial = {'only': Def(DefOption([], ['__VA_ARGS__']))})
     assert parse_macro(tm, dm) == (mk_id('only'), [TK.tokenize('1, 2, 3')])
     assert not tm.has_next()
 
-def test_substitute_parse_macro_function_vararg_combo() -> None:
+def test_parse_macro_function_vararg_combo() -> None:
     tm = TokenManager(TK.tokenize('combo(1, 2, 3)'))
     dm = DefMap(None, initial = {'combo': Def(DefOption([], ['a', '__VA_ARGS__']))})
     assert parse_macro(tm, dm) == (mk_id('combo'), [[mk_int(1)], TK.tokenize('2, 3')])
@@ -158,16 +168,16 @@ def test_substitute_multiple_results() -> None:
     assert substitute(tm, dm, keys = keys) == [('any', 'var', options)]
     assert keys == {mk_id('var')}
 
-def test_substitute_no_results() -> None:
+def test_substitute_no_options() -> None:
     keys: set[TokenType] = set()
     tm = TokenManager([mk_id('var')])
     dm = DefMap(None, initial = {'var': Def(defined = True)})
-    assert substitute(tm, dm, keys = keys) == []
+    assert substitute(tm, dm, keys = keys) == [mk_id('var')]
     assert keys == {mk_id('var')}
 
 def test_substitute_function() -> None:
     keys: set[TokenType] = set()
-    tm = TokenManager([mk_id('var(1, 2, 3)')])
+    tm = TokenManager(TK.tokenize('var(1, 2, 3)'))
     opt = DefOption(TK.tokenize('__VA_ARGS__ a'), ['a', '__VA_ARGS__'])
     dm = DefMap(None, initial = {'var': Def(opt)})
     assert substitute(tm, dm, keys = keys) == TK.tokenize('2, 3 1')

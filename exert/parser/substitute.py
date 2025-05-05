@@ -77,7 +77,84 @@ def parse_macro(tokmgr: TokenManager, defmap: DefMap) \
     # Everything else checks out, return the result
     return name, params
 
-def substitute(tokmgr: TokenManager, defmap: DefMap, replmap: None = None,
+KeysType = Optional[set[TokenType]]
+
+def subst_all(tokmgr: TokenManager, defmap: DefMap, keys: KeysType,
+    expansion_stack: TokenSeq) -> TokenSeq:
+
+    # For each token in tokmgr, try to substitute it and return the result
+    result: TokenSeq = []
+    while tokmgr.has_next():
+        result += OrElse[TokenSeq]()(subst(tokmgr, defmap, keys, expansion_stack),
+            lambda: cast(TokenSeq, [tokmgr.next()]))
+
+    return result
+
+# Recursion helper function
+def subst(tokmgr: TokenManager, defmap: DefMap, keys: KeysType,
+    expansion_stack: TokenSeq) -> Optional[TokenSeq]:
+
+    # First, try to parse a macro invocation
+    index = tokmgr.index
+    name, params = parse_macro(tokmgr, defmap)
+
+    # If this is a macro, add it to the keys set
+    macroname = OrElse[TokenType]()(name, cast(TokenType, tokmgr.peek()))
+    if isinstance(keys, set) and not defmap[macroname[1]].is_initial():
+        keys.add(macroname)
+
+    # This isn't a macro, or it doesn't have any options
+    if name is None:
+        return None
+
+    # We've already expanded this one
+    if name in expansion_stack:
+        tokmgr.index = index
+        return None
+
+    # Let's proceed to expand
+    substitutions: set[DefOption] = set()
+    expansion_stack.append(name)
+
+    # If we have any parameters, substitute them first
+    if params is not None:
+        params = [subst_all(TokenManager(p), defmap, keys, expansion_stack) \
+            for p in params]
+
+    # Find all replacements for this macro
+    opts = defmap.get_replacements(name)
+
+    # Recursively substitute each replacement
+    for opt in opts:
+        tokens: TokenSeq = []
+        optmgr = TokenManager(opt.tokens)
+        while optmgr.has_next():
+            # Replace parameters if necessary
+            nex = cast(TokenSeq, [optmgr.next()])
+            if opt.params is not None and nex[0][0] in ['identifier', 'keyword']:
+                opttok_name: str = cast(str, nex[0][1])
+                if opttok_name in opt.params:
+                    nex = (params or [])[opt.params.index(opttok_name)]
+
+            # Substitute the replacement
+            tokens += subst_all(TokenManager(nex), defmap, keys, expansion_stack)
+
+        substitutions.add(DefOption(tokens))
+
+    # We're done here, so we can pop the stack
+    expansion_stack.pop()
+
+    # We have more than one possible substitution, so return an ANY-form
+    if len(substitutions) > 1:
+        return [('any', name[1], substitutions)]
+
+    # We only have one possible substitution, so return it as is.
+    result: Optional[TokenSeq] = None
+    for substitution in substitutions:
+        result = substitution.tokens
+    return result
+
+def substitute(tokmgr: TokenManager, defmap: DefMap,
     keys: Optional[set[TokenType]] = None) -> TokenSeq:
     """
     Consume the tokmgr's next token and, if applicable, substitute it with the
@@ -85,63 +162,10 @@ def substitute(tokmgr: TokenManager, defmap: DefMap, replmap: None = None,
     tokens in replmap/keys.
     """
 
-    # Each macro is only expanded once, so we track that here
-    expansion_stack: TokenSeq = []
-
-    # Recursion helper function
-    def subst(tokmgr: TokenManager) -> Optional[TokenSeq]:
-        # First, try to parse a macro invocation
-        index = tokmgr.index
-        name, params = parse_macro(tokmgr, defmap)
-
-        # If this is a macro, add it to the keys set
-        macroname = OrElse[TokenType]()(name, cast(TokenType, tokmgr.peek()))
-        if isinstance(keys, set) and not defmap[macroname[1]].is_initial():
-            keys.add(macroname)
-
-        # This isn't a macro, or it doesn't have any options
-        if name is None:
-            return None
-
-        # We've already expanded this one
-        if name in expansion_stack:
-            tokmgr.index = index
-            return None
-
-        # Let's proceed to expand
-        substitutions: set[DefOption] = set()
-        expansion_stack.append(name)
-
-        # Find all replacements for this macro
-        opts = defmap.get_replacements(name, params)
-
-        # Recursively substitute each replacement
-        for opt in opts:
-            tokens: TokenSeq = []
-            optmgr = TokenManager(opt.tokens)
-            while optmgr.has_next():
-                tokens += OrElse[TokenSeq]()(subst(optmgr),
-                    lambda: cast(TokenSeq, [optmgr.next()]))
-            substitutions.add(DefOption(tokens))
-
-        # We're done here, so we can pop the stack
-        expansion_stack.pop()
-
-        # We have more than one possible substitution, so return an ANY-form
-        if len(substitutions) > 1:
-            return [('any', name[1], substitutions)]
-
-        # We only have one possible substitution, so return it as is
-        for substitution in substitutions:
-            return substitution.tokens
-
-        # There were no possible substitutions, likely because there were no
-        # options, or that this was a wildcard. Return empty.
-        return []
-
     # We've reached EOF, so we won't substitute anything
     if not tokmgr.has_next():
         return []
 
     # Try to substitute the next token, return it unmodified otherwise
-    return OrElse[TokenSeq]()(subst(tokmgr), lambda: cast(TokenSeq, [tokmgr.next()]))
+    return OrElse[TokenSeq]()(subst(tokmgr, defmap, keys, []),
+        lambda: cast(TokenSeq, [tokmgr.next()]))

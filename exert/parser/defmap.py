@@ -42,9 +42,8 @@ class DefMap:
             raise TypeError(item)
         self.defs[key] = item
 
-    def get_replacements(self, sym_tok: TokenType,
-        params: (list[list[TokenType]] | list[str] | None) = None) -> set[DefOption]:
-        return self[sym_tok[1]].get_replacements(sym_tok, params)
+    def get_replacements(self, sym_tok: TokenType) -> set[DefOption]:
+        return self[sym_tok[1]].get_replacements(sym_tok)
 
     def validate(self) -> None:
         for key in self.defs:

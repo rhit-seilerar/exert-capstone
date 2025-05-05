@@ -101,10 +101,9 @@ class DefState:
         assert self.layers[-1].current is not None
         self.layers[-1].current.combine(layer.accumulator.defs, replace = layer.closed)
 
-    def get_replacements(self, tok: TokenType, params: (list[TokenSeq] | None) = None) \
-    -> set[DefOption]:
+    def get_replacements(self, tok: TokenType) -> set[DefOption]:
         assert self.layers[-1].current is not None
-        return self.layers[-1].current.get_replacements(tok, params)
+        return self.layers[-1].current.get_replacements(tok)
 
     def substitute(self, tokmgr: (TokenManager | TokenType)) -> TokenSeq:
         if isinstance(tokmgr, tuple):
