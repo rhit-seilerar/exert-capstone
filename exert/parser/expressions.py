@@ -399,7 +399,6 @@ class Evaluator:
     def __init__(self, bitsize: int):
         self.bitsize = bitsize
         self.lookup: dict[str, 'Def'] = {}
-        self.defines: dict[str, bool] = {}
 
     def evaluate(self, tokens: list[TokenType]) \
         -> (Wildcard | tuple[int, bool]):

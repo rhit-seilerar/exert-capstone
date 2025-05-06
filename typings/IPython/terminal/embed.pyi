@@ -1,5 +1,5 @@
 from IPython.core import compilerop as compilerop, magic_arguments as magic_arguments, ultratb as ultratb
-from IPython.core.interactiveshell import InteractiveShell as InteractiveShell, make_main_module_type as make_main_module_type
+from IPython.core.interactiveshell import InteractiveShell as InteractiveShell
 from IPython.core.magic import Magics as Magics, line_magic as line_magic, magics_class as magics_class
 from IPython.terminal.interactiveshell import TerminalInteractiveShell as TerminalInteractiveShell
 from IPython.terminal.ipapp import load_default_config as load_default_config

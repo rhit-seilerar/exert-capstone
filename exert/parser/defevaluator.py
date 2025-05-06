@@ -186,8 +186,7 @@ class DefEvaluator(Evaluator):
             # Parse the substituted expression
             parsed = parse_expression(current)
 
-            # Set up a clean slate and evaluate
-            self.defines = {}
+            # Evalute the parsed expression
             result = parsed.evaluate(self).evaluate(self)
 
             # Apply the result to our accumulated state

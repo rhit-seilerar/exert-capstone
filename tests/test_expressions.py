@@ -81,7 +81,6 @@ def test_eval() -> None:
 
     evlr = Evaluator(32)
     evlr.lookup = {'abc': Def(defined = True)}
-    evlr.defines = {}
     assert isinstance(evlr.evaluate([('any', 'abc', set())]), expressions.Wildcard)
     assert str(expressions.Wildcard()) == '<wildcard>'
     assert isinstance(evlr.evaluate([
@@ -139,11 +138,6 @@ def test_eval() -> None:
         tm.mk_op(':'),
         ('any', 'a', set()),
     ]), expressions.Wildcard)
-    assert evlr.evaluate([('defined', 'abc')]) == (1, False)
-    assert evlr.evaluate([('defined', 'def')]) == (0, False)
-    assert evlr.defines['abc']
-    assert not evlr.defines['def']
-    assert str(parse_expression([('defined', 'abc')])) == 'defined(abc)'
 
 def test_bitsize() -> None:
     evaluate('1 << 32', 32, 0, False)

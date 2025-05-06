@@ -167,7 +167,7 @@ class Preprocessor(TokenManager):
             params = []
             while True:
                 if (ident := self.parse_identifier()):
-                    params.append(cast(str, ident))
+                    params.append(ident)
                     if self.consume_operator(')'):
                         break
                     if not self.consume_operator(','):
