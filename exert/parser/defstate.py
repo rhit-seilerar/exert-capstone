@@ -107,8 +107,7 @@ class DefState:
         return self.layers[-1].current.get_replacements(tok)
 
     def get_current(self, key: str) -> Def:
-        if self.layers[-1].current is None:
-            return Def()
+        assert self.layers[-1].current is not None
         return self.layers[-1].current[key]
 
     def substitute(self, tokmgr: (TokenManager | TokenType)) -> TokenSeq:
