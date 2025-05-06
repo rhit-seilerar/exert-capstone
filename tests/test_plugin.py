@@ -24,7 +24,6 @@ def do_test(test: ExertCallable, arch: str, generic: bool = True,
     if not RUN_PLUGIN_TESTS:
         return
     formatted = TEST_PREFIX.format(arch, generic, kernel, test.__name__)
-    print(formatted)
     subprocess.run(['python'], input = formatted, check = True, text = True)
 
 def run_test(arch: str, generic: bool, kernel: str, test: ExertCallable) -> None:
