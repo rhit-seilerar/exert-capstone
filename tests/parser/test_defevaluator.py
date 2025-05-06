@@ -11,44 +11,39 @@ TK = Tokenizer()
 
 def test_replace_unary_defined_none() -> None:
     de = DefEvaluator(64, DefMap(None))
-    teststr = '#if 0 + 3 < 4'
-    tokens = TK.tokenize(teststr)
+    tokens = TK.tokenize('#if 0 + 3 < 4')
     keys: set[TokenType] = set()
-    de.replace_unary_defined(tokens, keys)
-    assert tokens == TK.tokenize(teststr)
+    result = de.replace_unary_defined(tokens, keys)
+    assert result == tokens
     assert not keys
 
 def test_replace_unary_defined_without_parens() -> None:
     de = DefEvaluator(64, DefMap(None))
-    teststr = '#if defined MACRO'
-    tokens = TK.tokenize(teststr)
+    tokens = TK.tokenize('#if defined MACRO')
     keys: set[TokenType] = set()
-    de.replace_unary_defined(tokens, keys)
-    print(tokens)
-    assert tokens == [mk_dir('#'), mk_kw('if'), ('defined', 'MACRO'), mk_nl()]
+    result = de.replace_unary_defined(tokens, keys)
+    assert result == [mk_dir('#'), mk_kw('if'), ('defined', 'MACRO'), mk_nl()]
     assert keys == {mk_id('MACRO')}
 
 def test_replace_unary_defined_with_parens() -> None:
     de = DefEvaluator(64, DefMap(None))
-    teststr = '#if defined(MACRO)'
-    tokens = TK.tokenize(teststr)
+    tokens = TK.tokenize('#if defined(MACRO)')
     keys: set[TokenType] = set()
-    de.replace_unary_defined(tokens, keys)
-    print(tokens)
-    assert tokens == [mk_dir('#'), mk_kw('if'), ('defined', 'MACRO'), mk_nl()]
+    result = de.replace_unary_defined(tokens, keys)
+    assert result == [mk_dir('#'), mk_kw('if'), ('defined', 'MACRO'), mk_nl()]
     assert keys == {mk_id('MACRO')}
 
 def test_replace_identifiers_true() -> None:
     de = DefEvaluator(64, DefMap(None))
     tokens = [mk_id('true')]
-    de.replace_identifiers(tokens)
-    assert tokens == [mk_int(1)]
+    result = de.replace_identifiers(tokens)
+    assert result == [mk_int(1)]
 
 def test_replace_identifiers_falsey() -> None:
     de = DefEvaluator(64, DefMap(None))
     tokens = [mk_id('false'), mk_id('a'), mk_kw('if')]
-    de.replace_identifiers(tokens)
-    assert tokens == [mk_int(0), mk_int(0), mk_int(0)]
+    result = de.replace_identifiers(tokens)
+    assert result == [mk_int(0), mk_int(0), mk_int(0)]
 
 def test_make_def_singletons_initial() -> None:
     de = DefEvaluator(64, DefMap(None))
@@ -233,4 +228,16 @@ def test_evaluate_with_defs_truthy_unary_defined() -> None:
     assert m == DefMap(de.defs, initial = {
         'C': Def(defined = True, undefined = True),
         'D': Def(defined = True, undefined = True)
+    })
+
+def test_evaluate_with_defs_valued_unary_defined() -> None:
+    de = DefEvaluator(64, DefMap(None, initial = {
+        'C': Def(DefOption([mk_op(';')]), undefined = True)
+    }))
+    tokens = TK.tokenize('defined C')
+    anym, allm, m = de.evaluate_with_defs(tokens)
+    assert anym
+    assert not allm
+    assert m == DefMap(de.defs, initial = {
+        'C': Def(DefOption([mk_op(';')])),
     })

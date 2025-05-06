@@ -1,6 +1,6 @@
 import itertools
 from typing import cast
-from exert.parser.tokenmanager import TokenManager, mk_id, mk_int
+from exert.parser.tokenmanager import TokenManager, mk_id, mk_int, is_id_or_kw
 from exert.parser.definition import Def
 from exert.parser.defmap import DefMap
 from exert.parser.substitute import subst_all
@@ -24,8 +24,10 @@ class DefEvaluator(Evaluator):
         super().__init__(bitsize)
         self.defs = defmap
 
-    def replace_unary_defined(self, tokens: TokenSeq, keys: set[TokenType]) -> None:
-        # Modifications made to tokmgr.tokens will reflect in tokens
+    def replace_unary_defined(self, tokens: TokenSeq,
+        keys: set[TokenType]) -> TokenSeq:
+
+        result: TokenSeq = []
         tokmgr = TokenManager(tokens)
         while tokmgr.has_next():
             # parse 'defined MACRO' or 'defined(MACRO)'
@@ -33,30 +35,34 @@ class DefEvaluator(Evaluator):
                 # Grab the token and handle parenthses
                 parens = bool(tokmgr.consume_operator('('))
                 tok = tokmgr.next()
-                if parens and not tokmgr.consume_operator(')'):
-                    tok = None
-
-                # If the token is an identifier, replace it with a marker
-                if tok and tok[0] in ['identifier', 'keyword']:
-                    marker = ('defined', tok[1])
-                    delta = 2 + 2 * parens
-                    start = tokmgr.index - delta
-                    tokmgr.tokens[start:tokmgr.index] = [marker]
-                    tokmgr.len -= delta - 1
+                if tok and is_id_or_kw(tok) \
+                    and (not parens or tokmgr.consume_operator(')')):
+                    # If the token is an identifier, replace it with a marker
+                    result.append(('defined', tok[1]))
                     keys.add(tok)
+                else:
+                    # False alarm
+                    result.append(mk_id('defined'))
+                    if tok:
+                        result.append(tok)
+                    continue
             else:
-                tokmgr.bump()
+                result.append(cast(TokenType, tokmgr.next()))
+
+        return result
 
     # Replace all identifiers with 0, except 'true', which is 1.
-    def replace_identifiers(self, tokens: TokenSeq) -> None:
+    def replace_identifiers(self, tokens: TokenSeq) -> TokenSeq:
         # Modifications made to tokmgr.tokens will reflect in tokens
+        result: TokenSeq = []
         tokmgr = TokenManager(tokens)
         while tokmgr.has_next():
             if (ident := tokmgr.parse_ident_or_keyword()):
                 val = int(ident == 'true')
-                tokmgr.tokens[tokmgr.index-1] = mk_int(val)
+                result.append(mk_int(val))
             else:
-                tokmgr.bump()
+                result.append(cast(TokenType, tokmgr.next()))
+        return result
 
     # Convert a def into a list of singleton defs, each with one option or none
     def make_def_singletons(self, defn: Def) -> list[Def]:
@@ -124,8 +130,6 @@ class DefEvaluator(Evaluator):
         return nex
 
     def apply_evaluation_result(self, result: Expression, lookup: dict[str, Def]) -> None:
-        print(result, lookup)
-
         # Validity is dependent on an open-ended macro, so conceptually at least
         # one option might match, but another might not.
         if isinstance(result, Wildcard):
@@ -155,7 +159,7 @@ class DefEvaluator(Evaluator):
         # First we run through and replace all defined(MACRO) with a special
         # token so we don't substitute it later. This token will never be
         # serialized, but expressions.py knows how to handle it
-        self.replace_unary_defined(tokens, keys)
+        tokens = self.replace_unary_defined(tokens, keys)
 
         # Next we run through and replace all remaining macros with their ANY
         # forms. The replacement itself isn't strictly necessary, the main goal
@@ -177,7 +181,7 @@ class DefEvaluator(Evaluator):
             current = self.subst_permutation(lookup, tokens) if lookup else tokens
 
             # Replace identifiers with constants
-            self.replace_identifiers(current)
+            current = self.replace_identifiers(current)
 
             # Parse the substituted expression
             parsed = parse_expression(current)

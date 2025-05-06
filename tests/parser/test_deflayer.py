@@ -41,6 +41,7 @@ def test_deflayer_next() -> None:
     dl.add_map(TK.tokenize('defined abc'))
 
     dl.add_map(TK.tokenize('!defined abc'))
+    print(dl.cond)
     assert dl.cond == TK.tokenize('!(defined abc) && (!defined abc)')
     assert dl.cond_acc == TK.tokenize('!(defined abc) && !(!defined abc)')
     assert dl.accumulator['abc'] == Def(DefOption([mk_int(1)]), DefOption([mk_int(2)]))
