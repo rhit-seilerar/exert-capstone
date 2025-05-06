@@ -87,6 +87,7 @@ class Parser(TokenManager):
         self.anydepth = 0
         self.in_typedef = False
         self.staged_type_name = ''
+        self.staged_type: rules.Rule = rules.VOID
         self.staged_base_type: rules.Rule = rules.VOID
         self.staged_types: dict[str, rules.Rule] = {}
         self.types = types.copy() if types is not None else {}
@@ -263,10 +264,15 @@ class Parser(TokenManager):
 
     def parse_typedef_declarator_list(self, p: CPSTypes, f: CPSTypes) -> CPSTuple:
         dprint(3, 'parse_typedef_declarator_list')
+        def begin_type(p1: CPSTypes, f1: CPSTypes) -> CPSTypes:
+            self.staged_type = self.staged_base_type
+            self.staged_type_name = ''
+            return p1
         def stage_type(p1: CPSTypes, f1: CPSTypes) -> CPSTypes:
-            self.staged_types[self.staged_type_name] = self.staged_base_type
+            self.staged_types[self.staged_type_name] = self.staged_type
             return p1
         return self.pand(
+            begin_type,
             self.parse_declarator,
             stage_type,
             self.opt(self.pand(
@@ -1090,8 +1096,12 @@ class Parser(TokenManager):
 
     def parse_pointer(self, p: CPSTypes, f: CPSTypes) -> CPSTuple:
         dprint(3, 'parse_pointer')
+        def stage_pointer(p1: CPSTypes, f1: CPSTypes) -> CPSTypes:
+            self.staged_type = rules.Pointer(self.staged_type)
+            return p1
         return self.pand(
             self.tok(mk_op('*')),
+            stage_pointer,
             self.opt(self.parse_attribute_specifier_sequence),
             self.opt(self.parse_type_qualifier_list),
             self.opt(self.parse_pointer)

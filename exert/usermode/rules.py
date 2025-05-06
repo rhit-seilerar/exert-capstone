@@ -124,7 +124,7 @@ class Pointer(Rule):
         self.rule = rule
 
     def _get_key(self) -> str:
-        return f'Pointer({str(self.rule)})'
+        return f'{str(self.rule)}*'
 
     def _test(self, context: Context, address: int) -> set[int]:
         pointer, address = context.next_pointer(address)
