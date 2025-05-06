@@ -5,6 +5,7 @@ from exert.parser.defoption import DefOption
 from exert.parser.definition import Def
 from exert.parser.defmap import DefMap
 from exert.parser.defevaluator import DefEvaluator
+from exert.parser.expressions import Wildcard, Integer
 
 TK = Tokenizer()
 
@@ -37,47 +38,199 @@ def test_replace_unary_defined_with_parens() -> None:
     assert tokens == [mk_dir('#'), mk_kw('if'), ('defined', 'MACRO'), mk_nl()]
     assert keys == {mk_id('MACRO')}
 
-def test_defevaluator_none() -> None:
+def test_replace_identifiers_true() -> None:
     de = DefEvaluator(64, DefMap(None))
-    assert de.evaluate_with_defs([mk_int(0)]) == (False, False, DefMap(de.defs))
-    assert de.evaluate_with_defs([mk_int(1)]) == (True, True, DefMap(de.defs))
-    assert de.evaluate_with_defs([mk_id('abc')]) == (False, False, DefMap(de.defs))
-    assert de.evaluate_with_defs([mk_id('true')]) == (True, True, DefMap(de.defs))
-    de.defs['abc'] = Def(DefOption([mk_int(1)]), undefined = True)
-    assert de.evaluate_with_defs(TK.tokenize('abc == 2')) == (False, False, DefMap(de.defs))
+    tokens = [mk_id('true')]
+    de.replace_identifiers(tokens)
+    assert tokens == [mk_int(1)]
 
-def test_defevaluator_single() -> None:
+def test_replace_identifiers_falsey() -> None:
     de = DefEvaluator(64, DefMap(None))
-    de.defs['abc'] = Def(defined = True)
-    assert de.evaluate_with_defs([mk_id('defined'), mk_op('('),
-        mk_id('abc'), mk_op(')')]) == \
-        (True, True, DefMap(de.defs, initial = {'abc': Def(defined = True)}))
-    de.defs['abc'] = Def(DefOption([]), defined = True)
-    assert de.evaluate_with_defs([mk_id('defined'), mk_id('abc')]) == \
-        (True, True, DefMap(de.defs, initial = {'abc': Def(DefOption([]), defined = True)}))
-    de.defs['abc'] = Def(DefOption([mk_int(3)]), defined = True)
-    assert de.evaluate_with_defs([mk_id('defined'), mk_id('abc')]) == \
-        (True, True, DefMap(de.defs, initial = {
-            'abc': Def(DefOption([mk_int(3)]), defined = True)}))
-    de.defs['abc'] = Def(undefined = True)
-    assert de.evaluate_with_defs([mk_id('defined'), mk_id('abc')]) == \
-        (False, False, DefMap(de.defs))
+    tokens = [mk_id('false'), mk_id('a'), mk_kw('if')]
+    de.replace_identifiers(tokens)
+    assert tokens == [mk_int(0), mk_int(0), mk_int(0)]
 
-def test_defevaluator_multiple() -> None:
+def test_make_def_singletons_initial() -> None:
     de = DefEvaluator(64, DefMap(None))
-    assert de.evaluate_with_defs(TK.tokenize('defined abc')) == \
-        (True, False, DefMap(de.defs, initial = {'abc': Def(defined = True)}))
-    de.defs['abc'] = Def(defined = True, undefined = True)
-    assert de.evaluate_with_defs(TK.tokenize('defined abc')) == \
-        (True, False, DefMap(de.defs, initial = {'abc': Def(defined = True)}))
-    assert de.evaluate_with_defs(TK.tokenize('defined abc || !defined abc')) == \
-        (True, True, DefMap(de.defs, initial = {
-            'abc': Def(defined = True, undefined = True)}))
-    de.defs['abc'] = Def(DefOption([mk_int(1)]), DefOption([mk_int(2)]),
-        defined = True, undefined = True)
-    assert de.evaluate_with_defs(TK.tokenize('!defined abc || abc == 2')) == \
-        (True, False, DefMap(de.defs, initial = {
-            'abc': Def(DefOption([mk_int(2)]), undefined = True)}))
-    assert de.evaluate_with_defs(TK.tokenize('abc == 1 || abc == 2')) == \
-        (True, False, DefMap(de.defs, initial = {
-            'abc': Def(DefOption([mk_int(2)]), DefOption([mk_int(1)]))}))
+    result = de.make_def_singletons(Def())
+    assert len(result) == 2
+    assert Def(defined = True) in result
+    assert Def(undefined = True) in result
+
+def test_make_def_singletons_undefined() -> None:
+    de = DefEvaluator(64, DefMap(None))
+    result = de.make_def_singletons(Def(undefined = True))
+    assert result == [Def(undefined = True)]
+
+def test_make_def_singletons_empty_def() -> None:
+    de = DefEvaluator(64, DefMap(None))
+    result = de.make_def_singletons(Def(defined = True))
+    assert result == [Def(defined = True)]
+
+def test_make_def_singletons_defined() -> None:
+    de = DefEvaluator(64, DefMap(None))
+    opts = [DefOption([mk_id('a')]), DefOption([mk_id('b')])]
+    result = de.make_def_singletons(Def(*opts))
+    assert len(result) == 2
+    assert Def(opts[0]) in result
+    assert Def(opts[1]) in result
+
+def test_make_def_singletons_unsure() -> None:
+    de = DefEvaluator(64, DefMap(None))
+    opts = [DefOption([mk_id('a')]), DefOption([mk_id('b')])]
+    result = de.make_def_singletons(Def(*opts, undefined = True))
+    assert len(result) == 3
+    assert Def(opts[0]) in result
+    assert Def(opts[1]) in result
+    assert Def(undefined = True) in result
+
+def test_make_permuted_lookups_no_keys() -> None:
+    de = DefEvaluator(64, DefMap(None, initial = {
+        'MACRO': Def(DefOption([mk_int(1)]), DefOption([mk_int(2)]), undefined = True)
+    }))
+    tokens = TK.tokenize('int a = MACRO;')
+    result = de.make_permuted_lookups(tokens, set())
+    assert result == [{}]
+
+def test_make_permuted_lookups() -> None:
+    de = DefEvaluator(64, DefMap(None, initial = {
+        'MACRO1': Def(undefined = True),
+        'MACRO2': Def(DefOption([mk_int(1)]), DefOption([mk_int(2)]), undefined = True)
+    }))
+    tokens = TK.tokenize('int a = MACRO1 + MACRO2;')
+    result = de.make_permuted_lookups(tokens, {mk_id('MACRO1'), mk_id('MACRO2')})
+    assert len(result) == 3
+    assert {
+        'MACRO1': Def(undefined = True),
+        'MACRO2': Def(DefOption([mk_int(1)]))
+    } in result
+    assert {
+        'MACRO1': Def(undefined = True),
+        'MACRO2': Def(DefOption([mk_int(2)]))
+    } in result
+    assert {
+        'MACRO1': Def(undefined = True),
+        'MACRO2': Def(undefined = True)
+    } in result
+
+def test_make_permuted_lookups_initial() -> None:
+    de = DefEvaluator(64, DefMap(None))
+    tokens = TK.tokenize('int a = MACRO;')
+    result = de.make_permuted_lookups(tokens, {mk_id('MACRO')})
+    assert len(result) == 2
+    assert { 'MACRO': Def(undefined = True) } in result
+    assert { 'MACRO': Def(defined = True) } in result
+
+def test_subst_permutation_open_ended() -> None:
+    de = DefEvaluator(64, DefMap(None))
+    tokens: list[TokenType] = [('any', 'M', set())]
+    result = de.subst_permutation({'M': Def(defined = True)}, tokens)
+    assert result == tokens
+
+def test_subst_permutation_flat() -> None:
+    de = DefEvaluator(64, DefMap(None))
+    tokens = [mk_id('a'), ('any', 'M', {DefOption([mk_op('.')])})]
+    result = de.subst_permutation({'M': Def(DefOption([mk_op(';')]))}, tokens)
+    assert result == [mk_id('a'), mk_op(';')]
+
+def test_subst_permutation_defined() -> None:
+    de = DefEvaluator(64, DefMap(None))
+    tokens = [mk_id('a'), ('defined', 'M'), ('defined', 'N')]
+    result = de.subst_permutation({
+        'M': Def(DefOption([mk_op(';')])),
+        'N': Def(undefined = True)
+    }, tokens)
+    assert result == [mk_id('a'), mk_int(1), mk_int(0)]
+
+def test_subst_permutation_recurse() -> None:
+    de = DefEvaluator(64, DefMap(None))
+    inner = [mk_id('b'), ('any', 'N', {DefOption([mk_op('.')])})]
+    tokens = [mk_id('a'), ('any', 'M', {DefOption([mk_op('.')])})]
+    result = de.subst_permutation({
+        'N': Def(DefOption([mk_id('c')])),
+        'M': Def(DefOption(inner))
+    }, tokens)
+    assert result == [mk_id('a'), mk_id('b'), mk_id('c')]
+
+def test_apply_evaluation_result_wildcard() -> None:
+    de = DefEvaluator(64, DefMap(None))
+    de.apply_evaluation_result(Wildcard(), {})
+    assert hasattr(de, 'any_match') and de.any_match
+    assert hasattr(de, 'all_match') and not de.all_match
+
+def test_apply_evaluation_result_falsey() -> None:
+    de = DefEvaluator(64, DefMap(None))
+    de.apply_evaluation_result(Integer(0, False), {})
+    assert not hasattr(de, 'any_match')
+    assert hasattr(de, 'all_match') and not de.all_match
+
+def test_apply_evaluation_result_truthy() -> None:
+    de = DefEvaluator(64, DefMap(None))
+    de.matches = DefMap(de.defs, initial = {
+        'A': Def(undefined = True),
+        'B': Def(DefOption([mk_op(';')]))
+    })
+    de.apply_evaluation_result(Integer(1, False), {
+        'A': Def(DefOption([mk_id('a')])),
+        'B': Def(DefOption([mk_id('b')]))
+    })
+    assert hasattr(de, 'any_match') and de.any_match
+    assert not hasattr(de, 'all_match')
+    assert de.matches == DefMap(de.defs, initial = {
+        'A': Def(DefOption([mk_id('a')]), undefined = True),
+        'B': Def(DefOption([mk_id('b')]), DefOption([mk_op(';')]))
+    })
+
+def test_evaluate_with_defs_value_matching() -> None:
+    de = DefEvaluator(64, DefMap(None, initial = {
+        'A': Def(DefOption([mk_int(1)]), DefOption([mk_int(2)])),
+        'B': Def(DefOption([mk_int(2)]), DefOption([mk_int(3)])),
+    }))
+    tokens = TK.tokenize('A == B')
+    anym, allm, m = de.evaluate_with_defs(tokens)
+    assert anym
+    assert not allm
+    assert m == DefMap(de.defs, initial = {
+        'A': Def(DefOption([mk_int(2)])),
+        'B': Def(DefOption([mk_int(2)]))
+    })
+
+def test_evaluate_with_defs_value_matching_with_wildcard() -> None:
+    de = DefEvaluator(64, DefMap(None, initial = {
+        'A': Def(DefOption([mk_int(1)]), DefOption([mk_int(2)])),
+        'B': Def(DefOption([mk_int(2)]), DefOption([mk_int(3)])),
+        'E': Def()
+    }))
+    tokens = TK.tokenize('E || A == B')
+    anym, allm, m = de.evaluate_with_defs(tokens)
+    assert anym
+    assert not allm
+    assert m == DefMap(de.defs, initial = {
+        'A': Def(DefOption([mk_int(2)])),
+        'B': Def(DefOption([mk_int(2)]))
+    })
+
+def test_evaluate_with_defs_falsey_unary_defined() -> None:
+    de = DefEvaluator(64, DefMap(None, initial = {
+        'C': Def(defined = True),
+        'D': Def(undefined = True),
+    }))
+    tokens = TK.tokenize('(!defined(C) || !!defined D) ? true : false')
+    anym, allm, m = de.evaluate_with_defs(tokens)
+    assert not anym
+    assert not allm
+    assert m == DefMap(de.defs)
+
+def test_evaluate_with_defs_truthy_unary_defined() -> None:
+    de = DefEvaluator(64, DefMap(None, initial = {
+        'C': Def(),
+        'D': Def(defined = True, undefined = True),
+    }))
+    tokens = TK.tokenize('(!defined(C) || !!defined D) ? true : false')
+    anym, allm, m = de.evaluate_with_defs(tokens)
+    assert anym
+    assert not allm
+    assert m == DefMap(de.defs, initial = {
+        'C': Def(defined = True, undefined = True),
+        'D': Def(defined = True, undefined = True)
+    })

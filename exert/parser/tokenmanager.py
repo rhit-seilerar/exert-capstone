@@ -1,4 +1,4 @@
-from typing import NoReturn, Optional
+from typing import cast, NoReturn, Optional
 
 type OptionalToken = Optional['TokenType']
 
@@ -113,17 +113,14 @@ class TokenManager:
     def consume_identifier(self, name: str) -> OptionalToken:
         return self.consume(('identifier', name))
 
-    def parse_identifier(self) -> (str | int):
+    def parse_identifier(self) -> str:
         if (token := self.consume_type('identifier')):
-            return token[1]
+            return cast(str, token[1])
         return ''
 
     def parse_ident_or_keyword(self) -> str:
-        if (self.peek_type() in ['identifier', 'keyword']):
-            res = self.next()
-            assert res is not None
-            assert isinstance(res[1], str)
-            return res[1]
+        if is_id_or_kw(self.peek()):
+            return cast(str, cast(TokenType, self.next())[1])
         return ''
 
     def print_current(self, width: int = 5, fancy_print: bool = True) -> str:
@@ -164,4 +161,6 @@ class TokenManager:
         self.print_current()
         assert False
 
+# Import must be at the bottom to resolve typing order issues
+# pylint: disable=wrong-import-position
 from exert.utilities.types.global_types import TokenType

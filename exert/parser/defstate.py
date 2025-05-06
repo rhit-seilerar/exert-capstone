@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, Optional
 from exert.parser.defoption import DefOption
 from exert.parser.definition import Def
 from exert.parser.defmap import DefMap
@@ -52,13 +52,14 @@ class DefState:
                 result.add(key)
         return result
 
-    def on_define(self, sym: str, tokens: TokenSeq, params: (list[str] | None) = None) \
-        -> None:
+    def on_define(self, sym: str, tokens: TokenSeq,
+        params: Optional[list[str]] = None) -> None:
+
         if not self.is_skipping():
             dprint(3, '  ' * self.depth() + f'#define {sym} {tok_seq(tokens)}')
             self.keys.add(sym)
             assert self.layers[-1].current is not None
-            self.layers[-1].current.define(sym, DefOption(tokens, params))
+            self.layers[-1].current.define(sym, DefOption(tokens, params), keep = False)
 
     def on_undef(self, sym: str) -> None:
         if not self.is_skipping():

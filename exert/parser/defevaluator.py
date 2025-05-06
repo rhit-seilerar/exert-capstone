@@ -1,10 +1,11 @@
 import itertools
 from typing import cast
-from exert.parser.tokenmanager import TokenManager, mk_id
+from exert.parser.tokenmanager import TokenManager, mk_id, mk_int
 from exert.parser.definition import Def
 from exert.parser.defmap import DefMap
 from exert.parser.substitute import subst_all
-from exert.parser.expressions import Evaluator, Wildcard, Integer, parse_expression
+from exert.parser.expressions import Expression, Evaluator, Wildcard, \
+    Integer, parse_expression
 from exert.utilities.types.global_types import TokenType, TokenType3, TokenSeq
 
 # This file evaluates preprocessor-time constants in #if statements.
@@ -46,6 +47,17 @@ class DefEvaluator(Evaluator):
             else:
                 tokmgr.bump()
 
+    # Replace all identifiers with 0, except 'true', which is 1.
+    def replace_identifiers(self, tokens: TokenSeq) -> None:
+        # Modifications made to tokmgr.tokens will reflect in tokens
+        tokmgr = TokenManager(tokens)
+        while tokmgr.has_next():
+            if (ident := tokmgr.parse_ident_or_keyword()):
+                val = int(ident == 'true')
+                tokmgr.tokens[tokmgr.index-1] = mk_int(val)
+            else:
+                tokmgr.bump()
+
     # Convert a def into a list of singleton defs, each with one option or none
     def make_def_singletons(self, defn: Def) -> list[Def]:
         defs: list[Def] = []
@@ -54,8 +66,8 @@ class DefEvaluator(Evaluator):
         if not defn.is_defined():
             defs.append(Def(undefined = True))
 
-        # If it's not strictly undefined, it might be open-ended.
-        if not defn.is_undefined():
+        # If it's initial, it might be open-ended. Or, you know, it's open-ended.
+        if defn.is_initial() or defn.is_empty_def():
             defs.append(Def(defined = True))
 
         # Any specified option might be valid
@@ -84,11 +96,13 @@ class DefEvaluator(Evaluator):
         return [{k: p[i] for (i, k) in enumerate(keylist)} \
             for p in permutations]
 
-    # Replace all ANY tokens with their values in the lookup table
+    # Replace all ANY tokens with their values in the lookup table. Also
+    # replace all defined markers with 0 or 1.
     # TODO: Move this into substitute.py
     def subst_permutation(self, lookup: dict[str, Def], tokens: TokenSeq) -> TokenSeq:
         nex = []
         for tok in tokens:
+            # Substitute ANY tokens
             if tok[0] == 'any':
                 anytok = cast(TokenType3, tok)
                 # Ignore open-ended tokens, they'll be handled by expressions.py
@@ -98,20 +112,19 @@ class DefEvaluator(Evaluator):
                     # Recursively substitute
                     for repl in repls:
                         nex += self.subst_permutation(lookup, repl.tokens)
-            else:
-                nex.append(tok)
+                    continue
+
+            # Substitute 'defined' markers
+            if tok[0] == 'defined':
+                key = cast(str, tok[1])
+                nex.append(mk_int(int(lookup[key].defined)))
+                continue
+
+            nex.append(tok)
         return nex
 
-    def evaluate_permutation(self, lookup: dict[str, Def], tokens: TokenSeq) -> None:
-        # Subsitute the current permutation into tokens
-        current = self.subst_permutation(lookup, tokens) if lookup else tokens
-
-        # Parse the substituted expression
-        parsed = parse_expression(current)
-
-        # Set up a clean slate and evaluate
-        self.defines = {}
-        result = parsed.evaluate(self).evaluate(self)
+    def apply_evaluation_result(self, result: Expression, lookup: dict[str, Def]) -> None:
+        print(result, lookup)
 
         # Validity is dependent on an open-ended macro, so conceptually at least
         # one option might match, but another might not.
@@ -120,27 +133,17 @@ class DefEvaluator(Evaluator):
             self.all_match = False
             return
 
-        assert isinstance(result, Integer)
-
         # The expression is falsey, so not all options match.
+        assert isinstance(result, Integer)
         if result.value == 0:
             self.all_match = False
             return
 
         # Otherwise, the expression was truthy, so at least one option matches.
+        # Because of that, we can mark all lookup options as possible.
         self.any_match = True
-
-        # Since the expression was truthy, mark the defined-ness of all
-        # unary defined macros as possible.
-        for key, is_defined in (self.defines or {}).items():
-            if is_defined:
-                self.matches.getlocal(key).defined = True
-            else:
-                self.matches.getlocal(key).undefine()
-
-        for lookup_key, lookup_def in lookup.items():
-            if len(lookup_def) > 0:
-                self.matches.define(lookup_key, list(lookup_def.options)[0])
+        for key, defn in lookup.items():
+            self.matches.getlocal(key).combine(defn, False)
 
     def evaluate_with_defs(self, tokens: TokenSeq) -> tuple[bool, bool, DefMap]:
         # This tracks the possible values of macros within the upcoming #if block
@@ -170,7 +173,21 @@ class DefEvaluator(Evaluator):
         self.any_match = False
         self.all_match = True
         for lookup in lookups:
-            self.evaluate_permutation(lookup, tokens)
+            # Subsitute the current permutation into tokens
+            current = self.subst_permutation(lookup, tokens) if lookup else tokens
+
+            # Replace identifiers with constants
+            self.replace_identifiers(current)
+
+            # Parse the substituted expression
+            parsed = parse_expression(current)
+
+            # Set up a clean slate and evaluate
+            self.defines = {}
+            result = parsed.evaluate(self).evaluate(self)
+
+            # Apply the result to our accumulated state
+            self.apply_evaluation_result(result, lookup)
 
         # Return the results and we're done!
         return self.any_match, self.all_match, self.matches

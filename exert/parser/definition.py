@@ -53,17 +53,18 @@ class Def:
             self.defined = False
             self.options.clear()
 
-    def define(self, option: DefOption, keep: bool = True) -> None:
-        if not isinstance(option, DefOption):
-            raise TypeError(option)
-        if self.is_undefined() or not keep:
+    def define(self, option: Optional[DefOption] = None, keep: bool = True) -> Self:
+        if not keep and self.is_undefined():
             self.undefined = False
-        self.options.add(option)
-        if self.plen is None:
-            self.plen = -1 if option.params is None else len(option.params)
-        else:
-            assert self.plen == (-1 if option.params is None else len(option.params))
+        if option is not None:
+            self.options.add(option)
+            if self.plen is None:
+                self.plen = -1 if option.params is None else len(option.params)
+            else:
+                assert self.plen == \
+                    (-1 if option.params is None else len(option.params))
         self.defined = True
+        return self
 
     def get_replacements(self, sym: TokenType) -> set[DefOption]:
         """

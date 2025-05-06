@@ -53,9 +53,9 @@ class DefMap:
         if not self.skipping:
             self.getlocal(key).undefine(keep = False)
 
-    def define(self, key: str, option: DefOption) -> None:
+    def define(self, key: str, option: DefOption, keep: bool = True) -> None:
         if not self.skipping:
-            self.getlocal(key).define(option, keep = True)
+            self.getlocal(key).define(option, keep)
 
     def combine(self, other: dict[str, Def], replace: bool) -> Self:
         if not isinstance(other, dict):

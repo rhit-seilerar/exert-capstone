@@ -1,3 +1,4 @@
+from exert.parser.tokenmanager import mk_op
 from exert.parser.tokenizer import Tokenizer
 from exert.parser.defoption import DefOption
 from exert.parser.definition import Def
@@ -67,27 +68,25 @@ def test_def_undefine() -> None:
         assert not defn.defined
         assert len(defn.options) == 0
 
-def test_def_define() -> None:
-    defs1 = make_def_variants()
-    try:
-        assert defs1[0].define('abc') # type: ignore
-    except TypeError:
-        pass
-    option = DefOption([('integer', 4, '')])
-    for defn in defs1:
-        was_uncertain = defn.is_uncertain()
-        prev_options = defn.options
-        defn.define(option)
-        assert defn.options == prev_options | {option}
-        assert defn.undefined == was_uncertain
-        assert defn.defined
-    defs2 = make_def_variants()
-    for defn in defs2:
-        prev_options = defn.options
-        defn.define(option, keep = False)
-        assert defn.options == prev_options | {option}
-        assert not defn.undefined
-        assert defn.defined
+def test_def_define_keep() -> None:
+    opt = DefOption([mk_op(';')])
+    assert Def().define(opt, True) == Def(opt)
+    assert Def(defined = True).define(opt, True) == Def(opt)
+    assert Def(undefined = True).define(opt, True) == Def(opt, undefined = True)
+    opt2 = DefOption([mk_op('.')])
+    assert Def(opt2).define(opt, True) == Def(opt, opt2)
+    assert Def(opt2, undefined = True).define(opt, True) \
+        == Def(opt, opt2, undefined = True)
+
+def test_def_define_nokeep() -> None:
+    opt = DefOption([mk_op(';')])
+    assert Def().define(opt, False) == Def(opt)
+    assert Def(defined = True).define(opt, False) == Def(opt)
+    assert Def(undefined = True).define(opt, False) == Def(opt)
+    opt2 = DefOption([mk_op('.')])
+    assert Def(opt2).define(opt, False) == Def(opt, opt2)
+    assert Def(opt2, undefined = True).define(opt, False) \
+        == Def(opt, opt2, undefined = True)
 
 def test_def_get_replacements() -> None:
     defs = make_def_variants()

@@ -12,8 +12,6 @@ class Expression:
     def __str__(self) -> str:
         return '<err>'
 
-type ExpressionTypes = Expression | str
-
 class Integer(Expression):
     def __init__(self, value: int, unsigned: bool):
         self.value = value
@@ -56,7 +54,7 @@ class Operator(Expression):
     pass
 
 class UnaryOperator(Operator):
-    def __init__(self, a: ExpressionTypes, opname: str,
+    def __init__(self, a: Expression, opname: str,
                  op: Callable[[int], int], signop: (Callable[[bool], bool] | None) = None):
         assert isinstance(a, (Expression, str))
         self.opname = opname
@@ -77,7 +75,7 @@ class UnaryOperator(Operator):
         return self.opname + str(self.a)
 
 class BinaryOperator(Operator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes, opname: str,
+    def __init__(self, a: Expression, b: Expression, opname: str,
         op: (Callable[[int, int], int] | None),
         signop: (Callable[[bool, bool], bool] | None) = None):
         assert isinstance(a, Expression)
@@ -106,69 +104,52 @@ class BinaryOperator(Operator):
     def __str__(self) -> str:
         return str(self.a) + f' {self.opname} ' + str(self.b)
 
-class UnaryDefined(UnaryOperator):
-    def __init__(self, a: str):
-        super().__init__(a, 'defined', lambda a: a)
-
-    def evaluate(self, evaluator: 'Evaluator') -> (Wildcard | Integer):
-        assert evaluator.lookup is not None
-        assert evaluator.defines is not None
-        assert isinstance(self.a, str)
-        if self.a in evaluator.lookup and evaluator.lookup[self.a].defined:
-            evaluator.defines[self.a] = True
-            return Integer(1, False)
-        evaluator.defines[self.a] = False
-        return Integer(0, False)
-
-    def __str__(self) -> str:
-        return f'defined({self.a})'
-
 class UnaryPlus(UnaryOperator):
-    def __init__(self, a: ExpressionTypes):
+    def __init__(self, a: Expression):
         super().__init__(a, '+', lambda a: a)
 
 class UnaryMinus(UnaryOperator):
-    def __init__(self, a: ExpressionTypes):
+    def __init__(self, a: Expression):
         super().__init__(a, '-', lambda a: -a, lambda asig: False)
 
 class Add(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '+', lambda a, b: a + b)
 
 class Subtract(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '-', lambda a, b: a - b)
 
 class Multiply(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '*', lambda a, b: a * b)
 
 class Divide(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '/', lambda a, b: a // b)
 
 class Remainder(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '%', lambda a, b: abs(a) % abs(b) * (1 - 2 * (a < 0)))
 
 class BitwiseNot(UnaryOperator):
-    def __init__(self, a: ExpressionTypes):
+    def __init__(self, a: Expression):
         super().__init__(a, '~', lambda a: ~a)
 
 class BitwiseAnd(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '&', lambda a, b: a & b)
 
 class BitwiseOr(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '|', lambda a, b: a | b)
 
 class BitwiseXor(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '^', lambda a, b: a ^ b)
 
 class LeftShift(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '<<', None)
 
     def evaluate(self, evaluator: 'Evaluator') -> (Wildcard | Integer):
@@ -187,7 +168,7 @@ class LeftShift(BinaryOperator):
             else aint.value << bint.value, unsigned)
 
 class RightShift(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '>>', None)
 
     def evaluate(self, evaluator: 'Evaluator') -> (Wildcard | Integer):
@@ -208,43 +189,43 @@ class RightShift(BinaryOperator):
             else aint.value >> bint.value, unsigned)
 
 class LogicalNot(UnaryOperator):
-    def __init__(self, a: ExpressionTypes):
+    def __init__(self, a: Expression):
         super().__init__(a, '!', lambda a: 1 if not a else 0)
 
 class LogicalAnd(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '&&', lambda a, b: 1 if a and b else 0)
 
 class LogicalOr(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '||', lambda a, b: 1 if a or b else 0)
 
 class Equal(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '==', lambda a, b: 1 if a == b else 0, lambda asig, bsig: False)
 
 class NotEqual(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '!=', lambda a, b: 1 if a != b else 0, lambda asig, bsig: False)
 
 class LessThan(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '<', lambda a, b: 1 if a < b else 0, lambda asig, bsig: False)
 
 class GreaterThan(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '>', lambda a, b: 1 if a > b else 0, lambda asig, bsig: False)
 
 class LessThanOrEqual(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '<=', lambda a, b: 1 if a <= b else 0, lambda asig, bsig: False)
 
 class GreaterThanOrEqual(BinaryOperator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression):
         super().__init__(a, b, '>=', lambda a, b: 1 if a >= b else 0, lambda asig, bsig: False)
 
 class Conditional(Operator):
-    def __init__(self, a: ExpressionTypes, b: ExpressionTypes, c: ExpressionTypes):
+    def __init__(self, a: Expression, b: Expression, c: Expression):
         self.a = a
         self.b = b
         self.c = c
@@ -325,7 +306,7 @@ def parse_expression(tokens: list[TokenType]) -> Expression:
     assert len(tokens) > 0
 
     # Handle groups, identifiers, defined(), and terminals
-    nex: list[ExpressionTypes] = []
+    nex: list[Expression | str] = []
     gstart = None
     indent = 0
     i = 0
@@ -346,8 +327,6 @@ def parse_expression(tokens: list[TokenType]) -> Expression:
                 assert isinstance(token[1], int)
                 assert len(token) > 2
                 nex.append(Integer(token[1], 'u' in token[2]))
-            elif token[0] == 'defined':
-                nex.append(UnaryDefined(cast(str, token[1])))
             elif token[0] in ['identifier', 'keyword']:
                 nex.append(Identifier(token[1]))
             elif token[0] == 'operator':
@@ -364,7 +343,7 @@ def parse_expression(tokens: list[TokenType]) -> Expression:
         opset = PRECEDENCE_MAP[precedence]
         merged_any = False
         nex = []
-        args: list[ExpressionTypes] = []
+        args: list[Expression | str] = []
         op = None
 
         prev = None
@@ -385,20 +364,22 @@ def parse_expression(tokens: list[TokenType]) -> Expression:
                 value = op[1]
                 if op[0] == 2:
                     assert issubclass(value, (UnaryPlus, UnaryMinus, LogicalNot, BitwiseNot))
-                    nex.append(value(args[1]))
+                    nex.append(value(cast(Expression, args[1])))
                 elif op[0] == 3:
                     assert issubclass(value, (Multiply, Divide, Remainder, Add, \
                         Subtract, LeftShift, RightShift, LessThan, LessThanOrEqual, \
                         GreaterThan, GreaterThanOrEqual, Equal, NotEqual, BitwiseAnd, \
                             BitwiseXor, BitwiseOr, LogicalAnd, LogicalOr))
-                    nex.append(value(args[0], args[2]))
+                    nex.append(value(
+                        cast(Expression, args[0]),
+                        cast(Expression, args[2])))
                 else:
                     assert issubclass(value, Conditional)
-                    nex.append(value(args[0], args[2], args[4]))
+                    nex.append(value(
+                        cast(Expression, args[0]),
+                        cast(Expression, args[2]),
+                        cast(Expression, args[4])))
 
-                # nex.append(op[1](args[1]) if op[0] == 2
-                #     else op[1](args[0], args[2]) if op[0] == 3
-                #     else op[1](args[0], args[2], args[4]))
                 op = None
                 merged_any = True
                 args = []
