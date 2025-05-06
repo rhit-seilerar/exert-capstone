@@ -11,7 +11,7 @@ TK = Tokenizer()
 
 def test_replace_unary_defined_none() -> None:
     de = DefEvaluator(64, DefMap(None))
-    tokens = TK.tokenize('#if 0 + 3 < 4')
+    tokens = TK.tokenize('#if 0 + 3 < 4 defined')
     keys: set[TokenType] = set()
     result = de.replace_unary_defined(tokens, keys)
     assert result == tokens
