@@ -184,7 +184,7 @@ def test_substitute_no_options() -> None:
     keys: set[TokenType] = set()
     tm = TokenManager([mk_id('var')])
     dm = DefMap(None, initial = {'var': Def(defined = True)})
-    assert substitute(tm, dm, keys = keys) == [mk_id('var')]
+    assert substitute(tm, dm, keys = keys) == [('any', 'var', set())]
     assert keys == {mk_id('var')}
 
 def test_substitute_function() -> None:

@@ -75,20 +75,20 @@ class DefState:
         self.layers.append(DefLayer(parent, self.bitsize, self.is_skipping()))
         self.layers[-1].add_map(cond_tokens)
 
-    def on_ifdef(self, sym: str | int) -> None:
+    def on_ifdef(self, sym: str) -> None:
         self.on_if([ mk_id('defined'), mk_id(sym) ])
 
-    def on_ifndef(self, sym: str | int) -> None:
+    def on_ifndef(self, sym: str) -> None:
         self.on_if([ mk_op('!'), mk_id('defined'), mk_id(sym) ])
 
     def on_elif(self, cond_tokens: list[TokenType]) -> None:
         dprint(2, '  ' * self.depth() + f'#elif {tok_seq(cond_tokens)}')
         self.layers[-1].add_map(cond_tokens)
 
-    def on_elifdef(self, sym: str | int) -> None:
+    def on_elifdef(self, sym: str) -> None:
         self.on_elif([ mk_id('defined'), mk_id(sym) ])
 
-    def on_elifndef(self, sym: str | int) -> None:
+    def on_elifndef(self, sym: str) -> None:
         self.on_elif([ mk_op('!'), mk_id('defined'), mk_id(sym) ])
 
     def on_else(self) -> None:
@@ -105,6 +105,11 @@ class DefState:
     def get_replacements(self, tok: TokenType) -> set[DefOption]:
         assert self.layers[-1].current is not None
         return self.layers[-1].current.get_replacements(tok)
+
+    def get_current(self, key: str) -> Def:
+        if self.layers[-1].current is None:
+            return Def()
+        return self.layers[-1].current[key]
 
     def substitute(self, tokmgr: (TokenManager | TokenType)) -> TokenSeq:
         if isinstance(tokmgr, tuple):

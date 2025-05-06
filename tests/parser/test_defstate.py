@@ -36,18 +36,17 @@ def test_defstate() -> None:
 
 def test_defstate_multilayer() -> None:
     ds = DefState(64)
-    wild_abc = DefOption([('any', 'ABC', set())])
     wild_def = DefOption([('any', 'DEF', set())])
-    assert ds.get_replacements(tm.mk_id('ABC')) == {wild_abc}
+    assert ds.get_current('ABC').is_initial()
     ds.on_ifdef('ABC')
-    assert ds.get_replacements(tm.mk_id('ABC')) == {wild_abc}
+    assert ds.get_current('ABC').is_empty_def()
     assert not ds.is_skipping()
     assert not ds.layers[-1].skip_rest
     assert len(ds.layers) == 2
     ds.on_if(TK.tokenize('ABC == 2'))
     assert len(ds.layers) == 3
     # Currently can't make the '==' guarantee with wildcards
-    assert ds.get_replacements(tm.mk_id('ABC')) == {wild_abc}
+    assert ds.get_current('ABC').is_empty_def()
     assert not ds.is_skipping()
     assert not ds.is_guaranteed()
     ds.on_define('DEF', TK.tokenize('1'))

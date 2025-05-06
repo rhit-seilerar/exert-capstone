@@ -101,9 +101,15 @@ def subst(tokmgr: TokenManager, defmap: DefMap, keys: KeysType,
 
     # If this is a macro, add it to the keys set
     macroname = OrElse[TokenType]()(name, cast(TokenType, tokmgr.peek()))
-    if isinstance(keys, set) and is_id_or_kw(macroname) \
-        and not defmap[cast(str, macroname[1])].is_initial():
-        keys.add(macroname)
+    if is_id_or_kw(macroname):
+        defn = defmap[cast(str, macroname[1])]
+        if isinstance(keys, set) and not defn.is_initial():
+            keys.add(macroname)
+        # If it's a macro but doesn't have any options, we'll return an empty
+        # ANY as a special case.
+        if defn.is_defined() and defn.is_empty_def():
+            tokmgr.bump()
+            return [('any', macroname[1], set())]
 
     # This isn't a macro, or it doesn't have any options
     if name is None:

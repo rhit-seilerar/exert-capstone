@@ -81,7 +81,8 @@ class Def:
         if self.undefined:
             replacements.add(DefOption([sym]))
         if (self.defined or not self.undefined) and len(self.options) == 0:
-            replacements.add(DefOption([('any', sym[1], set())]))
+            macroname = '<empty>' if sym[1] == '<undefined>' else sym[1]
+            replacements.add(DefOption([('any', macroname, set())]))
         return replacements
 
     def combine(self, other: 'Def', replace: bool) -> Self:

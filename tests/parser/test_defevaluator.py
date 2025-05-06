@@ -241,3 +241,14 @@ def test_evaluate_with_defs_valued_unary_defined() -> None:
     assert m == DefMap(de.defs, initial = {
         'C': Def(DefOption([mk_op(';')])),
     })
+
+def test_evaluate_with_defs_value_matching_empty() -> None:
+    de = DefEvaluator(64, DefMap(None, initial = {
+        'E': Def(defined = True)
+    }))
+    tokens = TK.tokenize('E == 1')
+    anym, allm, m = de.evaluate_with_defs(tokens)
+    assert anym
+    assert not allm
+    print(m)
+    assert m == DefMap(de.defs)
