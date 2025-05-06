@@ -199,7 +199,7 @@ def get_osi_info(kernel: str, arch: str, version: str) -> None:
                             real_cred_offset = None,
                             cred_offset = None,
                             comm_offset = None,
-                            comm_size = None,
+                            comm_size = 16, # This is hardcoded in the kernel
                             files_offset = None,
                             start_time_offset = None)
             cred = osi.Cred(uid_offset = None,
