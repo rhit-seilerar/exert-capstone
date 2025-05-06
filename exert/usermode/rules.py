@@ -38,12 +38,17 @@ class Rule:
         return {address}
 
     def _get_key(self) -> str:
-        return 'Rule'
+        return ''
 
     def __str__(self) -> str:
         if not self.key:
             self.key = self._get_key()
         return self.key
+
+class Void(Rule):
+    def _get_key(self) -> str:
+        return 'void'
+VOID = Void()
 
 class Any(Rule):
     def __init__(self, *rules: Rule):
@@ -67,7 +72,24 @@ class Int(Rule):
         self.max_value = max_value if max_value is not None else min_value
 
     def _get_key(self) -> str:
-        return f'Int({self.size}, {self.signed}, {self.min_value}, {self.max_value})'
+        res = ''
+        if self.min_value is not None:
+            res += str(self.min_value) + ' <= '
+        if not self.signed:
+            res += 'unsigned '
+        if self.size == 1:
+            res += 'char'
+        elif self.size == 2:
+            res += 'short'
+        elif self.size == 4:
+            res += 'int'
+        elif self.size is None:
+            res += 'long'
+        else:
+            res += f'<int{self.size}>'
+        if self.max_value is not None:
+            res += ' <= ' + str(self.max_value)
+        return res
 
     def _test(self, context: Context, address: int) -> set[int]:
         size = context.word_size if self.size is None else self.size
@@ -79,6 +101,14 @@ class Int(Rule):
         if self.max_value is not None and val > self.max_value:
             return set()
         return {address}
+SCHAR = Int(1, True)
+UCHAR = Int(1, False)
+SHORT = Int(2, True)
+USHORT = Int(2, False)
+INT = Int(4, True)
+UINT = Int(4, False)
+LONG = Int(None, True)
+ULONG = Int(None, False)
 
 class Bool(Int):
     def __init__(self) -> None:
@@ -86,6 +116,7 @@ class Bool(Int):
 
     def _get_key(self) -> str:
         return 'Bool'
+BOOL = Bool()
 
 class Pointer(Rule):
     def __init__(self, rule: (Rule | None) = None):

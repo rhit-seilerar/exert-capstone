@@ -2,11 +2,12 @@ import os
 import sys
 import time
 import glob
-from typing import Callable
+from typing import cast, Callable
 from exert.parser.tokenizer import Tokenizer
 from exert.parser.tokenmanager import tok_seq, mk_kw, mk_op, mk_id, TokenManager
 from exert.parser.defoption import DefOption
 from exert.parser.preprocessor import Preprocessor
+from exert.usermode import rules
 from exert.utilities.debug import dprint
 from exert.utilities.command import run_command
 from exert.utilities.types.global_types import TokenType
@@ -77,32 +78,18 @@ def parse(filename: str, arch: str) -> None:
 
     parser = Parser()
     parser.parse(preprocessor.tokens)
+    print(str(parser))
 
 class Parser(TokenManager):
-    def __init__(self, types: (dict[str | int, int] | None) = None):
+    def __init__(self, types: (dict[str, rules.Rule] | None) = None):
         super().__init__()
         self.chkptid = 0
         self.anydepth = 0
         self.in_typedef = False
-        self.staged_types: dict[str | int, int] = {}
+        self.staged_type_name = ''
+        self.staged_base_type: rules.Rule = rules.VOID
+        self.staged_types: dict[str, rules.Rule] = {}
         self.types = types.copy() if types is not None else {}
-
-#     def add(self, values, key, value):
-#         values[key] = (arr := values.get(key, list()))
-#         arr.append(value)
-
-#     def set(self, values, key, value):
-#         values[key] = value
-
-#     def pop(self, values, key):
-#         values.pop(key)
-
-#     def get(self, values, key):
-#         arr = values.get(key)
-#         return rules.Any(list(arr)) if arr else None
-
-#     def has(self, values, key):
-#         return key in values
 
     def unwrap(self, k: CPSTypes) -> CPSTypes:
         dprint(3, 'unwrap.start')
@@ -269,19 +256,19 @@ class Parser(TokenManager):
 
     def maybe_typedef_name(self, p: CPSTypes, f: CPSTypes) -> CPSTuple:
         dprint(3, 'maybe_typedef_name')
-        def addname(p: CPSTypes, f: CPSTypes) -> CPSTypes:
-            if self.in_typedef:
-                staged_types = self.peek()
-                assert staged_types is not None
-                dprint(1.5, f'Staging: {staged_types[1]}: {1}')
-                self.staged_types[staged_types[1]] = 1
-            return p
-        return self.ptyp('identifier'), (addname, (self.pbump, p,f), f), f
+        def stage_name(p1: CPSTypes, f1: CPSTypes) -> CPSTypes:
+            self.staged_type_name = cast(str, cast(TokenType, self.peek())[1])
+            return p1
+        return self.ptyp('identifier'), (stage_name, (self.pbump, p,f), f), f
 
     def parse_typedef_declarator_list(self, p: CPSTypes, f: CPSTypes) -> CPSTuple:
         dprint(3, 'parse_typedef_declarator_list')
+        def stage_type(p1: CPSTypes, f1: CPSTypes) -> CPSTypes:
+            self.staged_types[self.staged_type_name] = self.staged_base_type
+            return p1
         return self.pand(
             self.parse_declarator,
+            stage_type,
             self.opt(self.pand(
                 self.tok(mk_op(',')),
                 self.parse_typedef_declarator_list
@@ -300,6 +287,8 @@ class Parser(TokenManager):
         def enter(p1: CPSTypes, f1: CPSTypes) -> CPSTypes:
             self.in_typedef = True
             self.staged_types = {}
+            self.staging_index = self.index
+            self.staged_base_type = rules.VOID
             return p1
         def commit(p1: CPSTypes, f1: CPSTypes) -> CPSTypes:
             self.in_typedef = False
@@ -309,7 +298,7 @@ class Parser(TokenManager):
         def rollback(p1: CPSTypes, f1: CPSTypes) -> CPSTypes:
             if self.in_typedef:
                 dprint(1, 'Rolling back!')
-            self.in_typedef = False
+                self.in_typedef = False
             return f1
         return self.pand(
             self.tok(mk_kw('typedef')),
@@ -769,23 +758,66 @@ class Parser(TokenManager):
 
     def parse_type_specifier(self, p: CPSTypes, f: CPSTypes) -> CPSTuple:
         dprint(3, 'parse_type_specifier')
+
+        def stage_int(p1: CPSTypes, f1: CPSTypes) -> CPSTypes:
+            t = cast(str, cast(TokenType, self.peek(-1))[1])
+            size = {'char': 1, 'short': 2, 'int': 4, 'long': None}[t]
+            if isinstance(self.staged_base_type, rules.Int):
+                if t != 'int':
+                    self.staged_base_type.size = size
+            else:
+                self.staged_base_type = rules.Int(size, True)
+            return p1
+
+        def stage_sign(p1: CPSTypes, f1: CPSTypes) -> CPSTypes:
+            t = cast(str, cast(TokenType, self.peek(-1))[1])
+            if isinstance(self.staged_base_type, rules.Int):
+                self.staged_base_type.signed = t == 'signed'
+            else:
+                self.staged_base_type = rules.Int(4, t == 'signed')
+            return p1
+
+        def stage_void(p1: CPSTypes, f1: CPSTypes) -> CPSTypes:
+            self.staged_base_type = rules.VOID
+            return p1
+
+        def stage_bool(p1: CPSTypes, f1: CPSTypes) -> CPSTypes:
+            self.staged_base_type = rules.BOOL
+            return p1
+
         return self.por(
-            self.tok(mk_kw('void')),
-            self.tok(mk_kw('char')),
-            self.tok(mk_kw('short')),
-            self.tok(mk_kw('int')),
-            self.tok(mk_kw('long')),
+            self.pand(
+                self.tok(mk_kw('void')),
+                stage_void
+            ),
+            self.pand(
+                self.por(
+                    self.tok(mk_kw('signed')),
+                    self.tok(mk_kw('unsigned'))
+                ),
+                stage_sign
+            ),
+            self.pand(
+                self.parse_bool,
+                stage_bool
+            ),
+            self.pand(
+                self.por(
+                    self.tok(mk_kw('char')),
+                    self.tok(mk_kw('short')),
+                    self.tok(mk_kw('int')),
+                    self.tok(mk_kw('long')),
+                ),
+                stage_int
+            ),
             self.tok(mk_kw('float')),
             self.tok(mk_kw('double')),
-            self.tok(mk_kw('signed')),
-            self.tok(mk_kw('unsigned')),
             self.pand(
                 self.tok(mk_kw('_BitInt')),
                 self.tok(mk_op('(')),
                 self.parse_constant_expression,
                 self.tok(mk_op(')'))
             ),
-            self.parse_bool,
             self.tok(mk_kw('_Complex')),
             self.tok(mk_kw('_Decimal32')),
             self.tok(mk_kw('_Decimal64')),
@@ -1179,6 +1211,8 @@ class Parser(TokenManager):
         dprint(3, 'parse_typedef_name')
         def intl(p1: CPSTypes, f1: CPSTypes) -> CPSTypes:
             if (ident := self.parse_identifier()) and ident in self.types:
+                self.staged_base_type_format = 'custom'
+                self.staged_base_type = self.types[ident]
                 return p1
             return f1
         return self.pand(self.check_for_any, intl), p, f
@@ -1567,9 +1601,14 @@ class Parser(TokenManager):
         self.tokens = tokens
         self.len = len(tokens)
         self.time = time.time()
-
         self.unwrap((self.parse_translation_unit, True, False))
-        print(self.types)
+
+    def __str__(self) -> str:
+        result = '===== PARSED TYPES =====\n'
+        for name, typ in self.types.items():
+            result += f'{name}: {typ}\n'
+        result += '\n'
+        return result
 
 if __name__ == '__main__':
     generate(sys.argv[1], sys.argv[2])
