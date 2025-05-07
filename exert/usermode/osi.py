@@ -237,16 +237,30 @@ path.mnt_parent_offset = {self.mnt_parent_offset}
 path.mnt_mountpoint_offset = {self.mnt_mountpoint_offset}\n'''
 
 def main(*, header_line: HeaderLine, osi_name: Name, osi_version: Version, task: Task, cred: Cred,
-         mm: MM, vma: VMA, fs: FS, qstr: QSTR, osi_path: Path, demo_path: str) -> None:
-    with open(demo_path, "w", encoding='utf-8') as f:
-        f.write(header_line.to_string())
-        f.write(osi_name.to_string())
-        f.write(osi_version.to_string())
-        f.write(task.to_string())
-        f.write(cred.to_string())
-        f.write(mm.to_string())
-        f.write(vma.to_string())
-        f.write(fs.to_string())
-        f.write(qstr.to_string())
-        f.write(osi_path.to_string())
-        f.close()
+         mm: MM, vma: VMA, fs: FS, qstr: QSTR, osi_path: Path, demo_path: str, demo_mode: bool) -> None:
+    if not demo_mode:
+        with open(demo_path, "w", encoding='utf-8') as f:
+            f.write(header_line.to_string())
+            f.write(osi_name.to_string())
+            f.write(osi_version.to_string())
+            f.write(task.to_string())
+            f.write(cred.to_string())
+            f.write(mm.to_string())
+            f.write(vma.to_string())
+            f.write(fs.to_string())
+            f.write(qstr.to_string())
+            f.write(osi_path.to_string())
+            f.close()
+    else:
+        print("Example OSI File:")
+        print(header_line.to_string())
+        print(osi_name.to_string())
+        print(osi_version.to_string())
+        print(task.to_string())
+        print(cred.to_string())
+        print(mm.to_string())
+        print(vma.to_string())
+        print(fs.to_string())
+        print(qstr.to_string())
+        print(osi_path.to_string())
+        print()

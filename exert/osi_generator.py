@@ -182,60 +182,16 @@ def get_osi_info(kernel: str, arch: str, version: str) -> None:
             header_line = osi.HeaderLine("[linux:" + version + ":" + bits + "]")
             osi_name = osi.Name(version + "|linux|" + arch)
             osi_version = osi.Version(ver_entry.x, ver_entry.y, ver_entry.z)
-            task = osi.Task(per_cpu_offsets_addr = None,
-                            per_cpu_offset_0_addr = None,
-                            current_task_addr = None,
-                            init_addr = init_task_struct_addr,
+            task = osi.Task(init_addr = init_task_struct_addr,
                             size = task_struct_size,
                             tasks_offset = tasks_offsets,
-                            pid_offset = None,
-                            tgid_offset = None,
-                            group_leader_offset = None,
-                            thread_group_offset = None,
-                            real_parent_offset = None,
-                            parent_offset = None,
-                            mm_offset = None,
-                            stack_offset = None,
-                            real_cred_offset = None,
-                            cred_offset = None,
-                            comm_offset = None,
-                            comm_size = 16, # This is hardcoded in the kernel
-                            files_offset = None,
-                            start_time_offset = None)
-            cred = osi.Cred(uid_offset = None,
-                            gid_offset = None,
-                            euid_offset = None,
-                            egid_offset = None)
-            mm = osi.MM(size = None,
-                        mmap_offset = None,
-                        pgd_offset = None,
-                        arg_start_offset = None,
-                        start_brk_offset = None,
-                        brk_offset = None,
-                        start_stack_offset = None)
-            vma = osi.VMA(size = None,
-                          vm_mm_offset = None,
-                          vm_start_offset = None,
-                          vm_end_offset = None,
-                          vm_next_offset = None,
-                          vm_flags_offset = None,
-                          vm_file_offset = None)
-            fs = osi.FS(f_path_dentry_offset = None,
-                        f_path_mnt_offset = None,
-                        f_pos_offset = None,
-                        fdt_offset = None,
-                        fdtab_offset = None,
-                        fd_offset = None)
-            qstr = osi.QSTR(size = None,
-                            name_offset = None)
-            osi_path = osi.Path(d_name_offset = None,
-                                d_iname_offset = None,
-                                d_parent_offset = None,
-                                d_op_offset = None,
-                                d_dname_offset = None,
-                                mnt_root_offset = None,
-                                mnt_parent_offset = None,
-                                mnt_mountpoint_offset = None)
+                            comm_size = 16) # This is hardcoded in the kernel
+            cred = osi.Cred()
+            mm = osi.MM()
+            vma = osi.VMA()
+            fs = osi.FS()
+            qstr = osi.QSTR()
+            osi_path = osi.Path()
             demo_path = "./Linux-" + version + "-" + arch + ".osi"
             osi.main(header_line=header_line,
                     osi_name=osi_name,
@@ -247,7 +203,8 @@ def get_osi_info(kernel: str, arch: str, version: str) -> None:
                     fs=fs,
                     qstr=qstr,
                     osi_path=osi_path,
-                    demo_path=demo_path)
+                    demo_path=demo_path,
+                    demo_mode=True)
 
     if not version_supported:
         print("Version not supported")

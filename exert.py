@@ -91,8 +91,10 @@ def main():
 def dev_osi_demo(parsed:argparse.ArgumentParser):
     volume_srd(0)
     dev_rta(in_docker=False, reset=False, version='4.4.100', arch='arm', rta_mode=0)
-    input("Hit any key to continue: ")
-    run_docker(command=f'python -m exert.utilities.osi_demo')
+    input("Hit enter to continue: ")
+    run_docker(command='python -m exert.osi_generator ./kernels/vmlinuz-arm-4.4.100 armv5l 4.4.100')
+    input("Hit enter to continue: ")
+    run_docker(command='python -m exert.utilities.osi_demo')
 
 def dev_reset():
     run_command('docker stop xmake', True, False)
