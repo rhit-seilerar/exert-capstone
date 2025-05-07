@@ -81,9 +81,18 @@ def main():
     dev_rules_parser.set_defaults(func = lambda parsed:
             dev_rta(in_docker=parsed.docker, reset=parsed.reset, version=parsed.version,
                 arch=parsed.arch, rta_mode=0))
+    
+    dev_osi_demo_parser = dev_subparsers.add_parser('demo', help='Demonstrate a usage of OSI')
+    dev_osi_demo_parser.set_defaults(func = dev_osi_demo)
 
     parsed = parser.parse_args()
     parsed.func(parsed)
+
+def dev_osi_demo(parsed:argparse.ArgumentParser):
+    volume_srd(0)
+    dev_rta(in_docker=False, reset=False, version='4.4.100', arch='arm', rta_mode=0)
+    input("Hit any key to continue: ")
+    run_docker(command=f'python -m exert.utilities.osi_demo')
 
 def dev_reset():
     run_command('docker stop xmake', True, False)
@@ -190,7 +199,7 @@ def volume_srd(srd: int = 0):
         command += f'rm -rf /mount/exert/ && rm -rf /mount/tests && rm -rf /mount/kernels/ \
             && rsync -auv --progress {exclude} /local/ /mount'
     run_docker(name = 'pandare-init', command = command,
-               capture_output=False, extra_args=extra_args)
+               capture_output=True, extra_args=extra_args)
 
 def osi(parsed:argparse.ArgumentParser):
     """Validate the provided image, and then generate its OSI information"""

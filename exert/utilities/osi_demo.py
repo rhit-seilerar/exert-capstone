@@ -14,3 +14,5 @@ def run_osi_with_arm() -> None:
 
 def run_osi_with_arm_nongeneric() -> None:
     plugin.run('armv5l', callback=process_lister, generic=False, kernel='./kernels/vmlinuz-arm-4.4.100')
+
+run_osi_with_arm()
