@@ -6,7 +6,8 @@ show_missing = True
 omit =
     ./exert/usermode/task_struct_stack.py,
     ./exert/usermode/plugin.py,
-    ./exert/utilities/debug.py
+    ./exert/utilities/debug.py,
+    ./exert/utilities/types/*
 parallel = True
 sigterm = True
 concurrency = multiprocessing
