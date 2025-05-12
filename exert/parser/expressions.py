@@ -303,8 +303,6 @@ PRECEDENCE_MAP: list[dict[str, tuple[int, type[Operator]]]] = [
 ]
 
 def parse_expression(tokens: list[TokenType]) -> Expression:
-    assert len(tokens) > 0
-
     # Handle groups, identifiers, defined(), and terminals
     nex: list[Expression | str] = []
     gstart = None
