@@ -83,7 +83,7 @@ def main():
                 arch=parsed.arch, rta_mode=0))
 
     dev_osi_demo_parser = dev_subparsers.add_parser('demo', help='Demonstrate a usage of OSI')
-    dev_osi_demo_parser.set_defaults(func = dev_osi_demo)
+    dev_osi_demo_parser.set_defaults(func = lambda _: dev_osi_demo())
 
     parsed = parser.parse_args()
     parsed.func(parsed)
@@ -122,7 +122,7 @@ def dev_rta(in_docker: bool, reset: bool, version: str=None,
     interactive = False
     if rta_mode == 1:
         make_usermode()
-        command = 'pytest --cov-config=.coveragerc --cov=exert tests/ && pylint exert/ \
+        command = 'pytest --cov-config=.coveragerc --cov=exert tests/ \
             && pylint ./exert ./tests --rcfile=.pylintrc --fail-on E --fail-under 10 \
             && mypy .'
     elif rta_mode == 0:
@@ -180,6 +180,7 @@ def volume_srd(srd: int = 0):
         "--exclude .venv",
         "--exclude .coverage",
         "--exclude .mypy_cache",
+        "--exclude mutants",
         "--exclude '*/__pycache__'"
     ])
 
