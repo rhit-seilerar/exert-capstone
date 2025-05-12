@@ -23,6 +23,7 @@ def test_file_print() -> None:
              fs=fs,
              qstr=qstr,
              osi_path=osi_path,
-             demo_path=demo_path)
+             demo_path=demo_path,
+             demo_mode=False)
 
     assert os.path.exists(demo_path)

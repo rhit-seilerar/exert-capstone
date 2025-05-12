@@ -169,6 +169,7 @@ def test_blocks() -> None:
         #endif
         int C = 6;
     """, CACHE, True).load(CACHE)
+    print(pp.tokens)
     assert len(pp.tokens[0]) > 2
     assert pp.tokens == [
         ('any', '', {

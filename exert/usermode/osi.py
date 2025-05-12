@@ -237,7 +237,7 @@ path.mnt_parent_offset = {self.mnt_parent_offset}
 path.mnt_mountpoint_offset = {self.mnt_mountpoint_offset}\n'''
 
 def main(*, header_line: HeaderLine, osi_name: Name, osi_version: Version, task: Task, cred: Cred,
-         mm: MM, vma: VMA, fs: FS, qstr: QSTR, osi_path: Path, demo_path: str, demo_mode: bool) -> None:
+    mm: MM, vma: VMA, fs: FS, qstr: QSTR, osi_path: Path, demo_path: str, demo_mode: bool) -> None:
     if not demo_mode:
         with open(demo_path, "w", encoding='utf-8') as f:
             f.write(header_line.to_string())

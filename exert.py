@@ -81,14 +81,14 @@ def main():
     dev_rules_parser.set_defaults(func = lambda parsed:
             dev_rta(in_docker=parsed.docker, reset=parsed.reset, version=parsed.version,
                 arch=parsed.arch, rta_mode=0))
-    
+
     dev_osi_demo_parser = dev_subparsers.add_parser('demo', help='Demonstrate a usage of OSI')
     dev_osi_demo_parser.set_defaults(func = dev_osi_demo)
 
     parsed = parser.parse_args()
     parsed.func(parsed)
 
-def dev_osi_demo(parsed:argparse.ArgumentParser):
+def dev_osi_demo():
     volume_srd(0)
     dev_rta(in_docker=False, reset=False, version='4.4.100', arch='arm', rta_mode=0)
     input("Hit enter to continue: ")
@@ -122,7 +122,9 @@ def dev_rta(in_docker: bool, reset: bool, version: str=None,
     interactive = False
     if rta_mode == 1:
         make_usermode()
-        command = 'pytest --cov-config=.coveragerc --cov=exert tests/'
+        command = 'pytest --cov-config=.coveragerc --cov=exert tests/ && pylint exert/ \
+            && pylint ./exert ./tests --rcfile=.pylintrc --fail-on E --fail-under 10 \
+            && mypy .'
     elif rta_mode == 0:
         command = f'python -u -m exert.parser.parser {version} {arch}'
     else:
